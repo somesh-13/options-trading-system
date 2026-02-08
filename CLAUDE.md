@@ -34,16 +34,22 @@ Two independent services that communicate over HTTP:
 - `src/app/api/` - Next.js API routes that proxy to Alpaca Trade API (portfolio, positions, trades)
 - `src/lib/alpaca.ts` - Alpaca SDK client (paper trading mode)
 - `src/lib/pricing-api.ts` - HTTP client for the Python backend; defines TypeScript interfaces for `OptionParams`, `Greeks`, `MispricingData`
-- `src/components/` - Client components (`'use client'`): `CifrMispricing`, `PricingCalculator`, `PortfolioStats`, `TradesTable`, `PerformanceChart`
+- `src/app/sentiment/` - NLP sentiment analysis page
+- `src/app/backtest/` - Backtesting framework page
+- `src/app/strategy/` - EV calculator + hedging page
+- `src/app/risk-mgmt/` - VaR + risk management page
+- `src/app/execution/` - Alpaca live trading page
+- `src/components/` - 18+ client components including SentimentPanel, BacktestPanel, VaRPanel, EVCalculator, HedgingPanel
 
 **Backend (Python FastAPI)** at `backend/src/`:
-- `api/routes.py` - FastAPI app with CORS configured for localhost:3000. Endpoints: `/api/pricing/calculate`, `/api/pricing/greeks`, `/api/pricing/implied-vol`, `/api/mispricing/cifr`, `/api/market/cifr/price`, `/api/market/cifr/volatility`
-- `api/models.py` - Pydantic request/response models (`OptionParams`, `ImpliedVolParams`, `PricingResponse`, `GreeksResponse`, `ImpliedVolResponse`)
-- `pricing/black_scholes.py` - Black-Scholes call/put pricing (vectorized with NumPy)
-- `pricing/greeks.py` - First-order Greeks (Delta, Gamma, Vega, Theta, Rho) computed analytically
-- `pricing/second_order_greeks.py` - Vanna, Charm, Volga
-- `pricing/implied_vol.py` - Newton-Raphson IV solver with arbitrage bounds checking
-- `data/cifr_data.py` - Yahoo Finance integration via yfinance for CIFR price, HV, options chain, and mispricing detection
+- `api/routes.py` - FastAPI app with CORS, 30+ endpoints across 7 phases
+- `api/models.py` - Pydantic request/response models for all endpoints
+- `pricing/` - Black-Scholes, Greeks (1st + 2nd order), IV solver, vol surface, hedge stability, P&L attribution
+- `data/` - Yahoo Finance, CIFR data, HMM regime detection, IR scraper, NLP extractor, Bayesian updates
+- `backtest/engine.py` - Walk-forward backtesting with performance metrics (Sharpe, Calmar, max DD)
+- `strategy/` - EV calculator, dynamic hedging engine (delta-gamma neutrality)
+- `risk/` - VaR (Historical/Parametric/Monte Carlo), position limits, drawdown protection
+- `execution/alpaca_client.py` - Alpaca paper trading (orders, positions, account)
 
 ## Key Patterns
 

@@ -41,6 +41,8 @@ from api.models import (
     VaRRequest,
     RiskCheckRequest,
     OrderRequest,
+    OptionsOrderRequest,
+    ExerciseRequest,
 )
 
 # Phase 2: NLP Pipeline
@@ -60,7 +62,10 @@ from risk.var import historical_var, parametric_var, monte_carlo_var, comprehens
 from risk.limits import check_position_limits, check_drawdown, RiskLimits
 
 # Phase 7: Execution
-from execution.alpaca_client import get_account, get_positions, get_orders, submit_order, cancel_order, get_portfolio_history
+from execution.alpaca_client import (
+    get_account, get_positions, get_orders, submit_order, cancel_order, get_portfolio_history,
+    get_options_contracts, get_options_chain_snapshot, submit_option_order, exercise_option, close_option_position,
+)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -683,6 +688,89 @@ def get_equity_history(period: str = "1M", timeframe: str = "1D"):
         return get_portfolio_history(period, timeframe)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"History fetch failed: {str(e)}")
+
+
+# =============================================
+# Options Trading Endpoints
+# =============================================
+
+@app.get("/api/execution/options/contracts")
+def get_option_contracts(
+    underlying_symbol: str,
+    expiration_date: str = None,
+    expiration_date_gte: str = None,
+    expiration_date_lte: str = None,
+    strike_price_gte: float = None,
+    strike_price_lte: float = None,
+    option_type: str = None,
+):
+    """List available options contracts for an underlying symbol."""
+    try:
+        return get_options_contracts(
+            underlying_symbol=underlying_symbol.upper(),
+            expiration_date=expiration_date,
+            expiration_date_gte=expiration_date_gte,
+            expiration_date_lte=expiration_date_lte,
+            strike_price_gte=strike_price_gte,
+            strike_price_lte=strike_price_lte,
+            option_type=option_type,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Contracts fetch failed: {str(e)}")
+
+
+@app.get("/api/execution/options/chain/{underlying}")
+def get_option_chain(
+    underlying: str,
+    expiration_date: str = None,
+    option_type: str = None,
+    strike_price_gte: float = None,
+    strike_price_lte: float = None,
+):
+    """Get live options chain snapshot with bid/ask and greeks."""
+    try:
+        return get_options_chain_snapshot(
+            underlying_symbol=underlying.upper(),
+            expiration_date=expiration_date,
+            option_type=option_type,
+            strike_price_gte=strike_price_gte,
+            strike_price_lte=strike_price_lte,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chain snapshot failed: {str(e)}")
+
+
+@app.post("/api/execution/options/order")
+def submit_options_order(req: OptionsOrderRequest):
+    """Submit an options order to Alpaca."""
+    try:
+        return submit_option_order(
+            symbol=req.symbol,
+            qty=req.qty,
+            side=req.side,
+            order_type=req.order_type,
+            limit_price=req.limit_price,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Options order failed: {str(e)}")
+
+
+@app.post("/api/execution/options/exercise")
+def exercise_options_position(req: ExerciseRequest):
+    """Exercise an options position."""
+    try:
+        return exercise_option(req.symbol_or_contract_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Exercise failed: {str(e)}")
+
+
+@app.delete("/api/execution/options/position/{symbol}")
+def close_options_position(symbol: str):
+    """Close an options position."""
+    try:
+        return close_option_position(symbol)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Close position failed: {str(e)}")
 
 
 if __name__ == "__main__":

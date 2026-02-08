@@ -378,3 +378,73 @@ export async function getVaR(ticker: string, portfolioValue: number = 100000, co
   if (!response.ok) throw new Error('VaR calculation failed');
   return response.json();
 }
+
+// === Options Trading API Functions ===
+
+export async function getOptionsContracts(
+  underlyingSymbol: string,
+  filters?: {
+    expiration_date?: string;
+    expiration_date_gte?: string;
+    expiration_date_lte?: string;
+    strike_price_gte?: number;
+    strike_price_lte?: number;
+    option_type?: string;
+  }
+): Promise<Record<string, unknown>> {
+  const params = new URLSearchParams({ underlying_symbol: underlyingSymbol });
+  if (filters) {
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    });
+  }
+  const response = await fetch(`${PRICING_API_URL}/api/execution/options/contracts?${params}`);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Contracts fetch failed');
+  }
+  return response.json();
+}
+
+export async function getOptionsChainSnapshot(
+  underlying: string,
+  filters?: {
+    expiration_date?: string;
+    option_type?: string;
+    strike_price_gte?: number;
+    strike_price_lte?: number;
+  }
+): Promise<Record<string, unknown>> {
+  const params = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    });
+  }
+  const qs = params.toString() ? `?${params}` : '';
+  const response = await fetch(`${PRICING_API_URL}/api/execution/options/chain/${underlying}${qs}`);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Chain snapshot failed');
+  }
+  return response.json();
+}
+
+export async function submitOptionsOrder(params: {
+  symbol: string;
+  qty: number;
+  side: 'buy' | 'sell';
+  order_type: 'market' | 'limit';
+  limit_price?: number;
+}): Promise<Record<string, unknown>> {
+  const response = await fetch(`${PRICING_API_URL}/api/execution/options/order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Options order failed');
+  }
+  return response.json();
+}

@@ -249,3 +249,19 @@ class OrderRequest(BaseModel):
     order_type: Literal['market', 'limit', 'stop', 'stop_limit'] = 'market'
     time_in_force: Literal['day', 'gtc', 'ioc'] = 'day'
     limit_price: float = Field(None, gt=0)
+
+
+# === Options Trading Models ===
+
+class OptionsOrderRequest(BaseModel):
+    """Request for submitting an options order"""
+    symbol: str = Field(..., description="OCC-format symbol e.g. CIFR260220C00016000")
+    qty: int = Field(..., gt=0, description="Number of contracts")
+    side: Literal['buy', 'sell'] = Field(...)
+    order_type: Literal['market', 'limit'] = 'limit'
+    limit_price: float = Field(None, gt=0)
+
+
+class ExerciseRequest(BaseModel):
+    """Request for exercising an options position"""
+    symbol_or_contract_id: str = Field(..., description="OCC symbol or Alpaca contract UUID")

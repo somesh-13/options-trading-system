@@ -1,7 +1,7 @@
 """Pydantic models for API request/response validation"""
 
 from pydantic import BaseModel, Field
-from typing import Literal, Dict, List
+from typing import Literal, Dict, List, Optional, Any
 
 
 class OptionParams(BaseModel):
@@ -249,6 +249,8 @@ class OrderRequest(BaseModel):
     order_type: Literal['market', 'limit', 'stop', 'stop_limit'] = 'market'
     time_in_force: Literal['day', 'gtc', 'ioc'] = 'day'
     limit_price: float = Field(None, gt=0)
+    signal_source: str = Field("manual", description="Signal source: manual or auto_engine")
+    signal_data: Optional[Dict[str, Any]] = Field(None, description="Signal metadata")
 
 
 # === Options Trading Models ===
@@ -260,8 +262,69 @@ class OptionsOrderRequest(BaseModel):
     side: Literal['buy', 'sell'] = Field(...)
     order_type: Literal['market', 'limit'] = 'limit'
     limit_price: float = Field(None, gt=0)
+    signal_source: str = Field("manual", description="Signal source: manual or auto_engine")
+    signal_data: Optional[Dict[str, Any]] = Field(None, description="Signal metadata")
 
 
 class ExerciseRequest(BaseModel):
     """Request for exercising an options position"""
     symbol_or_contract_id: str = Field(..., description="OCC symbol or Alpaca contract UUID")
+
+
+# === Trade Journal Models ===
+
+class TradeRecord(BaseModel):
+    """Trade record from the journal"""
+    id: int
+    order_id: Optional[str] = None
+    timestamp: str
+    symbol: str
+    asset_class: str
+    side: str
+    qty: int
+    order_type: str
+    limit_price: Optional[float] = None
+    filled_price: Optional[float] = None
+    filled_qty: Optional[int] = None
+    status: str
+    signal_source: str
+    signal_data: Optional[Dict[str, Any]] = None
+    related_trade_id: Optional[int] = None
+    realized_pnl: Optional[float] = None
+    notes: Optional[str] = None
+    created_at: str
+    updated_at: str
+
+
+class PnLSummary(BaseModel):
+    """Aggregate P&L summary"""
+    total_trades: int
+    winning_trades: int
+    losing_trades: int
+    breakeven_trades: int
+    total_pnl: float
+    avg_win: float
+    avg_loss: float
+    best_trade: float
+    worst_trade: float
+    win_rate: float
+    profit_factor: Any  # Can be float or "inf"
+    gross_profit: float
+    gross_loss: float
+
+
+# === Engine Config Models ===
+
+class EngineConfigRequest(BaseModel):
+    """Request for updating engine configuration"""
+    enabled: Optional[bool] = None
+    dry_run: Optional[bool] = None
+    scan_interval_seconds: Optional[int] = Field(None, ge=30, le=3600)
+    tickers: Optional[List[str]] = None
+    iv_hv_sell_threshold: Optional[float] = Field(None, gt=0, le=5)
+    iv_hv_buy_threshold: Optional[float] = Field(None, gt=0, le=5)
+    min_ev_per_contract: Optional[float] = Field(None, ge=0)
+    max_contracts_per_trade: Optional[int] = Field(None, ge=1, le=100)
+    max_total_contracts: Optional[int] = Field(None, ge=1, le=500)
+    max_daily_trades: Optional[int] = Field(None, ge=1, le=100)
+    max_daily_loss: Optional[float] = Field(None, ge=0)

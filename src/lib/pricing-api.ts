@@ -448,3 +448,180 @@ export async function submitOptionsOrder(params: {
   }
   return response.json();
 }
+
+// === Trade Journal Types & API ===
+
+export interface TradeRecord {
+  id: number;
+  order_id: string | null;
+  timestamp: string;
+  symbol: string;
+  asset_class: string;
+  side: string;
+  qty: number;
+  order_type: string;
+  limit_price: number | null;
+  filled_price: number | null;
+  filled_qty: number | null;
+  status: string;
+  signal_source: string;
+  signal_data: Record<string, unknown> | null;
+  related_trade_id: number | null;
+  realized_pnl: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PnLSummary {
+  total_trades: number;
+  winning_trades: number;
+  losing_trades: number;
+  breakeven_trades: number;
+  total_pnl: number;
+  avg_win: number;
+  avg_loss: number;
+  best_trade: number;
+  worst_trade: number;
+  win_rate: number;
+  profit_factor: number | string;
+  gross_profit: number;
+  gross_loss: number;
+}
+
+export interface SignalStats {
+  signal_source: string;
+  total_trades: number;
+  winners: number;
+  losers: number;
+  total_pnl: number;
+  avg_pnl: number;
+  win_rate: number;
+}
+
+export interface EngineStatus {
+  state: string;
+  config: Record<string, unknown>;
+  stats: {
+    scans_completed: number;
+    trades_executed: number;
+    trades_skipped: number;
+    errors: number;
+    last_scan_time: string | null;
+    last_trade_time: string | null;
+    started_at: string | null;
+    stopped_at: string | null;
+  };
+}
+
+export interface EngineLogEntry {
+  id: number;
+  timestamp: string;
+  event_type: string;
+  ticker: string | null;
+  details: Record<string, unknown> | null;
+  trade_id: number | null;
+}
+
+export async function getTradeHistory(filters?: {
+  symbol?: string;
+  status?: string;
+  signal_source?: string;
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ trades: TradeRecord[]; count: number }> {
+  const params = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    });
+  }
+  const qs = params.toString() ? `?${params}` : '';
+  const response = await fetch(`${PRICING_API_URL}/api/journal/trades${qs}`);
+  if (!response.ok) throw new Error('Failed to fetch trade history');
+  return response.json();
+}
+
+export async function getPnLSummary(): Promise<PnLSummary> {
+  const response = await fetch(`${PRICING_API_URL}/api/journal/pnl`);
+  if (!response.ok) throw new Error('Failed to fetch P&L summary');
+  return response.json();
+}
+
+export async function getPnLBySignal(): Promise<{ signal_stats: SignalStats[] }> {
+  const response = await fetch(`${PRICING_API_URL}/api/journal/pnl/by-signal`);
+  if (!response.ok) throw new Error('Failed to fetch P&L by signal');
+  return response.json();
+}
+
+export async function syncOrderStatuses(): Promise<Record<string, unknown>> {
+  const response = await fetch(`${PRICING_API_URL}/api/journal/sync`, { method: 'POST' });
+  if (!response.ok) throw new Error('Sync failed');
+  return response.json();
+}
+
+export async function getActivityLog(filters?: {
+  event_type?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ logs: EngineLogEntry[]; count: number }> {
+  const params = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    });
+  }
+  const qs = params.toString() ? `?${params}` : '';
+  const response = await fetch(`${PRICING_API_URL}/api/journal/activity-log${qs}`);
+  if (!response.ok) throw new Error('Failed to fetch activity log');
+  return response.json();
+}
+
+// === Auto Engine API ===
+
+export async function startEngine(): Promise<Record<string, unknown>> {
+  const response = await fetch(`${PRICING_API_URL}/api/engine/start`, { method: 'POST' });
+  if (!response.ok) throw new Error('Engine start failed');
+  return response.json();
+}
+
+export async function stopEngine(): Promise<Record<string, unknown>> {
+  const response = await fetch(`${PRICING_API_URL}/api/engine/stop`, { method: 'POST' });
+  if (!response.ok) throw new Error('Engine stop failed');
+  return response.json();
+}
+
+export async function getEngineStatus(): Promise<EngineStatus> {
+  const response = await fetch(`${PRICING_API_URL}/api/engine/status`);
+  if (!response.ok) throw new Error('Engine status failed');
+  return response.json();
+}
+
+export async function updateEngineConfig(config: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const response = await fetch(`${PRICING_API_URL}/api/engine/config`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  if (!response.ok) throw new Error('Config update failed');
+  return response.json();
+}
+
+export async function getEngineLogs(filters?: {
+  event_type?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ logs: EngineLogEntry[]; count: number }> {
+  const params = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    });
+  }
+  const qs = params.toString() ? `?${params}` : '';
+  const response = await fetch(`${PRICING_API_URL}/api/engine/logs${qs}`);
+  if (!response.ok) throw new Error('Failed to fetch engine logs');
+  return response.json();
+}

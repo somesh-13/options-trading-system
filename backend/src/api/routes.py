@@ -43,7 +43,18 @@ from api.models import (
     OrderRequest,
     OptionsOrderRequest,
     ExerciseRequest,
+    EngineConfigRequest,
 )
+
+# Trade Journal
+from journal.database import (
+    init_db, get_trades, get_trade, get_pnl_summary,
+    get_trade_stats_by_signal, get_engine_logs,
+)
+from journal.sync import sync_order_statuses
+
+# Auto Engine
+from engine.executor import get_engine
 
 # Phase 2: NLP Pipeline
 from data.ir_scraper import aggregate_ir_data
@@ -84,6 +95,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def startup():
+    """Initialize trade journal database on startup."""
+    init_db()
 
 
 @app.get("/")
@@ -667,6 +684,8 @@ def submit_trading_order(req: OrderRequest):
             order_type=req.order_type,
             time_in_force=req.time_in_force,
             limit_price=req.limit_price,
+            signal_source=req.signal_source,
+            signal_data=req.signal_data,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Order submission failed: {str(e)}")
@@ -750,6 +769,8 @@ def submit_options_order(req: OptionsOrderRequest):
             side=req.side,
             order_type=req.order_type,
             limit_price=req.limit_price,
+            signal_source=req.signal_source,
+            signal_data=req.signal_data,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Options order failed: {str(e)}")
@@ -771,6 +792,140 @@ def close_options_position(symbol: str):
         return close_option_position(symbol)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Close position failed: {str(e)}")
+
+
+# =============================================
+# Trade Journal Endpoints
+# =============================================
+
+@app.get("/api/journal/trades")
+def get_journal_trades(
+    symbol: str = None,
+    status: str = None,
+    signal_source: str = None,
+    date_from: str = None,
+    date_to: str = None,
+    limit: int = 100,
+    offset: int = 0,
+):
+    """Get trade history with optional filters."""
+    try:
+        trades = get_trades(
+            symbol=symbol, status=status, signal_source=signal_source,
+            date_from=date_from, date_to=date_to, limit=limit, offset=offset,
+        )
+        return {"trades": trades, "count": len(trades)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Journal query failed: {str(e)}")
+
+
+@app.get("/api/journal/trades/{trade_id}")
+def get_journal_trade(trade_id: int):
+    """Get a single trade by ID."""
+    try:
+        trade = get_trade(trade_id)
+        if trade is None:
+            raise HTTPException(status_code=404, detail="Trade not found")
+        return trade
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Trade fetch failed: {str(e)}")
+
+
+@app.get("/api/journal/pnl")
+def get_journal_pnl():
+    """Get aggregate P&L summary."""
+    try:
+        return get_pnl_summary()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"P&L summary failed: {str(e)}")
+
+
+@app.get("/api/journal/pnl/by-signal")
+def get_journal_pnl_by_signal():
+    """Get P&L breakdown by signal source."""
+    try:
+        return {"signal_stats": get_trade_stats_by_signal()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Signal stats failed: {str(e)}")
+
+
+@app.post("/api/journal/sync")
+def trigger_journal_sync():
+    """Sync trade statuses from Alpaca."""
+    try:
+        return sync_order_statuses()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
+
+@app.get("/api/journal/activity-log")
+def get_journal_activity_log(event_type: str = None, limit: int = 100, offset: int = 0):
+    """Get engine/system activity log."""
+    try:
+        logs = get_engine_logs(event_type=event_type, limit=limit, offset=offset)
+        return {"logs": logs, "count": len(logs)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Activity log failed: {str(e)}")
+
+
+# =============================================
+# Auto Engine Endpoints
+# =============================================
+
+@app.post("/api/engine/start")
+async def start_engine():
+    """Start the mispricing engine."""
+    try:
+        engine = get_engine()
+        result = await engine.start()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Engine start failed: {str(e)}")
+
+
+@app.post("/api/engine/stop")
+async def stop_engine():
+    """Stop the mispricing engine."""
+    try:
+        engine = get_engine()
+        result = await engine.stop()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Engine stop failed: {str(e)}")
+
+
+@app.get("/api/engine/status")
+def get_engine_status():
+    """Get engine status, config, and stats."""
+    try:
+        engine = get_engine()
+        return engine.status()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Engine status failed: {str(e)}")
+
+
+@app.put("/api/engine/config")
+def update_engine_config(req: EngineConfigRequest):
+    """Update engine configuration at runtime."""
+    try:
+        engine = get_engine()
+        updates = req.model_dump(exclude_none=True)
+        config = engine.update_config(**updates)
+        return {"config": config}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Config update failed: {str(e)}")
+
+
+@app.get("/api/engine/logs")
+def get_engine_activity_logs(event_type: str = None, limit: int = 100, offset: int = 0):
+    """Get engine activity logs."""
+    try:
+        logs = get_engine_logs(event_type=event_type, limit=limit, offset=offset)
+        return {"logs": logs, "count": len(logs)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Engine logs failed: {str(e)}")
 
 
 if __name__ == "__main__":

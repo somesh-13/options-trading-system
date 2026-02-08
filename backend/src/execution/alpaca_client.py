@@ -84,6 +84,8 @@ def submit_order(
     order_type: str = "market",
     time_in_force: str = "day",
     limit_price: Optional[float] = None,
+    signal_source: str = "manual",
+    signal_data: Optional[dict] = None,
 ) -> dict:
     """Submit an order to Alpaca.
 
@@ -125,7 +127,24 @@ def submit_order(
     )
     if resp.status_code not in (200, 201):
         return {"error": f"Order failed: {resp.status_code}", "detail": resp.text}
-    return resp.json()
+
+    result = resp.json()
+    try:
+        from journal.database import log_trade
+        log_trade(
+            order_id=result.get("id", ""),
+            symbol=symbol,
+            side=side,
+            qty=qty,
+            order_type=order_type,
+            limit_price=limit_price,
+            asset_class="stock",
+            signal_source=signal_source,
+            signal_data=signal_data,
+        )
+    except Exception:
+        pass  # Never block trading on journal failures
+    return result
 
 
 def cancel_order(order_id: str) -> dict:
@@ -255,6 +274,8 @@ def submit_option_order(
     side: str,
     order_type: str = "limit",
     limit_price: Optional[float] = None,
+    signal_source: str = "manual",
+    signal_data: Optional[dict] = None,
 ) -> dict:
     """Submit an options order to Alpaca.
 
@@ -291,7 +312,24 @@ def submit_option_order(
     )
     if resp.status_code not in (200, 201):
         return {"error": f"Options order failed: {resp.status_code}", "detail": resp.text}
-    return resp.json()
+
+    result = resp.json()
+    try:
+        from journal.database import log_trade
+        log_trade(
+            order_id=result.get("id", ""),
+            symbol=symbol,
+            side=side,
+            qty=qty,
+            order_type=order_type,
+            limit_price=limit_price,
+            asset_class="option",
+            signal_source=signal_source,
+            signal_data=signal_data,
+        )
+    except Exception:
+        pass  # Never block trading on journal failures
+    return result
 
 
 def exercise_option(symbol_or_contract_id: str) -> dict:

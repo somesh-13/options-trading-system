@@ -1,12 +1,13 @@
-# Trading Dashboard
+# VegaEdge
 
-A Next.js dashboard for monitoring paper trading performance via Alpaca API.
+A Next.js dashboard for volatility trading and monitoring paper trading performance via Alpaca API.
 
 ## Features
 
 - 📊 Real-time portfolio stats (value, equity, cash, buying power)
 - 📈 Performance chart with time-period filters
 - 📋 Live trades table with filtering (All/Filled/Open)
+- 🎯 Volatility arbitrage strategy tracking (IV/HV analysis)
 - 🎨 Robinhood-inspired dark theme
 - ⚡ Built with Next.js 14, TypeScript, and Tailwind CSS
 

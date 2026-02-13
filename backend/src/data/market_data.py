@@ -151,3 +151,96 @@ def get_tca_data(ticker: str) -> Dict:
         'atm_strike': float(atm_call['strike']),
         'expiration': str(atm_call['expiration'])
     }
+
+
+def detect_mispricing_alpaca(ticker: str) -> Dict:
+    """
+    Detect IV vs HV mispricing using Alpaca's real-time options data.
+    
+    More accurate than Yahoo Finance version - uses live greeks and IV.
+    """
+    from execution.alpaca_client import get_options_chain_snapshot
+    
+    # Get spot price from Yahoo (still free and reliable)
+    spot = get_ticker_price(ticker)
+    
+    # Get historical volatility
+    hv = get_historical_volatility(ticker, window=30)
+    
+    # Get Alpaca options chain snapshot
+    chain_data = get_options_chain_snapshot(ticker, option_type='call')
+    
+    if 'error' in chain_data:
+        raise ValueError(f"Alpaca options data unavailable: {chain_data.get('error')}")
+    
+    snapshots = chain_data.get('snapshots', {})
+    if not snapshots:
+        raise ValueError(f"No options data for {ticker}")
+    
+    # Find ATM call with IV data
+    best_atm = None
+    min_distance = float('inf')
+    
+    for symbol, data in snapshots.items():
+        # Extract strike from OCC symbol (e.g., CIFR260220C00017000 -> $17.00)
+        try:
+            strike_str = symbol[-8:]  # Last 8 chars = strike price in cents
+            strike = float(strike_str) / 1000.0
+        except:
+            continue
+            
+        if 'impliedVolatility' not in data or data['impliedVolatility'] is None:
+            continue
+            
+        distance = abs(strike - spot)
+        if distance < min_distance:
+            min_distance = distance
+            best_atm = {
+                'symbol': symbol,
+                'strike': strike,
+                'iv': data['impliedVolatility'],
+                'greeks': data.get('greeks', {}),
+                'quote': data.get('latestQuote', {}),
+            }
+    
+    if not best_atm:
+        raise ValueError(f"No ATM options with IV data found for {ticker}")
+    
+    iv = best_atm['iv']
+    iv_hv_ratio = iv / hv if hv > 0 else 0
+    
+    if iv_hv_ratio > 1.3:
+        signal = "SELL"
+    elif iv_hv_ratio < 0.8:
+        signal = "BUY"
+    else:
+        signal = "NEUTRAL"
+    
+    quote = best_atm['quote']
+    bid = quote.get('bp', 0)
+    ask = quote.get('ap', 0)
+    mid = (bid + ask) / 2 if bid > 0 and ask > 0 else 0
+    
+    # Extract expiration from symbol (e.g., CIFR260220C00017000 -> 2026-02-20)
+    symbol = best_atm['symbol']
+    exp_year = 2000 + int(symbol[4:6])
+    exp_month = int(symbol[6:8])
+    exp_day = int(symbol[8:10])
+    expiration = f"{exp_year}-{exp_month:02d}-{exp_day:02d}"
+    
+    return {
+        'ticker': ticker,
+        'spot_price': float(spot),
+        'historical_vol': float(hv),
+        'implied_vol_atm': float(iv),
+        'iv_hv_ratio': float(iv_hv_ratio),
+        'signal': signal,
+        'expiration': expiration,
+        'atm_strike': best_atm['strike'],
+        'atm_call_price': mid,
+        'bid': bid,
+        'ask': ask,
+        'greeks': best_atm['greeks'],
+        'occ_symbol': symbol,
+        'data_source': 'alpaca',
+    }

@@ -178,6 +178,22 @@ class BacktestRequest(BaseModel):
     stop_loss_pct: float = Field(0.05, gt=0, le=1.0)
 
 
+class MultiBacktestRequest(BaseModel):
+    """Request for running a multi-strategy comparative backtest"""
+    tickers: List[str] = Field(default=["CIFR", "MARA", "RIOT", "COIN", "SQ"])
+    start_date: str = Field(default="2022-01-01")
+    end_date: str = Field(default="2025-12-31")
+    initial_capital: float = Field(100000.0, gt=0)
+    strategies: List[str] = Field(default=["iv_hv_arbitrage", "ev_filtered", "mean_reversion"])
+    iv_hv_sell_threshold: float = Field(1.15, gt=0)
+    iv_hv_buy_threshold: float = Field(0.85, gt=0)
+    ev_threshold: float = Field(25.0, ge=0)
+    mean_reversion_z_entry: float = Field(1.0, gt=0)
+    mean_reversion_z_exit: float = Field(0.3, ge=0)
+    max_position_pct: float = Field(0.1, gt=0, le=1.0)
+    stop_loss_pct: float = Field(0.05, gt=0, le=1.0)
+
+
 # === Phase 5: Hedging Models ===
 
 class HedgeRequest(BaseModel):
@@ -314,6 +330,35 @@ class PnLSummary(BaseModel):
 
 
 # === Engine Config Models ===
+
+# === Portfolio Monitoring Models ===
+
+class PositionGreeksResponse(BaseModel):
+    """Response from positions-with-greeks endpoint"""
+    positions: List[Dict[str, Any]]
+    portfolio_greeks: Dict[str, Any]
+    position_count: int
+    timestamp: str
+
+
+class PortfolioSummaryResponse(BaseModel):
+    """Response from portfolio summary endpoint"""
+    account: Dict[str, Any]
+    portfolio_greeks: Dict[str, Any]
+    pnl_summary: Dict[str, Any]
+    position_count: int
+    timestamp: str
+
+
+class EquityHistoryResponse(BaseModel):
+    """Response from equity history endpoint"""
+    equity: List[Optional[float]]
+    timestamps: List[int]
+    profit_loss: List[Optional[float]]
+    profit_loss_pct: List[Optional[float]]
+    base_value: float
+    timeframe: str
+
 
 class EngineConfigRequest(BaseModel):
     """Request for updating engine configuration"""

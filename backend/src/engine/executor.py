@@ -211,20 +211,34 @@ class MispricingEngine:
         }
 
         # Try to find a real OCC symbol via Alpaca
+        # Use a wide strike range to capture real standardized strikes,
+        # then pick the contract closest to our theoretical strike.
         occ_symbol = None
         try:
+            strike_tolerance = 5.0 if strike and strike < 50 else 10.0
             contracts_result = await loop.run_in_executor(
                 _executor,
                 lambda: get_options_contracts(
                     underlying_symbol=ticker,
                     expiration_date=expiration,
                     option_type=option_type,
-                    strike_price_gte=strike - 0.01 if strike else None,
-                    strike_price_lte=strike + 0.01 if strike else None,
+                    strike_price_gte=strike - strike_tolerance if strike else None,
+                    strike_price_lte=strike + strike_tolerance if strike else None,
                 ),
             )
             contracts = contracts_result.get("option_contracts") or contracts_result.get("options_contracts") or []
-            if contracts:
+            if contracts and strike:
+                # Pick the contract with the closest strike to our theoretical value
+                best_contract = min(
+                    contracts,
+                    key=lambda c: abs(float(c.get("strike_price", 0)) - strike),
+                )
+                occ_symbol = best_contract.get("symbol")
+                # Update strike and limit_price to reflect the real contract
+                real_strike = float(best_contract.get("strike_price", strike))
+                signal_data["strike"] = real_strike
+                signal_data["theoretical_strike"] = strike
+            elif contracts:
                 occ_symbol = contracts[0].get("symbol")
         except Exception:
             pass

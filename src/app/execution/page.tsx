@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { parseOCC, formatOCCReadable } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
 
@@ -13,29 +14,6 @@ interface AccountInfo {
   portfolio_value?: string;
   message?: string;
   paper_trading?: boolean;
-}
-
-// Parse OCC symbol: CIFR260220C00016000 -> { underlying, expDate, type, strike }
-function parseOCC(occ: string): { underlying: string; expDate: string; type: string; strike: number } | null {
-  // OCC format: SYMBOL(1-6 chars) + YYMMDD(6) + C/P(1) + strike*1000(8)
-  const match = occ.match(/^([A-Z]{1,6})(\d{6})([CP])(\d{8})$/);
-  if (!match) return null;
-  const [, underlying, dateStr, type, strikeStr] = match;
-  const yy = dateStr.slice(0, 2);
-  const mm = dateStr.slice(2, 4);
-  const dd = dateStr.slice(4, 6);
-  return {
-    underlying,
-    expDate: `20${yy}-${mm}-${dd}`,
-    type: type === 'C' ? 'Call' : 'Put',
-    strike: parseInt(strikeStr) / 1000,
-  };
-}
-
-function formatOCCReadable(occ: string): string {
-  const parsed = parseOCC(occ);
-  if (!parsed) return occ;
-  return `${parsed.underlying} ${parsed.expDate} $${parsed.strike.toFixed(2)} ${parsed.type}`;
 }
 
 export default function ExecutionPage() {

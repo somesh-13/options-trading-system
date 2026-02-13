@@ -10,6 +10,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from pricing.black_scholes import black_scholes
 from pricing.greeks import calculate_greeks
+from datetime import datetime
 from pricing.implied_vol import implied_volatility
 from pricing.second_order_greeks import calculate_all_second_order_greeks
 from data.cifr_data import detect_mispricing_cifr, get_cifr_price, get_historical_volatility
@@ -44,6 +45,10 @@ from api.models import (
     OptionsOrderRequest,
     ExerciseRequest,
     EngineConfigRequest,
+    MultiBacktestRequest,
+    PositionGreeksResponse,
+    PortfolioSummaryResponse,
+    EquityHistoryResponse,
 )
 
 # Trade Journal
@@ -63,9 +68,13 @@ from data.bayesian_update import bayesian_update_for_ticker
 
 # Phase 3: Backtesting
 from backtest.engine import run_backtest, BacktestConfig
+from backtest.multi_engine import run_multi_backtest
 
 # Phase 5: Hedging & EV
-from strategy.hedging import compute_hedge_ratio, check_rebalance_triggers, optimal_rebalance_schedule
+from strategy.hedging import compute_hedge_ratio, check_rebalance_triggers, optimal_rebalance_schedule, aggregate_portfolio_greeks
+
+# Portfolio monitoring helpers
+from api.portfolio_helpers import _parse_occ_symbol, _get_spot_price, _estimate_sigma, _build_greeks_input
 from strategy.ev_calculator import calculate_trade_ev, scan_opportunities
 
 # Phase 6: Risk Management
@@ -530,6 +539,17 @@ def run_volatility_backtest(req: BacktestRequest):
         raise HTTPException(status_code=500, detail=f"Backtest failed: {str(e)}")
 
 
+@app.post("/api/backtest/compare")
+def run_comparative_backtest(req: MultiBacktestRequest):
+    """Run multi-strategy comparative backtest across multiple tickers."""
+    try:
+        config = req.model_dump()
+        result = run_multi_backtest(config)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Comparative backtest failed: {str(e)}")
+
+
 # =============================================
 # Phase 5: Hedging & EV Endpoints
 # =============================================
@@ -926,6 +946,209 @@ def get_engine_activity_logs(event_type: str = None, limit: int = 100, offset: i
         return {"logs": logs, "count": len(logs)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Engine logs failed: {str(e)}")
+
+
+# =============================================
+# Portfolio Monitoring Endpoints
+# =============================================
+
+@app.get("/api/portfolio/positions-greeks")
+def get_positions_with_greeks():
+    """Get all positions enriched with Greeks (individual + aggregated)."""
+    from datetime import datetime, date as date_type
+    try:
+        raw_positions = get_positions()
+        enriched = []
+        option_positions = []
+        stock_positions = []
+
+        for pos in raw_positions:
+            asset_class = pos.get("asset_class", "us_equity")
+            if asset_class == "us_option":
+                option_positions.append(pos)
+            else:
+                stock_positions.append(pos)
+
+        # Enrich stock positions (delta = qty, other greeks = 0)
+        for pos in stock_positions:
+            qty = int(float(pos.get("qty", 0)))
+            enriched.append({
+                **pos,
+                "parsed_symbol": pos.get("symbol", ""),
+                "position_type": "stock",
+                "greeks": {
+                    "delta": float(qty),
+                    "gamma": 0.0,
+                    "vega": 0.0,
+                    "theta": 0.0,
+                    "rho": 0.0,
+                },
+                "bs_price": None,
+                "bs_params": None,
+            })
+
+        # Enrich option positions with individual Greeks
+        greeks_input = _build_greeks_input(option_positions)
+        for pos, gi in zip(option_positions, greeks_input):
+            try:
+                indiv_greeks = calculate_greeks(
+                    S=gi["S"], K=gi["K"], T=gi["T"],
+                    r=gi["r"], sigma=gi["sigma"],
+                    option_type=gi["option_type"],
+                )
+                bs_price = black_scholes(
+                    S=gi["S"], K=gi["K"], T=gi["T"],
+                    r=gi["r"], sigma=gi["sigma"],
+                    option_type=gi["option_type"],
+                )
+                qty = gi["qty"]
+                multiplier = qty * 100
+                scaled_greeks = {k: round(float(v) * multiplier, 4) for k, v in indiv_greeks.items()}
+            except Exception:
+                scaled_greeks = {"delta": 0, "gamma": 0, "vega": 0, "theta": 0, "rho": 0}
+                bs_price = 0
+                gi = {}
+
+            parsed = _parse_occ_symbol(pos.get("symbol", ""))
+            readable = ""
+            if parsed:
+                readable = f"{parsed['underlying']} {parsed['expiration']} ${parsed['strike']:.2f} {parsed['type'].title()}"
+
+            enriched.append({
+                **pos,
+                "parsed_symbol": readable,
+                "position_type": "option",
+                "greeks": scaled_greeks,
+                "bs_price": round(float(bs_price), 4) if bs_price else None,
+                "bs_params": gi if gi else None,
+            })
+
+        # Aggregate portfolio Greeks
+        portfolio_greeks = {"total_delta": 0, "total_gamma": 0, "total_vega": 0, "total_theta": 0, "total_rho": 0}
+        # Add stock deltas
+        for pos in enriched:
+            portfolio_greeks["total_delta"] += pos["greeks"].get("delta", 0)
+            portfolio_greeks["total_gamma"] += pos["greeks"].get("gamma", 0)
+            portfolio_greeks["total_vega"] += pos["greeks"].get("vega", 0)
+            portfolio_greeks["total_theta"] += pos["greeks"].get("theta", 0)
+            portfolio_greeks["total_rho"] += pos["greeks"].get("rho", 0)
+
+        portfolio_greeks = {k: round(v, 4) for k, v in portfolio_greeks.items()}
+
+        return {
+            "positions": enriched,
+            "portfolio_greeks": portfolio_greeks,
+            "position_count": len(enriched),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Positions-Greeks fetch failed: {str(e)}")
+
+
+@app.get("/api/portfolio/summary")
+def get_portfolio_summary():
+    """Get combined portfolio summary: account, Greeks, P&L."""
+    from datetime import datetime
+    try:
+        account = get_account()
+        positions = get_positions()
+
+        # Build greeks input from option positions
+        option_positions = [p for p in positions if p.get("asset_class") == "us_option"]
+        greeks_input = _build_greeks_input(option_positions)
+
+        # Aggregate Greeks (options)
+        if greeks_input:
+            agg = aggregate_portfolio_greeks(greeks_input)
+        else:
+            agg = {"total_delta": 0, "total_gamma": 0, "total_vega": 0, "total_theta": 0, "total_rho": 0}
+
+        # Add stock deltas
+        stock_delta = sum(
+            int(float(p.get("qty", 0)))
+            for p in positions if p.get("asset_class") != "us_option"
+        )
+        if isinstance(agg.get("total_delta"), (int, float)):
+            agg["total_delta"] = round(agg["total_delta"] + stock_delta, 4)
+
+        # P&L summary from journal
+        try:
+            pnl = get_pnl_summary()
+        except Exception:
+            pnl = {}
+
+        return {
+            "account": account,
+            "portfolio_greeks": agg,
+            "pnl_summary": pnl,
+            "position_count": len(positions),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Portfolio summary failed: {str(e)}")
+
+
+@app.get("/api/portfolio/equity-history")
+def get_portfolio_equity_history(period: str = "1M", timeframe: str = "1D"):
+    """Get portfolio equity history for charting."""
+    try:
+        return get_portfolio_history(period, timeframe)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Equity history failed: {str(e)}")
+
+
+@app.get("/api/portfolio/market-status")
+def get_market_status():
+    """Get current US market status based on ET time."""
+    import pytz
+    from datetime import datetime, time as dt_time, timedelta
+
+    et = pytz.timezone("US/Eastern")
+    now = datetime.now(et)
+    weekday = now.weekday()  # 0=Mon, 6=Sun
+
+    market_open = dt_time(9, 30)
+    market_close = dt_time(16, 0)
+    pre_market_open = dt_time(4, 0)
+    after_hours_close = dt_time(20, 0)
+
+    current_time = now.time()
+
+    if weekday >= 5:
+        status = "closed"
+    elif market_open <= current_time < market_close:
+        status = "open"
+    elif pre_market_open <= current_time < market_open or market_close <= current_time < after_hours_close:
+        status = "extended"
+    else:
+        status = "closed"
+
+    # Calculate next open/close
+    if status == "open":
+        next_close = now.replace(hour=16, minute=0, second=0, microsecond=0).isoformat()
+        next_open = None
+    else:
+        next_close = None
+        # Next market open: find next weekday at 9:30 ET
+        days_ahead = 0
+        candidate = now
+        if weekday >= 5:
+            days_ahead = 7 - weekday  # Monday
+        elif current_time >= market_close:
+            days_ahead = 1
+            if weekday == 4:
+                days_ahead = 3  # Friday after close -> Monday
+        candidate = (now + timedelta(days=days_ahead)).replace(
+            hour=9, minute=30, second=0, microsecond=0
+        )
+        next_open = candidate.isoformat()
+
+    return {
+        "status": status,
+        "current_time_et": now.strftime("%H:%M:%S ET"),
+        "next_open": next_open,
+        "next_close": next_close,
+    }
 
 
 if __name__ == "__main__":

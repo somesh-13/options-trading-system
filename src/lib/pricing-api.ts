@@ -625,3 +625,147 @@ export async function getEngineLogs(filters?: {
   if (!response.ok) throw new Error('Failed to fetch engine logs');
   return response.json();
 }
+
+// === Portfolio Monitoring Types & API ===
+
+export interface PositionWithGreeks {
+  symbol: string;
+  qty: string;
+  market_value: string;
+  unrealized_pl: string;
+  unrealized_plpc: string;
+  current_price: string;
+  avg_entry_price: string;
+  asset_class: string;
+  parsed_symbol: string;
+  position_type: 'stock' | 'option';
+  greeks: {
+    delta: number;
+    gamma: number;
+    vega: number;
+    theta: number;
+    rho: number;
+  };
+  bs_price: number | null;
+  bs_params: Record<string, unknown> | null;
+}
+
+export interface PortfolioGreeks {
+  total_delta: number;
+  total_gamma: number;
+  total_vega: number;
+  total_theta: number;
+  total_rho: number;
+}
+
+export interface PositionsGreeksResponse {
+  positions: PositionWithGreeks[];
+  portfolio_greeks: PortfolioGreeks;
+  position_count: number;
+  timestamp: string;
+}
+
+export interface PortfolioSummaryResponse {
+  account: Record<string, string>;
+  portfolio_greeks: PortfolioGreeks;
+  pnl_summary: PnLSummary | Record<string, never>;
+  position_count: number;
+  timestamp: string;
+}
+
+export interface EquityHistoryResponse {
+  equity: (number | null)[];
+  timestamp: number[];
+  profit_loss: (number | null)[];
+  profit_loss_pct: (number | null)[];
+  base_value: number;
+  timeframe: string;
+}
+
+export async function getPositionsWithGreeks(): Promise<PositionsGreeksResponse> {
+  const response = await fetch(`${PRICING_API_URL}/api/portfolio/positions-greeks`);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Positions-Greeks fetch failed');
+  }
+  return response.json();
+}
+
+export async function getPortfolioSummary(): Promise<PortfolioSummaryResponse> {
+  const response = await fetch(`${PRICING_API_URL}/api/portfolio/summary`);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Portfolio summary failed');
+  }
+  return response.json();
+}
+
+export async function getEquityHistory(period: string = '1M', timeframe: string = '1D'): Promise<EquityHistoryResponse> {
+  const response = await fetch(`${PRICING_API_URL}/api/portfolio/equity-history?period=${period}&timeframe=${timeframe}`);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Equity history failed');
+  }
+  return response.json();
+}
+
+// === Market Status ===
+
+export interface MarketStatus {
+  status: 'open' | 'extended' | 'closed';
+  current_time_et: string;
+  next_open: string | null;
+  next_close: string | null;
+}
+
+export async function getMarketStatus(): Promise<MarketStatus> {
+  const response = await fetch(`${PRICING_API_URL}/api/portfolio/market-status`);
+  if (!response.ok) throw new Error('Market status fetch failed');
+  return response.json();
+}
+
+// === Multi-Strategy Backtesting ===
+
+export interface ComparativeBacktestResult {
+  config: Record<string, unknown>;
+  comparison: Array<{
+    strategy: string;
+    total_return_pct: number;
+    sharpe_ratio: number;
+    max_drawdown_pct: number;
+    win_rate: number;
+    profit_factor: number;
+    total_trades: number;
+    avg_pnl: number;
+    final_equity: number;
+  }>;
+  strategies: Record<string, {
+    strategy: string;
+    metrics: Record<string, number>;
+    trades: Array<Record<string, unknown>>;
+    equity_curve: Array<{ date: string; equity: number }>;
+    monthly_returns: Array<{ month: string; return_pct: number }>;
+    per_ticker: Record<string, { trades: number; final_capital: number }>;
+  }>;
+}
+
+export async function runComparativeBacktest(params: {
+  tickers?: string[];
+  start_date?: string;
+  end_date?: string;
+  initial_capital?: number;
+  strategies?: string[];
+  iv_hv_sell_threshold?: number;
+  iv_hv_buy_threshold?: number;
+  ev_threshold?: number;
+  mean_reversion_z_entry?: number;
+  mean_reversion_z_exit?: number;
+}): Promise<ComparativeBacktestResult> {
+  const response = await fetch(`${PRICING_API_URL}/api/backtest/compare`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!response.ok) throw new Error('Comparative backtest failed');
+  return response.json();
+}

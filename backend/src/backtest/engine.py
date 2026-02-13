@@ -20,6 +20,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from pricing.black_scholes import black_scholes
 from pricing.greeks import calculate_greeks
+from backtest.price_analysis import calculate_price_metrics, analyze_price_sensitivity
 
 
 @dataclass
@@ -124,6 +125,9 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
 
         # Check exit conditions for open position
         if position is not None:
+            # Track price history for this trade
+            position.setdefault("price_history", []).append(spot)
+            
             days_held = i - position["entry_idx"]
             price_change_pct = (spot - position["entry_spot"]) / position["entry_spot"]
 
@@ -162,6 +166,29 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
                 pnl = round(pnl * position["contracts"] * 100, 2)
                 capital += pnl
 
+                # Calculate price movement metrics
+                price_metrics = calculate_price_metrics(
+                    entry_spot=position["entry_spot"],
+                    exit_spot=spot,
+                    entry_iv=position["iv"],
+                    exit_iv=current_iv,
+                    price_history=position.get("price_history", [position["entry_spot"], spot]),
+                    position_direction=position["direction"],
+                    avg_delta=0.5,  # Approximate ATM delta
+                    avg_vega=0.02,  # Approximate ATM vega
+                    total_pnl=pnl,
+                    contracts=position["contracts"],
+                )
+
+                # Option premium per share: for SELL we receive at entry, pay at exit; for BUY the opposite
+                exit_ratio = ratio
+                if position["direction"] == "SELL_CALL":
+                    option_premium_at_entry = position["premium"]
+                    option_premium_at_exit = position["premium"] * (exit_ratio / position["iv_hv_ratio"])
+                else:
+                    option_premium_at_entry = position["premium"]
+                    option_premium_at_exit = position["premium"] * (exit_ratio / position["iv_hv_ratio"])
+
                 trades.append({
                     "entry_date": position["entry_date"],
                     "exit_date": date,
@@ -169,6 +196,8 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
                     "direction": position["direction"],
                     "entry_price": position["entry_spot"],
                     "exit_price": spot,
+                    "option_premium_at_entry": round(float(option_premium_at_entry), 4),
+                    "option_premium_at_exit": round(float(option_premium_at_exit), 4),
                     "pnl": pnl,
                     "pnl_pct": round(pnl / (config.initial_capital) * 100, 4),
                     "iv_at_entry": position["iv"],
@@ -176,15 +205,17 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
                     "iv_hv_ratio": position["iv_hv_ratio"],
                     "holding_days": days_held,
                     "exit_reason": exit_reason,
+                    # NEW: Price movement metrics
+                    **price_metrics,
                 })
                 position = None
 
         # Check entry conditions (only if no open position)
         if position is None:
             if ratio > config.iv_hv_sell_threshold:
-                # Sell overpriced vol
+                # Sell overpriced vol — 1 lot only (100 shares per contract)
                 premium = spot * current_iv * np.sqrt(30 / 365) * 0.4  # Approximate ATM premium
-                contracts = max(1, int(capital * config.max_position_pct / (premium * 100)))
+                contracts = 1
                 position = {
                     "entry_date": date,
                     "entry_idx": i,
@@ -195,12 +226,13 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
                     "iv": current_iv,
                     "hv": current_hv,
                     "iv_hv_ratio": ratio,
+                    "price_history": [spot],  # Track prices during trade
                 }
 
             elif ratio < config.iv_hv_buy_threshold:
-                # Buy underpriced vol
+                # Buy underpriced vol — 1 lot only (100 shares per contract)
                 premium = spot * current_iv * np.sqrt(30 / 365) * 0.4
-                contracts = max(1, int(capital * config.max_position_pct / (premium * 100)))
+                contracts = 1
                 position = {
                     "entry_date": date,
                     "entry_idx": i,
@@ -211,6 +243,7 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
                     "iv": current_iv,
                     "hv": current_hv,
                     "iv_hv_ratio": ratio,
+                    "price_history": [spot],  # Track prices during trade
                 }
 
         equity_curve.append({"date": date, "equity": round(capital, 2)})
@@ -218,6 +251,7 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
     # Close any remaining position at end
     if position is not None:
         final_spot = float(prices.iloc[-1])
+        final_iv = float(iv.iloc[-1]) if not np.isnan(iv.iloc[-1]) else position["iv"]
         final_ratio = float(iv.iloc[-1] / hv.iloc[-1]) if hv.iloc[-1] != 0 else 1.0
         if position["direction"] == "SELL_CALL":
             pnl = position["premium"] * (1.0 - final_ratio / position["iv_hv_ratio"])
@@ -225,6 +259,29 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
             pnl = position["premium"] * (final_ratio / position["iv_hv_ratio"] - 1.0)
         pnl = round(pnl * position["contracts"] * 100, 2)
         capital += pnl
+        
+        # Calculate price movement metrics
+        price_metrics = calculate_price_metrics(
+            entry_spot=position["entry_spot"],
+            exit_spot=final_spot,
+            entry_iv=position["iv"],
+            exit_iv=final_iv,
+            price_history=position.get("price_history", [position["entry_spot"], final_spot]),
+            position_direction=position["direction"],
+            avg_delta=0.5,
+            avg_vega=0.02,
+            total_pnl=pnl,
+            contracts=position["contracts"],
+        )
+        
+        exit_ratio = final_ratio
+        if position["direction"] == "SELL_CALL":
+            option_premium_at_entry = position["premium"]
+            option_premium_at_exit = position["premium"] * (exit_ratio / position["iv_hv_ratio"])
+        else:
+            option_premium_at_entry = position["premium"]
+            option_premium_at_exit = position["premium"] * (exit_ratio / position["iv_hv_ratio"])
+
         trades.append({
             "entry_date": position["entry_date"],
             "exit_date": str(prices.index[-1].date()),
@@ -232,6 +289,8 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
             "direction": position["direction"],
             "entry_price": position["entry_spot"],
             "exit_price": final_spot,
+            "option_premium_at_entry": round(float(option_premium_at_entry), 4),
+            "option_premium_at_exit": round(float(option_premium_at_exit), 4),
             "pnl": pnl,
             "pnl_pct": round(pnl / config.initial_capital * 100, 4),
             "iv_at_entry": position["iv"],
@@ -239,15 +298,20 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
             "iv_hv_ratio": position["iv_hv_ratio"],
             "holding_days": len(prices) - 1 - position["entry_idx"],
             "exit_reason": "backtest_end",
+            # NEW: Price movement metrics
+            **price_metrics,
         })
 
     metrics = compute_metrics(trades, equity_curve, config.initial_capital)
 
     # Compute monthly returns
     monthly = _compute_monthly_returns(equity_curve)
+    
+    # Compute price sensitivity analysis
+    price_analysis = analyze_price_sensitivity(trades, equity_curve)
 
-    return BacktestResult(
-        config={
+    result_dict = {
+        "config": {
             "ticker": config.ticker,
             "start_date": config.start_date,
             "end_date": config.end_date,
@@ -255,10 +319,20 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
             "iv_hv_sell_threshold": config.iv_hv_sell_threshold,
             "iv_hv_buy_threshold": config.iv_hv_buy_threshold,
         },
-        trades=trades,
-        metrics=metrics,
-        equity_curve=equity_curve,
-        monthly_returns=monthly,
+        "trades": trades,
+        "metrics": metrics,
+        "equity_curve": equity_curve,
+        "monthly_returns": monthly,
+        "price_analysis": price_analysis,
+    }
+
+    # BacktestResult doesn't have price_analysis field, so return a compatible dict
+    return BacktestResult(
+        config=result_dict["config"],
+        trades=result_dict["trades"],
+        metrics={**result_dict["metrics"], "price_analysis": result_dict["price_analysis"]},
+        equity_curve=result_dict["equity_curve"],
+        monthly_returns=result_dict["monthly_returns"],
     )
 
 

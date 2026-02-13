@@ -49,6 +49,9 @@ export default function Dashboard() {
           <Link href="/risk-mgmt" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FF006E]/30">
             Risk Management
           </Link>
+          <Link href="/portfolio" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#00C805]/30">
+            Portfolio Monitor
+          </Link>
           <Link href="/execution" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FF006E]/30">
             Live Trading
           </Link>

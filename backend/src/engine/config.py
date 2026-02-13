@@ -9,7 +9,7 @@ class EngineConfig:
     enabled: bool = True
     dry_run: bool = False  # Live execution by default
     scan_interval_seconds: int = 300  # 5 minutes
-    tickers: list = field(default_factory=lambda: ["CIFR"])
+    tickers: list = field(default_factory=lambda: ["CIFR", "HOOD"])
 
     # Mispricing thresholds
     iv_hv_sell_threshold: float = 1.3

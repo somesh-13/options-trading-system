@@ -8,7 +8,7 @@ from typing import Optional
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from data.market_data import detect_mispricing
+from data.market_data import detect_mispricing_alpaca
 from strategy.ev_calculator import scan_opportunities
 from execution.alpaca_client import get_positions
 from journal.database import get_trades, get_pnl_summary
@@ -40,8 +40,8 @@ def scan_ticker(ticker: str, config: EngineConfig) -> Optional[dict]:
 
     Returns the best opportunity dict or None if nothing qualifies.
     """
-    # Step 1: IV/HV mispricing detection
-    mispricing = detect_mispricing(ticker)
+    # Step 1: IV/HV mispricing detection (using Alpaca real-time data)
+    mispricing = detect_mispricing_alpaca(ticker)
     signal = mispricing.get("signal", "NEUTRAL")
     iv_hv_ratio = mispricing.get("iv_hv_ratio", 1.0)
 
@@ -59,8 +59,17 @@ def scan_ticker(ticker: str, config: EngineConfig) -> Optional[dict]:
     if spot <= 0 or hv <= 0:
         return None
 
-    # Use ~30 days to expiry
-    T = 30 / 365
+    # Calculate T from actual expiration date returned by mispricing detection
+    expiration = mispricing.get("expiration", "")
+    if expiration:
+        try:
+            exp_date = datetime.strptime(expiration, "%Y-%m-%d").date()
+            dte = max((exp_date - datetime.now(ET).date()).days, 1)
+            T = dte / 365
+        except (ValueError, TypeError):
+            T = 30 / 365
+    else:
+        T = 30 / 365
     r = 0.05  # Assume 5% risk-free rate
 
     opportunities = scan_opportunities(

@@ -143,6 +143,39 @@ def should_sell_call(position, iv_hv_ratio, iv_percentile, has_shares=True):
         return False, "No IV spike detected"
     
     return True, f"Top + IV spike (IV/HV={iv_hv_ratio:.2f})"
+
+def should_buy_leaps(iv_hv_ratio, iv_percentile, position=None):
+    """
+    Determine if we should BUY long-dated calls (LEAPs)
+    
+    Criteria:
+    - IV extremely cheap (IV/HV < 0.8)
+    - IV in bottom 20% historically (IV percentile < 20)
+    - Bonus: Price at Keltner bottom (technical support)
+    
+    Returns: bool, reason, suggested_discount (%)
+    """
+    if iv_hv_ratio >= 0.8:
+        return False, "IV not cheap enough (need <0.8)", None
+    
+    if iv_percentile >= 20:
+        return False, "IV not in bottom 20%", None
+    
+    # Determine discount for limit orders based on how cheap IV is
+    if iv_hv_ratio < 0.6:
+        discount = 0.20  # 20% below ask if IV super cheap
+    elif iv_hv_ratio < 0.7:
+        discount = 0.15  # 15% below ask
+    else:
+        discount = 0.10  # 10% below ask
+    
+    reason = f"IV extremely cheap (IV/HV={iv_hv_ratio:.2f}, {iv_percentile}th percentile)"
+    
+    if position == 'BOTTOM':
+        reason += " + Price at Keltner support"
+        discount += 0.05  # Extra 5% discount if at support
+    
+    return True, reason, discount
 ```
 
 ---
@@ -166,6 +199,7 @@ for symbol in ['HOOD', 'CIFR', 'WULF', 'PYPL', 'GRAB']:
     # 3. Check for actionable signals
     sell_put, put_reason = should_sell_put(position, iv_hv_ratio, iv_percentile)
     sell_call, call_reason = should_sell_call(position, iv_hv_ratio, iv_percentile)
+    buy_leap, leap_reason, discount = should_buy_leaps(iv_hv_ratio, iv_percentile, position)
     
     # 4. Add to alerts
     if sell_put:
@@ -184,6 +218,19 @@ for symbol in ['HOOD', 'CIFR', 'WULF', 'PYPL', 'GRAB']:
             'reason': call_reason,
             'keltner_upper': keltner['upper'],
             'current_price': keltner['current_price']
+        })
+    
+    if buy_leap:
+        # Get LEAP pricing for 1.5-2 year expirations
+        leap_data = get_leap_pricing(symbol, years_out=[1.5, 2.0])
+        alerts.append({
+            'type': 'BUY_LEAP_SIGNAL',
+            'symbol': symbol,
+            'reason': leap_reason,
+            'iv_hv_ratio': iv_hv_ratio,
+            'discount_pct': discount * 100,
+            'leap_options': leap_data,
+            'keltner_position': position
         })
 ```
 
@@ -297,6 +344,9 @@ Suggested strikes: $23, $24, $25 (weekly or monthly)
 - [ ] Implement position detection
 - [ ] Implement `should_sell_put()` logic
 - [ ] Implement `should_sell_call()` logic
+- [ ] Implement `should_buy_leaps()` logic (IV < 0.8 trigger)
+- [ ] Add LEAP pricing fetcher (1.5-2 year expirations)
+- [ ] Calculate limit order prices (discount logic)
 - [ ] Unit tests for edge cases
 
 ### Phase 3: VegaEdge Integration (Week 2)
@@ -324,12 +374,21 @@ Suggested strikes: $23, $24, $25 (weekly or monthly)
 ### Signals per month (estimate):
 - **5 stocks monitored**
 - **Weekly timeframe** = ~4 candles/month
-- **Estimated:** 2-4 signals/month across all stocks
+- **Estimated signals:**
+  - 2-4 premium selling signals/month (puts/calls at bands)
+  - 1-3 LEAP buying signals/month (when IV < 0.8)
+  - Total: 3-7 actionable setups/month
 
 ### Signal quality:
 - **High conviction:** Both technical + volatility confirmation
 - **Reduced noise:** Weekly TF filters out daily chop
 - **Actionable:** Clear entry/exit levels (Keltner bands)
+- **LEAP timing:** Only triggers during extreme IV cheapness (rare but high-value)
+
+### Signal types breakdown:
+1. **Sell CSP:** Bottom of channel + IV spike (premium collection)
+2. **Sell Covered Call:** Top of channel + IV spike (premium collection)
+3. **Buy LEAP:** IV extremely cheap (long-term positioning with limit orders)
 
 ---
 
@@ -354,6 +413,119 @@ Suggested strikes: $23, $24, $25 (weekly or monthly)
 - Use Alpaca (reliable source)
 - Validate data before calculations
 - Log errors for debugging
+
+---
+
+### Sell Covered Call (at channel TOP)
+**When:**
+- Price touches/bounces off upper Keltner band
+- IV spike present (IV/HV > 1.3)
+- **Must own shares** (covered requirement)
+
+**Why it works:**
+- Upper band = technical resistance
+- IV spike = calls are overpriced
+- If called away, selling at resistance (good exit)
+- If expires worthless, keep premium + shares
+
+**Risk:**
+- Price breaks through resistance (bull run)
+- Mitigation: Only sell slightly OTM calls, or accept assignment
+
+---
+
+### Buy LEAPs (when IV is CHEAPEST)
+**When:**
+- IV/HV ratio < 0.8 (options severely underpriced)
+- IV percentile < 20th (IV in bottom 20% historically)
+- Optional: Price near Keltner bottom (double confirmation)
+
+**Why it works:**
+- Buying options when they're historically cheap
+- Long time horizon (1.5-2 years) absorbs volatility
+- Profit from IV expansion + price movement
+
+**Execution Strategy:**
+1. **Monitor cheapest IV moments:**
+   - Track IV/HV daily for all 5 stocks
+   - Alert when IV/HV < 0.8 (like Feb 13: HOOD, CIFR, PYPL all < 0.8)
+
+2. **Place "abnormally cheap" limit orders:**
+   - **1.5-2 year expiration** (Jan 2026 or Jan 2027 LEAPs)
+   - **Strike selection:** ATM or slightly OTM for best leverage
+   - **Limit price:** Set BELOW current ask (e.g., -10% to -20%)
+   - **Good-til-canceled (GTC):** Leave orders open for fills during dips
+
+3. **Example:**
+   - HOOD at $73, Jan 2028 $75 calls trading at $12
+   - Place limit order at $10.80 (10% below ask)
+   - If filled during a panic sell-off, you got an even better deal
+
+**Benefits of Limit Orders:**
+- **Patient capital:** Only fill at your price
+- **Catch flash crashes:** Filled during brief liquidity events
+- **No FOMO:** Systematic, unemotional entries
+- **Better cost basis:** -10-20% cheaper than market price
+
+**Risk Management:**
+- **Position sizing:** Only allocate 10-20% of capital to LEAPs
+- **Diversification:** Spread across multiple stocks
+- **Time decay:** LEAPs lose value slowly, but still decay
+- **Mitigation:** 1.5-2 years gives plenty of time for thesis to play out
+
+**Alert Logic:**
+```python
+def should_buy_leaps(iv_hv_ratio, iv_percentile, keltner_position=None):
+    """
+    Determine if we should BUY long-dated calls (LEAPs)
+    
+    Criteria:
+    - IV extremely cheap (IV/HV < 0.8)
+    - IV in bottom 20% historically
+    - Bonus: Price at Keltner bottom (technical support)
+    
+    Returns: bool, reason, limit_order_price
+    """
+    if iv_hv_ratio >= 0.8:
+        return False, "IV not cheap enough", None
+    
+    if iv_percentile >= 20:
+        return False, "IV not in bottom 20%", None
+    
+    # Calculate limit order price (15% below current ask)
+    current_ask = get_leap_ask_price(symbol, expiration='2026-01-16', strike='ATM')
+    limit_price = current_ask * 0.85  # 15% discount
+    
+    reason = f"IV extremely cheap (IV/HV={iv_hv_ratio:.2f}, {iv_percentile}th percentile)"
+    
+    if keltner_position == 'BOTTOM':
+        reason += " + Price at technical support (Keltner bottom)"
+    
+    return True, reason, limit_price
+```
+
+**WhatsApp Alert Example:**
+```
+🚨 LEAP BUY SIGNAL - HOOD
+
+Current Price: $73.44
+IV/HV: 0.65 (extremely cheap!)
+IV Percentile: 12th (bottom 12% historically)
+Keltner Position: BOTTOM 🟢
+
+🎯 RECOMMENDED LEAP:
+Jan 2028 $75 Call (ATM)
+Current Ask: $12.00
+Suggested Limit: $10.20 (15% discount)
+
+📋 ACTION:
+Place GTC limit order at $10.20
+Expiration: Jan 21, 2028 (2 years)
+Profit if HOOD > $85.20 at expiration
+
+💡 Why: Options are cheap + price at support
+⏰ Time Value: 2 years to work out
+```
 
 ---
 
@@ -385,6 +557,9 @@ Suggested strikes: $23, $24, $25 (weekly or monthly)
 - **Weekly TF rationale:** Reduces noise, better for swing trading options (20-60 DTE)
 - **IV spike requirement:** Prevents selling premium when options are already cheap
 - **Covered call limitation:** Only suggests if user owns shares (can't determine programmatically without portfolio API)
+- **LEAP limit orders:** "Abnormally cheap" orders (10-25% below ask) placed GTC for 1.5-2 years out. Catch panic sells and flash crashes. Patient capital only fills at desired price.
+- **LEAP expiration targets:** Jan 2026 (1.5 years) or Jan 2027/2028 (2+ years) - maximize time value while keeping costs reasonable
+- **Discount tiers:** 10% discount (IV/HV 0.7-0.8), 15% (0.6-0.7), 20% (< 0.6), +5% if at Keltner bottom
 
 ---
 

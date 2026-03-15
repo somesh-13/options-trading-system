@@ -61,6 +61,15 @@ export default function Dashboard() {
           <Link href="/auto-engine" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FF006E]/30">
             Auto Engine
           </Link>
+          <Link href="/positions" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#00C805]/30">
+            Positions
+          </Link>
+          <Link href="/options-chain" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FFD700]/30">
+            Option Chain
+          </Link>
+          <Link href="/agent" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FFD700]/50">
+            VegaEdge Live Agent
+          </Link>
           <a
             href="http://localhost:8000/docs"
             target="_blank"

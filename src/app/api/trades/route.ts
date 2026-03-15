@@ -10,6 +10,10 @@ export async function GET(request: Request) {
       status: 'all',
       limit,
       nested: true,
+      until: undefined,
+      after: undefined,
+      direction: undefined,
+      symbols: undefined,
     });
     
     return NextResponse.json({ success: true, data: orders });

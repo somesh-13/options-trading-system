@@ -3,9 +3,11 @@ uvicorn==0.40.0
 numpy==2.4.2
 scipy==1.17.0
 pandas==3.0.0
-alpaca-trade-api==3.2.0
 yfinance==0.2.58
 pydantic==2.12.5
 pytest==9.0.2
 python-dotenv==1.2.1
 hmmlearn==0.3.3
+google-genai>=1.0.0
+matplotlib>=3.8.0
+websockets>=12.0

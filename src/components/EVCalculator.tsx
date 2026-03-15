@@ -29,7 +29,7 @@ export default function EVCalculator() {
   const [error, setError] = useState('');
   const [params, setParams] = useState({
     S: 150, K: 155, T: 0.0833, r: 0.05, sigma: 0.3,
-    option_type: 'call' as const, direction: 'sell' as const, contracts: 1,
+    option_type: 'call' as 'call' | 'put', direction: 'sell' as 'sell' | 'buy', contracts: 1,
   });
 
   const calculate = async () => {

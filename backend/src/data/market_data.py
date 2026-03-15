@@ -153,6 +153,46 @@ def get_tca_data(ticker: str) -> Dict:
     }
 
 
+def get_price_history(ticker: str, period: str = "1M", interval: str = "1D") -> dict:
+    """
+    Get OHLCV price history for any ticker.
+
+    Args:
+        ticker: Stock symbol
+        period: 1D, 1W, 1M, 3M, 1Y, ALL
+        interval: Auto-mapped from period if not specified
+    """
+    period_map = {"1D": "1d", "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y", "ALL": "max"}
+    interval_map = {"1D": "5m", "1W": "30m", "1M": "1d", "3M": "1d", "1Y": "1wk", "ALL": "1wk"}
+
+    yf_period = period_map.get(period.upper(), "1mo")
+    yf_interval = interval_map.get(period.upper(), "1d")
+
+    stock = yf.Ticker(ticker)
+    data = stock.history(period=yf_period, interval=yf_interval)
+
+    if data.empty:
+        raise ValueError(f"No price history for {ticker}")
+
+    records = []
+    for idx, row in data.iterrows():
+        records.append({
+            "date": str(idx),
+            "open": round(float(row["Open"]), 4),
+            "high": round(float(row["High"]), 4),
+            "low": round(float(row["Low"]), 4),
+            "close": round(float(row["Close"]), 4),
+            "volume": int(row["Volume"]),
+        })
+
+    return {
+        "ticker": ticker,
+        "period": period.upper(),
+        "interval": yf_interval,
+        "data": records,
+    }
+
+
 def detect_mispricing_alpaca(ticker: str) -> Dict:
     """
     Detect IV vs HV mispricing using Alpaca's real-time options data.

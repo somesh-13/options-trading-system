@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import os
 import sys
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from pricing.implied_vol import implied_volatility_compare
 from pricing.vol_surface import generate_vol_surface
 from pricing.hedge_stability import forecast_delta_decay, forecast_vol_shock, rehedge_recommendation
 from pricing.pnl_attribution import greeks_pnl_attribution, stress_test_position, stress_test_portfolio
-from data.market_data import get_ticker_price, detect_mispricing, get_tca_data
+from data.market_data import get_ticker_price, detect_mispricing, get_tca_data, get_price_history
 from data.hmm_regime import detect_current_regime
 from stats.hv_confidence import hv_with_confidence
 from api.models import (
@@ -96,14 +97,19 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Add CORS middleware for Next.js frontend
+# Add CORS middleware — configurable via ALLOWED_ORIGINS env var (comma-separated)
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Next.js dev server
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# VegaEdge Live Agent WebSocket
+from api.ws_routes import router as ws_router
+app.include_router(ws_router)
 
 
 @app.on_event("startup")
@@ -391,6 +397,15 @@ def get_ticker_mispricing(ticker: str):
         return detect_mispricing(ticker.upper())
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Mispricing detection failed: {str(e)}")
+
+
+@app.get("/api/market/{ticker}/price-history")
+def get_price_history_endpoint(ticker: str, period: str = "1M"):
+    """Get OHLCV price history for any ticker."""
+    try:
+        return get_price_history(ticker.upper(), period=period)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Price history fetch failed: {str(e)}")
 
 
 @app.get("/api/market/{ticker}/regime")

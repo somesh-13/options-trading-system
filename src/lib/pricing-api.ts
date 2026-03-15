@@ -724,6 +724,33 @@ export async function getMarketStatus(): Promise<MarketStatus> {
   return response.json();
 }
 
+// === Price History ===
+
+export interface PriceHistoryPoint {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface PriceHistoryData {
+  ticker: string;
+  period: string;
+  interval: string;
+  data: PriceHistoryPoint[];
+}
+
+export async function getPriceHistory(ticker: string, period: string = '1M'): Promise<PriceHistoryData> {
+  const response = await fetch(`${PRICING_API_URL}/api/market/${ticker}/price-history?period=${period}`);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Price history fetch failed');
+  }
+  return response.json();
+}
+
 // === Multi-Strategy Backtesting ===
 
 export interface ComparativeBacktestResult {

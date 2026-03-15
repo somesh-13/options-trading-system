@@ -18,6 +18,7 @@ interface HedgeResult {
     total_gamma: number;
     total_vega: number;
     total_theta: number;
+    total_rho: number;
     per_position: Array<{
       strike: number; type: string; qty: number; price: number;
       greeks: Record<string, number>;

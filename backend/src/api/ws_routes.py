@@ -9,7 +9,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from google import genai
 from google.genai import types
 
-from vegaedge.gemini_session import execute_tool, get_live_config, MODEL
+from vegaedge.gemini_session import execute_tool, get_live_config, get_text_config, MODEL, TEXT_MODEL
 
 router = APIRouter()
 
@@ -126,6 +126,119 @@ async def ws_live(websocket: WebSocket):
                         t.result()
                     except Exception:
                         pass
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        try:
+            await websocket.send_json({"type": "error", "message": str(e)})
+        except Exception:
+            pass
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+@router.websocket("/ws/chat")
+async def ws_chat(websocket: WebSocket):
+    """VegaEdge Chat: text-mode Gemini with tool loop and streaming."""
+    await websocket.accept()
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        await websocket.send_json({"type": "error", "message": "Missing GEMINI_API_KEY"})
+        await websocket.close(code=1011)
+        return
+
+    client = genai.Client(api_key=api_key)
+    config = get_text_config()
+    history: list[types.Content] = []
+
+    try:
+        while True:
+            raw = await websocket.receive_text()
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+
+            if data.get("type") != "text" or not data.get("text"):
+                continue
+
+            user_text = data["text"]
+            history.append(types.Content(role="user", parts=[types.Part.from_text(text=user_text)]))
+
+            # Tool loop: keep calling generate_content until we get a text response
+            max_tool_rounds = 10
+            for _ in range(max_tool_rounds):
+                response = await client.aio.models.generate_content(
+                    model=TEXT_MODEL,
+                    contents=history,
+                    config=types.GenerateContentConfig(
+                        system_instruction=config["system_instruction"],
+                        tools=config["tools"],
+                    ),
+                )
+
+                # Check for tool calls
+                has_tool_calls = False
+                if response.candidates and response.candidates[0].content:
+                    candidate_parts = response.candidates[0].content.parts or []
+                    function_calls = [p for p in candidate_parts if p.function_call]
+
+                    if function_calls:
+                        has_tool_calls = True
+                        # Append model's tool call message to history
+                        history.append(response.candidates[0].content)
+
+                        tool_response_parts = []
+                        for part in function_calls:
+                            fc = part.function_call
+                            name = fc.name
+                            args = dict(fc.args) if fc.args else {}
+                            try:
+                                result = execute_tool(name, args)
+                            except Exception as e:
+                                result = {"error": str(e)}
+
+                            # Send charts/signals to client as they occur
+                            if name == "get_keltner_chart" and isinstance(result, dict) and result.get("image_b64"):
+                                await websocket.send_json({
+                                    "type": "chart",
+                                    "data": result["image_b64"],
+                                    "ticker": result.get("ticker", ""),
+                                })
+                            if name in ("analyze_ticker", "scan_watchlist") and isinstance(result, dict):
+                                await websocket.send_json({"type": "signal", "data": result})
+
+                            tool_response_parts.append(
+                                types.Part.from_function_response(
+                                    name=name,
+                                    response={"result": result},
+                                )
+                            )
+
+                        history.append(types.Content(role="user", parts=tool_response_parts))
+                        continue  # Loop again to get model's text response
+
+                # No tool calls — extract text and stream to client
+                if not has_tool_calls:
+                    text = response.text or ""
+                    if text:
+                        # Send the full response as a single streamed message
+                        # (Gemini generate_content doesn't support true SSE streaming in
+                        # the same way, so we send the complete text at once)
+                        history.append(types.Content(role="model", parts=[types.Part.from_text(text=text)]))
+                        await websocket.send_json({
+                            "type": "transcript",
+                            "role": "model",
+                            "text": text,
+                            "done": True,
+                        })
+                    break
+
+    except WebSocketDisconnect:
+        pass
     except asyncio.CancelledError:
         pass
     except Exception as e:

@@ -7,6 +7,7 @@ import os
 from vegaedge.tools import TOOL_DECLARATIONS, dispatch_tool
 
 MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025")
+TEXT_MODEL = "gemini-2.5-flash"
 # Fallback for older env names
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
@@ -26,6 +27,16 @@ def get_live_config():
     """Build config for client.aio.live.connect()."""
     return {
         "response_modalities": ["AUDIO"],
+        "system_instruction": SYSTEM_INSTRUCTION,
+        "tools": [{"function_declarations": TOOL_DECLARATIONS}],
+        "input_audio_transcription": {},
+        "output_audio_transcription": {},
+    }
+
+
+def get_text_config():
+    """Build config for text-mode Gemini (generate_content)."""
+    return {
         "system_instruction": SYSTEM_INSTRUCTION,
         "tools": [{"function_declarations": TOOL_DECLARATIONS}],
     }

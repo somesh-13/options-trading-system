@@ -4,6 +4,43 @@ import { useState } from 'react';
 import MispricingDetector from '@/components/MispricingDetector';
 import Link from 'next/link';
 
+function NavGroup({ title, icon, defaultOpen = false, children }: {
+  title: string;
+  icon: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 w-full text-left px-4 py-2.5 bg-[#252525] hover:bg-[#2D2D2D] rounded-lg text-sm font-semibold text-gray-300 transition-colors"
+      >
+        <span className="text-base">{icon}</span>
+        <span className="flex-1">{title}</span>
+        <svg
+          className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div
+        className={`grid transition-all duration-200 ease-in-out ${open ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'}`}
+      >
+        <div className="overflow-hidden">
+          <div className="flex flex-wrap gap-2 pl-4">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const navLinkClass = "px-4 py-2 bg-[#2D2D2D] hover:bg-[#383838] rounded-md text-sm transition-colors";
+
 export default function Dashboard() {
   const [ticker, setTicker] = useState('CIFR');
   const [inputTicker, setInputTicker] = useState('CIFR');
@@ -23,61 +60,59 @@ export default function Dashboard() {
           <p className="text-gray-400">Quantitative Volatility Arbitrage System</p>
         </header>
 
-        {/* Navigation */}
-        <div className="flex flex-wrap gap-3 mb-8">
-          <Link href="/pricing" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors">
-            Pricing Calculator
-          </Link>
-          <Link href="/vol-surface" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors">
-            Vol Surface
-          </Link>
-          <Link href="/risk" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors">
-            Risk & P&L
-          </Link>
-          <Link href="/scanner" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors">
-            Scanner
-          </Link>
-          <Link href="/sentiment" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#00C805]/30">
-            NLP Sentiment
-          </Link>
-          <Link href="/backtest" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FFD700]/30">
-            Backtesting
-          </Link>
-          <Link href="/strategy" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FFD700]/30">
-            Strategy & Hedging
-          </Link>
-          <Link href="/risk-mgmt" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FF006E]/30">
-            Risk Management
-          </Link>
-          <Link href="/portfolio" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#00C805]/30">
-            Portfolio Monitor
-          </Link>
-          <Link href="/execution" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FF006E]/30">
-            Live Trading
-          </Link>
-          <Link href="/journal" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#00C805]/30">
-            Trade Journal
-          </Link>
-          <Link href="/auto-engine" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FF006E]/30">
-            Auto Engine
-          </Link>
-          <Link href="/positions" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#00C805]/30">
-            Positions
-          </Link>
-          <Link href="/options-chain" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FFD700]/30">
-            Option Chain
-          </Link>
-          <Link href="/agent" className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors border border-[#FFD700]/50">
-            VegaEdge Live Agent
-          </Link>
-          <a
-            href="http://localhost:8000/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-3 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg transition-colors"
+        {/* Primary Actions */}
+        <div className="flex gap-4 mb-6">
+          <Link
+            href="/options-chain"
+            className="px-6 py-3 bg-[#2D2D2D] hover:bg-[#383838] rounded-lg border border-[#FFD700]/40 font-semibold transition-colors flex items-center gap-2"
           >
-            API Docs
-          </a>
+            <span>⛓</span> Option Chain
+          </Link>
+          <Link
+            href="/agent"
+            className="px-6 py-3 bg-[#2D2D2D] hover:bg-[#383838] rounded-lg border border-[#00C805]/50 font-semibold transition-colors flex items-center gap-2"
+          >
+            <span>🤖</span> VegaEdge Live Agent
+          </Link>
+        </div>
+
+        {/* Collapsible Navigation Groups */}
+        <div className="mb-8 space-y-2">
+          <NavGroup title="Analytics" icon="📊" defaultOpen>
+            <Link href="/pricing" className={navLinkClass}>Pricing Calculator</Link>
+            <Link href="/vol-surface" className={navLinkClass}>Vol Surface</Link>
+            <Link href="/scanner" className={navLinkClass}>Scanner</Link>
+          </NavGroup>
+
+          <NavGroup title="Strategy & Backtesting" icon="🎯">
+            <Link href="/strategy" className={navLinkClass}>Strategy & Hedging</Link>
+            <Link href="/backtest" className={navLinkClass}>Backtesting</Link>
+            <Link href="/sentiment" className={navLinkClass}>NLP Sentiment</Link>
+          </NavGroup>
+
+          <NavGroup title="Risk" icon="🛡️">
+            <Link href="/risk" className={navLinkClass}>Risk & P&L</Link>
+            <Link href="/risk-mgmt" className={navLinkClass}>Risk Management</Link>
+          </NavGroup>
+
+          <NavGroup title="Trading & Execution" icon="⚡">
+            <Link href="/execution" className={navLinkClass}>Live Trading</Link>
+            <Link href="/auto-engine" className={navLinkClass}>Auto Engine</Link>
+            <Link href="/positions" className={navLinkClass}>Positions</Link>
+            <Link href="/portfolio" className={navLinkClass}>Portfolio Monitor</Link>
+          </NavGroup>
+
+          <NavGroup title="Tools" icon="🔧">
+            <Link href="/journal" className={navLinkClass}>Trade Journal</Link>
+            <a
+              href="http://localhost:8000/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={navLinkClass}
+            >
+              API Docs ↗
+            </a>
+          </NavGroup>
         </div>
 
         {/* Ticker Selector */}
@@ -99,46 +134,6 @@ export default function Dashboard() {
 
         {/* Main Detector */}
         <MispricingDetector ticker={ticker} />
-
-        {/* System Overview */}
-        <div className="mt-8 bg-[#2D2D2D] rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">System Architecture</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#1E1E1E] rounded-lg p-4">
-              <h3 className="font-bold text-[#00C805] mb-2">Pricing Engine (Phase 1)</h3>
-              <ul className="text-sm text-gray-300 space-y-1">
-                <li>Black-Scholes pricing</li>
-                <li>8 Greeks (incl. Vanna/Charm/Volga)</li>
-                <li>IV solver (NR + Bisection)</li>
-                <li>HMM Regime Detection</li>
-                <li>Vol Surface Generation</li>
-                <li>Stress Testing & P&L Attribution</li>
-              </ul>
-            </div>
-            <div className="bg-[#1E1E1E] rounded-lg p-4">
-              <h3 className="font-bold text-[#FFD700] mb-2">Strategy (Phase 2-5)</h3>
-              <ul className="text-sm text-gray-300 space-y-1">
-                <li>NLP Sentiment Pipeline (Bayesian)</li>
-                <li>Expected Value Calculator</li>
-                <li>Dynamic Delta-Gamma Hedging</li>
-                <li>Regime-aware Backtesting</li>
-                <li>Transaction Cost Analysis</li>
-                <li>EV Opportunity Scanner</li>
-              </ul>
-            </div>
-            <div className="bg-[#1E1E1E] rounded-lg p-4">
-              <h3 className="font-bold text-[#FF006E] mb-2">Risk & Execution (Phase 6-7)</h3>
-              <ul className="text-sm text-gray-300 space-y-1">
-                <li>VaR (Historical/Parametric/MC)</li>
-                <li>Position Limits & Drawdown</li>
-                <li>Portfolio Greeks Aggregation</li>
-                <li>Alpaca Paper Trading</li>
-                <li>Order Execution Engine</li>
-                <li>P&L Tracking</li>
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   );

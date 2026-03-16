@@ -13,6 +13,15 @@ load_dotenv()
 ALPACA_API_KEY = os.getenv("ALPACA_API_KEY", "")
 ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY", "")
 _raw_url = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+
+# SAFETY: Only paper trading is allowed. Block live trading URLs.
+if "paper" not in _raw_url:
+    raise RuntimeError(
+        "SAFETY: VegaEdge only supports paper trading. "
+        "ALPACA_BASE_URL must contain 'paper' (e.g. https://paper-api.alpaca.markets). "
+        f"Got: {_raw_url}"
+    )
+
 # Strip trailing /v2 if present — we add it in each endpoint
 ALPACA_BASE_URL = _raw_url.rstrip("/").removesuffix("/v2")
 ALPACA_DATA_URL = "https://data.alpaca.markets"
@@ -206,7 +215,7 @@ def get_options_contracts(
 
     import requests
 
-    params: dict = {"underlying_symbols": underlying_symbol, "status": "active", "limit": 100}
+    params: dict = {"underlying_symbols": underlying_symbol, "status": "active", "limit": 1000}
     if expiration_date:
         params["expiration_date"] = expiration_date
     if expiration_date_gte:
@@ -220,15 +229,27 @@ def get_options_contracts(
     if option_type:
         params["type"] = option_type
 
-    resp = requests.get(
-        f"{ALPACA_BASE_URL}/v2/options/contracts",
-        headers=_get_headers(),
-        params=params,
-        timeout=10,
-    )
-    if resp.status_code != 200:
-        return {"error": f"Contracts fetch failed: {resp.status_code}", "detail": resp.text}
-    return resp.json()
+    all_contracts = []
+    page_token = None
+    for _ in range(10):
+        if page_token:
+            params["page_token"] = page_token
+        resp = requests.get(
+            f"{ALPACA_BASE_URL}/v2/options/contracts",
+            headers=_get_headers(),
+            params=params,
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            return {"error": f"Contracts fetch failed: {resp.status_code}", "detail": resp.text}
+        data = resp.json()
+        contracts = data.get("option_contracts") or data.get("contracts") or []
+        all_contracts.extend(contracts)
+        page_token = data.get("next_page_token")
+        if not page_token:
+            break
+
+    return {"option_contracts": all_contracts}
 
 
 def get_options_chain_snapshot(
@@ -247,7 +268,7 @@ def get_options_chain_snapshot(
 
     import requests
 
-    params: dict = {"feed": "indicative", "limit": 100}
+    params: dict = {"feed": "indicative", "limit": 250}
     if expiration_date:
         params["expiration_date"] = expiration_date
     if option_type:
@@ -257,15 +278,26 @@ def get_options_chain_snapshot(
     if strike_price_lte is not None:
         params["strike_price_lte"] = str(strike_price_lte)
 
-    resp = requests.get(
-        f"{ALPACA_DATA_URL}/v1beta1/options/snapshots/{underlying_symbol}",
-        headers=_get_headers(),
-        params=params,
-        timeout=15,
-    )
-    if resp.status_code != 200:
-        return {"error": f"Chain snapshot failed: {resp.status_code}", "detail": resp.text}
-    return resp.json()
+    all_snapshots: dict = {}
+    page_token = None
+    for _ in range(5):
+        if page_token:
+            params["page_token"] = page_token
+        resp = requests.get(
+            f"{ALPACA_DATA_URL}/v1beta1/options/snapshots/{underlying_symbol}",
+            headers=_get_headers(),
+            params=params,
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return {"error": f"Chain snapshot failed: {resp.status_code}", "detail": resp.text}
+        data = resp.json()
+        all_snapshots.update(data.get("snapshots", {}))
+        page_token = data.get("next_page_token")
+        if not page_token:
+            break
+
+    return {"snapshots": all_snapshots}
 
 
 def submit_option_order(

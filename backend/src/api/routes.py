@@ -88,6 +88,10 @@ from execution.alpaca_client import (
     get_options_contracts, get_options_chain_snapshot, submit_option_order, exercise_option, close_option_position,
 )
 
+# Configure logging so vegaedge.ws logs show up in Cloud Run
+import logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Options Pricing API",
@@ -98,7 +102,7 @@ app = FastAPI(
 )
 
 # Add CORS middleware — configurable via ALLOWED_ORIGINS env var (comma-separated)
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,https://vegaedge.netlify.app").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -781,15 +785,70 @@ def get_option_chain(
     strike_price_gte: float = None,
     strike_price_lte: float = None,
 ):
-    """Get live options chain snapshot with bid/ask and greeks."""
+    """Get live options chain snapshot with bid/ask and computed IV per strike."""
     try:
-        return get_options_chain_snapshot(
+        chain = get_options_chain_snapshot(
             underlying_symbol=underlying.upper(),
             expiration_date=expiration_date,
             option_type=option_type,
             strike_price_gte=strike_price_gte,
             strike_price_lte=strike_price_lte,
         )
+        snapshots = chain.get("snapshots", {})
+        if not snapshots:
+            return chain
+
+        import re
+        from datetime import datetime
+
+        try:
+            spot = get_ticker_price(underlying.upper())
+        except Exception:
+            return chain
+
+        r = 0.05
+        today = datetime.now()
+
+        for occ, snap in snapshots.items():
+            match = re.match(r'^[A-Z]{1,6}(\d{6})([CP])(\d{8})$', occ)
+            if not match:
+                continue
+            date_str, cp, strike_str = match.groups()
+            strike = float(strike_str) / 1000.0
+            yy, mm, dd = date_str[:2], date_str[2:4], date_str[4:6]
+            try:
+                exp_date = datetime(2000 + int(yy), int(mm), int(dd))
+            except ValueError:
+                continue
+            T = max((exp_date - today).days / 365.0, 1 / 365.0)
+            opt_type = 'call' if cp == 'C' else 'put'
+
+            quote = snap.get("latestQuote", {})
+            bid = quote.get("bp", 0) or 0
+            ask = quote.get("ap", 0) or 0
+            mid = (bid + ask) / 2.0
+            if mid <= 0:
+                continue
+
+            try:
+                iv = implied_volatility(
+                    market_price=mid, S=spot, K=strike, T=T, r=r,
+                    option_type=opt_type,
+                )
+            except Exception:
+                iv = None
+
+            if iv is not None and iv > 0:
+                if "greeks" not in snap:
+                    snap["greeks"] = {}
+                snap["greeks"]["impliedVolatility"] = round(iv, 6)
+                try:
+                    g = calculate_greeks(S=spot, K=strike, T=T, r=r, sigma=iv, option_type=opt_type)
+                    snap["greeks"]["delta"] = round(g.get("delta", 0), 6)
+                except Exception:
+                    pass
+
+        return chain
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chain snapshot failed: {str(e)}")
 

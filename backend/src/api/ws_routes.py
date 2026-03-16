@@ -3,6 +3,7 @@
 import asyncio
 import base64
 import json
+import logging
 import os
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -11,6 +12,7 @@ from google.genai import types
 
 from vegaedge.gemini_session import execute_tool, get_live_config, get_text_config, MODEL, TEXT_MODEL
 
+logger = logging.getLogger("vegaedge.ws")
 router = APIRouter()
 
 
@@ -31,12 +33,14 @@ async def _producer(websocket: WebSocket, session) -> None:
                 )
             elif msg_type == "text" and data.get("text"):
                 await session.send_realtime_input(text=data["text"])
+            elif msg_type == "interrupt":
+                logger.info("Producer: client requested interrupt (manual stop)")
     except WebSocketDisconnect:
-        pass
+        logger.info("Producer: client disconnected")
     except asyncio.CancelledError:
         pass
-    except Exception:
-        pass
+    except Exception as e:
+        logger.exception("Producer error: %s", e)
 
 
 async def _consumer(websocket: WebSocket, session) -> None:
@@ -49,6 +53,12 @@ async def _consumer(websocket: WebSocket, session) -> None:
                     if part.inline_data and part.inline_data.data:
                         b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
                         await websocket.send_json({"type": "audio", "data": b64})
+            # Interruption / turn-complete signals
+            if response.server_content:
+                if getattr(response.server_content, "interrupted", False):
+                    await websocket.send_json({"type": "interrupted"})
+                if getattr(response.server_content, "turn_complete", False):
+                    await websocket.send_json({"type": "turn_complete"})
             # Transcript
             if response.server_content:
                 if getattr(response.server_content, "input_transcription", None) and response.server_content.input_transcription.text:
@@ -92,6 +102,7 @@ async def _consumer(websocket: WebSocket, session) -> None:
     except asyncio.CancelledError:
         pass
     except Exception as e:
+        logger.exception("Consumer error: %s", e)
         try:
             await websocket.send_json({"type": "error", "message": str(e)})
         except Exception:
@@ -109,9 +120,11 @@ async def ws_live(websocket: WebSocket):
         return
     client = genai.Client(api_key=api_key)
     config = get_live_config()
+    logger.info("Connecting to Gemini Live model=%s", MODEL)
     prod = cons = None
     try:
         async with client.aio.live.connect(model=MODEL, config=config) as session:
+            logger.info("Gemini Live session established")
             prod = asyncio.create_task(_producer(websocket, session))
             cons = asyncio.create_task(_consumer(websocket, session))
             done, pending = await asyncio.wait(
@@ -122,18 +135,17 @@ async def ws_live(websocket: WebSocket):
                 t.cancel()
             for t in done:
                 if t.exception():
-                    try:
-                        t.result()
-                    except Exception:
-                        pass
+                    logger.error("Task ended with error: %s", t.exception())
     except asyncio.CancelledError:
         pass
     except Exception as e:
+        logger.exception("ws_live session error: %s", e)
         try:
             await websocket.send_json({"type": "error", "message": str(e)})
         except Exception:
             pass
     finally:
+        logger.info("ws_live closing")
         try:
             await websocket.close()
         except Exception:

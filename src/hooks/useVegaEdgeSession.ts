@@ -8,6 +8,7 @@ const WS_BASE =
     : 'ws://localhost:8000';
 
 const SAMPLE_RATE = 16000;
+const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 15000]; // exponential backoff
 
 export type AgentMode = 'chat' | 'voice';
 
@@ -26,7 +27,7 @@ export interface SignalEntry {
   implied_vol_atm?: number;
   expiration?: string;
   atm_strike?: number;
-  opportunity?: string;
+  opportunity?: string | { direction?: string; option_type?: string; strike?: number; ev_per_contract?: number; premium_estimate?: number };
   timestamp?: Date;
   watchlist?: Array<{ ticker: string; signal: string; iv_hv_ratio?: number; spot_price?: number }>;
   summary?: string;
@@ -50,6 +51,7 @@ export interface VegaEdgeSession {
   setMode: (mode: AgentMode) => void;
   connected: boolean;
   listening: boolean;
+  isSpeaking: boolean;
   error: string | null;
   signals: SignalEntry[];
   transcript: TranscriptEntry[];
@@ -61,10 +63,9 @@ export interface VegaEdgeSession {
   watchlistSummary: string | null;
   streamingModelText: string;
   isAgentThinking: boolean;
-  connect: () => void;
-  disconnect: () => void;
   startListening: () => void;
   stopListening: () => void;
+  stopSpeaking: () => void;
   sendText: (text: string) => void;
   sendChatMessage: (text: string) => void;
   clearLiveText: () => void;
@@ -74,6 +75,7 @@ export function useVegaEdgeSession(): VegaEdgeSession {
   const [mode, setModeState] = useState<AgentMode>('chat');
   const [connected, setConnected] = useState(false);
   const [listening, setListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [chartData, setChartData] = useState<string | null>(null);
   const [chartTicker, setChartTicker] = useState('');
   const [chartHistory, setChartHistory] = useState<ChartHistoryEntry[]>([]);
@@ -88,6 +90,27 @@ export function useVegaEdgeSession(): VegaEdgeSession {
 
   const liveUserTextRef = useRef('');
   const modeRef = useRef<AgentMode>('chat');
+  const wsRef = useRef<WebSocket | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const captureCtxRef = useRef<AudioContext | null>(null);
+  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const audioQueueRef = useRef<Uint8Array[]>([]);
+  const nextPlayRef = useRef<number>(0);
+  const playbackCtxRef = useRef<AudioContext | null>(null);
+  const playNextChunkRef = useRef<() => void>(() => {});
+  const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  const interruptedRef = useRef(false);
+  const interruptResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const awaitingNewResponseRef = useRef(false);
+  const speakingEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resumingRef = useRef(false);
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intentionalCloseRef = useRef(false);
+  const mountedRef = useRef(true);
+  const wasListeningRef = useRef(false);
+  const startListeningRef = useRef<() => void>(() => {});
+  const connectToWsRef = useRef<(mode: AgentMode) => void>(() => {});
 
   const flushLiveText = useCallback(() => {
     const text = liveUserTextRef.current;
@@ -103,44 +126,149 @@ export function useVegaEdgeSession(): VegaEdgeSession {
     setLiveUserText('');
   }, []);
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const captureCtxRef = useRef<AudioContext | null>(null);
-  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
-  const audioQueueRef = useRef<Uint8Array[]>([]);
-  const nextPlayRef = useRef<number>(0);
-  const playbackCtxRef = useRef<AudioContext | null>(null);
-  const playNextChunkRef = useRef<() => void>(() => {});
+  const flushPlayback = useCallback(() => {
+    audioQueueRef.current.length = 0;
+    for (const src of activeSourcesRef.current) {
+      try { src.stop(); } catch { /* already stopped */ }
+    }
+    activeSourcesRef.current.clear();
+    if (playbackCtxRef.current) {
+      nextPlayRef.current = playbackCtxRef.current.currentTime;
+    }
+    // Bypass debounce — stop immediately
+    if (speakingEndTimerRef.current) {
+      clearTimeout(speakingEndTimerRef.current);
+      speakingEndTimerRef.current = null;
+    }
+    setIsSpeaking(false);
+  }, []);
 
+  const stopSpeaking = useCallback(() => {
+    interruptedRef.current = true;
+    flushPlayback();
+    // Notify backend
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'interrupt' }));
+    }
+    // Safety: reset after 3s in case turn_complete never arrives
+    if (interruptResetTimerRef.current) clearTimeout(interruptResetTimerRef.current);
+    interruptResetTimerRef.current = setTimeout(() => {
+      interruptedRef.current = false;
+      interruptResetTimerRef.current = null;
+    }, 3000);
+  }, [flushPlayback]);
+
+  // Audio playback engine
   useEffect(() => {
     playNextChunkRef.current = () => {
       const queue = audioQueueRef.current;
-      if (queue.length === 0 || nextPlayRef.current > Date.now()) return;
-      const bytes = queue.shift();
-      if (!bytes) return;
-      if (!playbackCtxRef.current || playbackCtxRef.current.state === 'closed') {
-        playbackCtxRef.current = new AudioContext({ sampleRate: 24000 });
+      if (queue.length === 0) {
+        // Debounce: wait 300ms before declaring speech ended
+        if (speakingEndTimerRef.current) clearTimeout(speakingEndTimerRef.current);
+        speakingEndTimerRef.current = setTimeout(() => {
+          if (audioQueueRef.current.length === 0 && activeSourcesRef.current.size === 0) {
+            setIsSpeaking(false);
+          }
+        }, 300);
+        return;
       }
-      const ctx = playbackCtxRef.current;
-      const buf = ctx.createBuffer(1, bytes.length / 2, 24000);
-      const channel = buf.getChannelData(0);
-      const view = new DataView(bytes.buffer ?? new ArrayBuffer(0), bytes.byteOffset ?? 0, bytes.byteLength ?? 0);
-      for (let i = 0; i < channel.length; i++) {
-        channel[i] = view.getInt16(i * 2, true) / 32768;
+
+      try {
+        if (!playbackCtxRef.current || playbackCtxRef.current.state === 'closed') {
+          playbackCtxRef.current = new AudioContext({ sampleRate: 24000 });
+        }
+        const ctx = playbackCtxRef.current;
+
+        if (ctx.state === 'suspended') {
+          // Guard: only register one resume callback
+          if (!resumingRef.current) {
+            resumingRef.current = true;
+            ctx.resume().then(() => {
+              resumingRef.current = false;
+              playNextChunkRef.current();
+            }).catch(() => { resumingRef.current = false; });
+          }
+          return;
+        }
+
+        // Cancel any pending "speaking ended" timer
+        if (speakingEndTimerRef.current) {
+          clearTimeout(speakingEndTimerRef.current);
+          speakingEndTimerRef.current = null;
+        }
+        setIsSpeaking(true);
+
+        while (queue.length > 0) {
+          const bytes = queue.shift();
+          if (!bytes || bytes.length < 2) continue;
+          const evenLen = bytes.length - (bytes.length % 2);
+          const sampleCount = evenLen / 2;
+          if (sampleCount === 0) continue;
+          const buf = ctx.createBuffer(1, sampleCount, 24000);
+          const channel = buf.getChannelData(0);
+          const view = new DataView(bytes.buffer, bytes.byteOffset, evenLen);
+          for (let i = 0; i < sampleCount; i++) {
+            channel[i] = view.getInt16(i * 2, true) / 32768;
+          }
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          src.connect(ctx.destination);
+          const startTime = Math.max(nextPlayRef.current, ctx.currentTime);
+          src.start(startTime);
+          nextPlayRef.current = startTime + buf.duration;
+          activeSourcesRef.current.add(src);
+          src.onended = () => {
+            activeSourcesRef.current.delete(src);
+            if (audioQueueRef.current.length === 0 && activeSourcesRef.current.size === 0) {
+              // Debounce: wait 300ms before declaring speech ended
+              if (speakingEndTimerRef.current) clearTimeout(speakingEndTimerRef.current);
+              speakingEndTimerRef.current = setTimeout(() => {
+                if (audioQueueRef.current.length === 0 && activeSourcesRef.current.size === 0) {
+                  setIsSpeaking(false);
+                }
+              }, 300);
+            }
+          };
+        }
+      } catch (e) {
+        console.error('Audio playback error:', e);
+        setIsSpeaking(false);
       }
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.connect(ctx.destination);
-      src.start(0);
-      nextPlayRef.current = Date.now() + (buf.duration * 1000);
-      if (queue.length > 0) setTimeout(() => playNextChunkRef.current(), 50);
     };
   });
 
   const handleMessage = useCallback((event: MessageEvent) => {
     try {
       const msg = JSON.parse(event.data as string);
+      if (msg.type === 'interrupted') {
+        interruptedRef.current = true;
+        flushPlayback();
+        // Safety timer (turn_complete should follow, but just in case)
+        if (interruptResetTimerRef.current) clearTimeout(interruptResetTimerRef.current);
+        interruptResetTimerRef.current = setTimeout(() => {
+          interruptedRef.current = false;
+          interruptResetTimerRef.current = null;
+        }, 3000);
+        return;
+      }
+      if (msg.type === 'turn_complete') {
+        interruptedRef.current = false;
+        awaitingNewResponseRef.current = true;
+        if (interruptResetTimerRef.current) {
+          clearTimeout(interruptResetTimerRef.current);
+          interruptResetTimerRef.current = null;
+        }
+        if (audioQueueRef.current.length === 0 && activeSourcesRef.current.size === 0) {
+          setIsSpeaking(false);
+        }
+        return;
+      }
       if (msg.type === 'audio' && msg.data) {
+        if (awaitingNewResponseRef.current) {
+          interruptedRef.current = false;
+          awaitingNewResponseRef.current = false;
+        }
+        if (interruptedRef.current) return; // drop stale chunks after interruption
         audioQueueRef.current.push(Uint8Array.from(atob(msg.data), (c) => c.charCodeAt(0)));
         playNextChunkRef.current();
       } else if (msg.type === 'chart') {
@@ -153,26 +281,30 @@ export function useVegaEdgeSession(): VegaEdgeSession {
         }
       } else if (msg.type === 'transcript' && msg.text) {
         if (msg.role === 'user') {
-          // Voice mode: live transcription from Gemini
+          interruptedRef.current = false; // reset so next AI response has audio
           liveUserTextRef.current = msg.text;
           setLiveUserText(msg.text);
         } else {
           flushLiveText();
           if (modeRef.current === 'chat') {
-            // Chat mode: handle streaming with done flag
             if (msg.done) {
-              // Final message — add to transcript, clear streaming state
               setStreamingModelText('');
               setIsAgentThinking(false);
               setTranscript((t) => [...t, { role: 'model', text: msg.text, timestamp: new Date() }]);
             } else {
-              // Partial streaming chunk
               setStreamingModelText((prev) => prev + msg.text);
               setIsAgentThinking(false);
             }
           } else {
-            // Voice mode: direct transcript
-            setTranscript((t) => [...t, { role: 'model', text: msg.text, timestamp: new Date() }]);
+            setTranscript((t) => {
+              const last = t[t.length - 1];
+              if (last && last.role === 'model') {
+                const updated = [...t];
+                updated[updated.length - 1] = { ...last, text: last.text + msg.text };
+                return updated;
+              }
+              return [...t, { role: 'model', text: msg.text, timestamp: new Date() }];
+            });
           }
         }
       } else if (msg.type === 'signal' && msg.data) {
@@ -189,34 +321,103 @@ export function useVegaEdgeSession(): VegaEdgeSession {
     } catch {
       // ignore parse errors
     }
-  }, [flushLiveText]);
+  }, [flushLiveText, flushPlayback]);
 
+  // Connect to WebSocket with auto-reconnect
   const connectToWs = useCallback((wsMode: AgentMode) => {
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) return;
+    // Clean up any existing connection
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+    }
+
     setError(null);
+    intentionalCloseRef.current = false;
     const wsPath = wsMode === 'chat' ? '/ws/chat' : '/ws/live';
     const ws = new WebSocket(WS_BASE + wsPath);
     wsRef.current = ws;
 
-    ws.onopen = () => setConnected(true);
+    ws.onopen = () => {
+      if (!mountedRef.current) return;
+      setConnected(true);
+      setError(null);
+      reconnectAttemptRef.current = 0; // Reset backoff on successful connect
+
+      // Auto-resume mic if it was active before disconnect
+      if (wasListeningRef.current) {
+        wasListeningRef.current = false;
+        setTimeout(() => {
+          if (mountedRef.current && wsRef.current?.readyState === WebSocket.OPEN) {
+            startListeningRef.current();
+          }
+        }, 100);
+      }
+    };
+
     ws.onclose = () => {
+      if (!mountedRef.current) return;
       setConnected(false);
       setIsAgentThinking(false);
+      wsRef.current = null;
+
+      // Remember if mic was active before disconnect
+      wasListeningRef.current = mediaStreamRef.current !== null;
+
+      // Clean up mic resources (audio going nowhere without WS)
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+      }
+      if (workletNodeRef.current) {
+        workletNodeRef.current.disconnect();
+        workletNodeRef.current = null;
+      }
+      if (captureCtxRef.current) {
+        captureCtxRef.current.close();
+        captureCtxRef.current = null;
+      }
+      setListening(false);
+
+      // Auto-reconnect unless intentionally closed (removed ev.code !== 1000)
+      if (!intentionalCloseRef.current) {
+        const attempt = reconnectAttemptRef.current;
+        const delay = RECONNECT_DELAYS[Math.min(attempt, RECONNECT_DELAYS.length - 1)];
+        reconnectTimerRef.current = setTimeout(() => {
+          if (mountedRef.current && !intentionalCloseRef.current) {
+            reconnectAttemptRef.current++;
+            connectToWs(modeRef.current);
+          }
+        }, delay);
+      }
     };
-    ws.onerror = () => setError('WebSocket error');
+
+    ws.onerror = () => {
+      if (!mountedRef.current) return;
+      setError('Connection error — retrying...');
+    };
+
     ws.onmessage = handleMessage;
   }, [handleMessage]);
+  connectToWsRef.current = connectToWs;
 
-  const connect = useCallback(() => {
-    connectToWs(modeRef.current);
-  }, [connectToWs]);
-
+  // Auto-connect on mount
   useEffect(() => {
+    mountedRef.current = true;
+    connectToWs(modeRef.current);
+
     return () => {
+      mountedRef.current = false;
+      intentionalCloseRef.current = true;
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       wsRef.current?.close();
+      if (speakingEndTimerRef.current) clearTimeout(speakingEndTimerRef.current);
+      if (interruptResetTimerRef.current) clearTimeout(interruptResetTimerRef.current);
       mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
       captureCtxRef.current?.close();
       playbackCtxRef.current?.close();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const stopListening = useCallback(() => {
@@ -229,29 +430,36 @@ export function useVegaEdgeSession(): VegaEdgeSession {
     setListening(false);
   }, []);
 
-  const disconnect = useCallback(() => {
-    stopListening();
+  const setMode = useCallback((newMode: AgentMode) => {
+    if (newMode === modeRef.current) return;
+    const wasListening = mediaStreamRef.current !== null;
+    if (wasListening) stopListening();
+    modeRef.current = newMode;
+    setModeState(newMode);
+
+    // Reconnect to the appropriate endpoint
+    intentionalCloseRef.current = true;
+    if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
     wsRef.current?.close();
     wsRef.current = null;
     setConnected(false);
-    setIsAgentThinking(false);
-    setStreamingModelText('');
-  }, [stopListening]);
-
-  const setMode = useCallback((newMode: AgentMode) => {
-    if (newMode === modeRef.current) return;
-    modeRef.current = newMode;
-    setModeState(newMode);
-    // Reconnect to the appropriate endpoint
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      disconnect();
-      // Small delay to ensure clean disconnect before reconnecting
-      setTimeout(() => connectToWs(newMode), 100);
-    }
-  }, [disconnect, connectToWs]);
+    // Small delay then reconnect to new endpoint
+    setTimeout(() => {
+      intentionalCloseRef.current = false;
+      connectToWs(newMode);
+    }, 100);
+  }, [stopListening, connectToWs]);
 
   const startListening = useCallback(async () => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      wasListeningRef.current = true;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      connectToWsRef.current(modeRef.current);
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: SAMPLE_RATE, channelCount: 1 } });
       mediaStreamRef.current = stream;
@@ -295,6 +503,7 @@ export function useVegaEdgeSession(): VegaEdgeSession {
       setError('Microphone access denied');
     }
   }, []);
+  startListeningRef.current = startListening;
 
   const sendText = useCallback((text: string) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -317,6 +526,7 @@ export function useVegaEdgeSession(): VegaEdgeSession {
     setMode,
     connected,
     listening,
+    isSpeaking,
     error,
     signals,
     transcript,
@@ -328,10 +538,9 @@ export function useVegaEdgeSession(): VegaEdgeSession {
     watchlistSummary,
     streamingModelText,
     isAgentThinking,
-    connect,
-    disconnect,
     startListening,
     stopListening,
+    stopSpeaking,
     sendText,
     sendChatMessage,
     clearLiveText,

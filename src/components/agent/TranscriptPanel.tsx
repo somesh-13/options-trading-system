@@ -8,6 +8,7 @@ interface TranscriptPanelProps {
   liveUserText?: string;
   streamingModelText?: string;
   isAgentThinking?: boolean;
+  minimal?: boolean;
 }
 
 export default function TranscriptPanel({
@@ -15,6 +16,7 @@ export default function TranscriptPanel({
   liveUserText,
   streamingModelText,
   isAgentThinking,
+  minimal,
 }: TranscriptPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -22,15 +24,17 @@ export default function TranscriptPanel({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript.length, liveUserText, streamingModelText, isAgentThinking]);
 
-  return (
-    <div className="bg-[#2D2D2D] rounded-lg p-4 flex flex-col">
-      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">
-        Conversation
-      </h3>
+  const isEmpty = transcript.length === 0 && !liveUserText && !isAgentThinking && !streamingModelText;
 
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-        {transcript.length === 0 && !liveUserText && !isAgentThinking && (
-          <p className="text-gray-500 text-sm">Start a conversation with VegaEdge...</p>
+  return (
+    <div className="flex flex-col">
+      <div className="space-y-3">
+        {isEmpty && (
+          <div className={`text-center ${minimal ? 'py-8' : 'py-12'}`}>
+            <p className="text-gray-600 text-sm">
+              {minimal ? 'Tap the mic to start talking' : 'Start a conversation with VegaEdge...'}
+            </p>
+          </div>
         )}
 
         {transcript.map((t, i) => (
@@ -39,59 +43,56 @@ export default function TranscriptPanel({
             className={`flex flex-col ${t.role === 'user' ? 'items-end' : 'items-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-lg px-4 py-2.5 ${
+              className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
                 t.role === 'user'
                   ? 'bg-[#00C805]/10 text-[#00C805]'
-                  : 'bg-[#1E1E1E] text-gray-200'
+                  : 'bg-[#2D2D2D] text-gray-200'
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{t.text}</p>
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">{t.text}</p>
             </div>
-            <span className="text-[10px] text-gray-600 mt-1 px-1">
-              {t.role === 'user' ? 'You' : 'VegaEdge'} &middot;{' '}
-              {t.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
+            {!minimal && (
+              <span className="text-[10px] text-gray-600 mt-1 px-1">
+                {t.role === 'user' ? 'You' : 'VegaEdge'} &middot;{' '}
+                {t.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
           </div>
         ))}
 
-        {/* Agent thinking indicator (before streaming text arrives) */}
+        {/* Agent thinking indicator */}
         {isAgentThinking && !streamingModelText && (
           <div className="flex flex-col items-start">
-            <div className="max-w-[80%] rounded-lg px-4 py-2.5 bg-[#1E1E1E] text-gray-400">
+            <div className="rounded-2xl px-4 py-3 bg-[#2D2D2D] text-gray-400">
               <div className="flex items-center gap-2">
-                <span className="text-sm">VegaEdge is thinking</span>
-                <span className="flex gap-0.5">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" style={{ animation: 'thinking-dot 1.4s ease-in-out infinite' }} />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" style={{ animation: 'thinking-dot 1.4s ease-in-out 0.2s infinite' }} />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" style={{ animation: 'thinking-dot 1.4s ease-in-out 0.4s infinite' }} />
+                <span className="flex gap-1">
+                  <span className="w-2 h-2 bg-[#00C805] rounded-full" style={{ animation: 'thinking-dot 1.4s ease-in-out infinite' }} />
+                  <span className="w-2 h-2 bg-[#00C805] rounded-full" style={{ animation: 'thinking-dot 1.4s ease-in-out 0.2s infinite' }} />
+                  <span className="w-2 h-2 bg-[#00C805] rounded-full" style={{ animation: 'thinking-dot 1.4s ease-in-out 0.4s infinite' }} />
                 </span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Streaming model text (partial response) */}
+        {/* Streaming model text */}
         {streamingModelText && (
           <div className="flex flex-col items-start">
-            <div className="max-w-[80%] rounded-lg px-4 py-2.5 bg-[#1E1E1E] text-gray-200">
-              <p className="text-sm whitespace-pre-wrap">
+            <div className="max-w-[85%] rounded-2xl px-4 py-2.5 bg-[#2D2D2D] text-gray-200">
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">
                 {streamingModelText}
                 <span
-                  className="inline-block w-[2px] h-[14px] bg-gray-300 ml-0.5 align-middle"
+                  className="inline-block w-[2px] h-[14px] bg-[#00C805] ml-0.5 align-middle"
                   style={{ animation: 'blink-cursor 1s step-end infinite' }}
                 />
               </p>
             </div>
-            <span className="text-[10px] text-gray-600 mt-1 px-1">
-              VegaEdge &middot; streaming...
-            </span>
           </div>
         )}
 
         <div ref={bottomRef} />
       </div>
 
-      {/* CSS animations */}
       <style jsx>{`
         @keyframes thinking-dot {
           0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }

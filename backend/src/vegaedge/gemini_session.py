@@ -25,13 +25,31 @@ Watchlist: HOOD, CIFR, WULF, PYPL, GRAB (you can analyze any ticker on request).
 
 def get_live_config():
     """Build config for client.aio.live.connect()."""
-    return {
-        "response_modalities": ["AUDIO"],
-        "system_instruction": SYSTEM_INSTRUCTION,
-        "tools": [{"function_declarations": TOOL_DECLARATIONS}],
-        "input_audio_transcription": {},
-        "output_audio_transcription": {},
-    }
+    from google.genai import types
+
+    return types.LiveConnectConfig(
+        response_modalities=["AUDIO"],
+        system_instruction=SYSTEM_INSTRUCTION,
+        tools=[types.Tool(function_declarations=TOOL_DECLARATIONS)],
+        input_audio_transcription=types.AudioTranscriptionConfig(),
+        output_audio_transcription=types.AudioTranscriptionConfig(),
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                    voice_name=os.getenv("GEMINI_VOICE", "Kore"),
+                )
+            ),
+        ),
+        realtime_input_config=types.RealtimeInputConfig(
+            automatic_activity_detection=types.AutomaticActivityDetection(
+                disabled=False,
+                start_of_speech_sensitivity=types.StartSensitivity.START_SENSITIVITY_MEDIUM,
+                end_of_speech_sensitivity=types.EndSensitivity.END_SENSITIVITY_LOW,
+                prefix_padding_ms=20,
+                silence_duration_ms=600,
+            ),
+        ),
+    )
 
 
 def get_text_config():

@@ -90,7 +90,11 @@ export default function SignalPanel({ signals }: SignalPanelProps) {
                   )}
                 </div>
                 {s.opportunity && (
-                  <p className="mt-2 text-xs text-[#FFD700] font-medium">{s.opportunity}</p>
+                  <p className="mt-2 text-xs text-[#FFD700] font-medium">
+                    {typeof s.opportunity === 'string'
+                      ? s.opportunity
+                      : `${s.opportunity.direction ?? ''} ${s.opportunity.option_type ?? ''} @ $${s.opportunity.strike ?? '?'} · EV $${s.opportunity.ev_per_contract?.toFixed(2) ?? '?'}/contract`}
+                  </p>
                 )}
               </>
             )}

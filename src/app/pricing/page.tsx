@@ -26,16 +26,26 @@ import {
 
 const DEFAULT_TICKER = 'CIFR';
 
-const EXPIRATIONS: Expiration[] = [
-  { dte: '7d', date: 'Apr 26', iv: 0.68, oi: 12 },
-  { dte: '14d', date: 'May 03', iv: 0.71, oi: 18 },
-  { dte: '24d', date: 'May 17', iv: 0.724, oi: 44 },
-  { dte: '45d', date: 'Jun 07', iv: 0.69, oi: 22 },
-  { dte: '80d', date: 'Jul 12', iv: 0.62, oi: 14 },
-  { dte: '170d', date: 'Oct 11', iv: 0.55, oi: 8 },
+type DerivedExpiration = Expiration & { rawDate: string };
+
+const FALLBACK_EXPIRATIONS: DerivedExpiration[] = [
+  { dte: '24d', date: 'loading…', rawDate: '', iv: 0, oi: 0 },
 ];
 
 const RISK_FREE_DEFAULT = 0.045;
+
+function formatExpDate(iso: string): string {
+  const d = new Date(iso + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function daysUntil(iso: string): number {
+  const d = new Date(iso + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return 0;
+  const diffMs = d.getTime() - Date.now();
+  return Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+}
 
 const GREEK_UNITS: Record<string, string> = {
   delta: 'per $1 spot',
@@ -53,10 +63,6 @@ function fmtVal(n: number | null | undefined, digits = 3): string {
   return n.toFixed(digits);
 }
 
-function dteDays(dte: string): number {
-  return parseInt(dte, 10) || 24;
-}
-
 export default function PricingPage() {
   const [ticker, setTicker] = useState(DEFAULT_TICKER);
   const [tickerInput, setTickerInput] = useState(DEFAULT_TICKER);
@@ -66,7 +72,7 @@ export default function PricingPage() {
   const [expiryIdx, setExpiryIdx] = useState(2);
   const [spot, setSpot] = useState<number | null>(null);
   const [sigma, setSigma] = useState(0.724);
-  const [days, setDays] = useState(dteDays(EXPIRATIONS[2].dte));
+  const [days, setDays] = useState(24);
   const [r, setR] = useState(RISK_FREE_DEFAULT);
   const [marketPrice, setMarketPrice] = useState(0.82);
   const [mode, setMode] = useState<CalcMode>('price-from-iv');
@@ -105,6 +111,12 @@ export default function PricingPage() {
           if (s == null) setSpot(m.spot_price);
         }
         if (vs) setSurface(vs);
+        if (m && Number.isFinite(m.atm_strike) && m.atm_strike > 0) {
+          setStrike(m.atm_strike);
+        } else if (s != null && s > 0) {
+          setStrike(Math.round(s));
+        }
+        setExpiryIdx(0);
         if (s == null && m == null && vs == null) {
           setError(`No data returned for ${ticker}`);
         }
@@ -117,10 +129,43 @@ export default function PricingPage() {
     };
   }, [ticker]);
 
-  // Keep `days` in sync with the selected expiration tab.
+  // Build the expiration strip from the live surface; fall back to a placeholder
+  // before any data arrives so the strip doesn't pop in.
+  const expirations: DerivedExpiration[] = useMemo(() => {
+    if (!surface || !surface.expirations.length) return FALLBACK_EXPIRATIONS;
+    const strikes = surface.strikes;
+    const refSpot = mispricing?.spot_price ?? spot ?? surface.spot_price ?? strikes[0] ?? 0;
+    let atmIdx = 0;
+    let atmDiff = Infinity;
+    for (let j = 0; j < strikes.length; j++) {
+      const d = Math.abs(strikes[j] - refSpot);
+      if (d < atmDiff) {
+        atmDiff = d;
+        atmIdx = j;
+      }
+    }
+    return surface.expirations.map((iso, i) => {
+      const dte = daysUntil(iso);
+      const ivAtm = surface.iv_matrix[i]?.[atmIdx];
+      return {
+        dte: `${dte}d`,
+        date: formatExpDate(iso),
+        rawDate: iso,
+        iv: typeof ivAtm === 'number' && Number.isFinite(ivAtm) ? ivAtm : 0,
+        oi: 0,
+      };
+    });
+  }, [surface, mispricing, spot]);
+
+  const safeExpiryIdx = Math.min(expiryIdx, Math.max(0, expirations.length - 1));
+  const expSel = expirations[safeExpiryIdx] ?? FALLBACK_EXPIRATIONS[0];
+
+  // Keep `days` in sync with the selected expiration.
   useEffect(() => {
-    setDays(dteDays(EXPIRATIONS[expiryIdx].dte));
-  }, [expiryIdx]);
+    if (!expSel.rawDate) return;
+    const dte = daysUntil(expSel.rawDate);
+    if (dte > 0) setDays(dte);
+  }, [expSel.rawDate]);
 
   // Keep the strike window centered on the spot.
   const strikeWindow = useMemo(() => {
@@ -183,7 +228,6 @@ export default function PricingPage() {
   const theoretical = pricing?.price ?? 0;
   const effectiveSigma = mode === 'iv-from-price' && solvedIV != null ? solvedIV : sigma;
 
-  const expSel = EXPIRATIONS[expiryIdx];
   const isAtmStrike = mispricing != null && Math.abs(strike - mispricing.atm_strike) < 0.01;
   const bid = isAtmStrike ? mispricing!.bid : null;
   const ask = isAtmStrike ? mispricing!.ask : null;
@@ -290,8 +334,8 @@ export default function PricingPage() {
       </div>
 
       <ExpirationStrip
-        expirations={EXPIRATIONS}
-        selectedIdx={expiryIdx}
+        expirations={expirations}
+        selectedIdx={safeExpiryIdx}
         onSelect={setExpiryIdx}
       />
       <StrikeStrip
@@ -360,7 +404,7 @@ export default function PricingPage() {
                 Expiry
               </div>
               <div>
-                {EXPIRATIONS[expiryIdx].date} ({EXPIRATIONS[expiryIdx].dte})
+                {expSel.date} ({expSel.dte})
               </div>
             </div>
           </div>
@@ -695,7 +739,7 @@ export default function PricingPage() {
             <VolSmile
               surface={surface}
               selectedStrike={strike}
-              selectedExpiration={expSel.date}
+              selectedExpiration={expSel.rawDate || undefined}
             />
             <div
               style={{
@@ -713,7 +757,7 @@ export default function PricingPage() {
               <MiniVolSurface
                 surface={surface}
                 selectedStrike={strike}
-                selectedExpiration={expSel.date}
+                selectedExpiration={expSel.rawDate || undefined}
               />
             </div>
           </div>

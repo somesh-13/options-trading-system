@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PRICING_API_URL as API_URL } from '@/lib/pricing-api';
 
 interface Position {
   S: number; K: number; T: number; r: number; sigma: number;
@@ -25,8 +26,6 @@ interface HedgeResult {
     }>;
   };
 }
-
-const API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
 
 const DEFAULT_POSITION: Position = { S: 150, K: 155, T: 0.25, r: 0.05, sigma: 0.3, option_type: 'call', qty: 10 };
 

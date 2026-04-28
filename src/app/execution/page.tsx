@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { parseOCC, formatOCCReadable } from '@/lib/utils';
-
-const API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
+import { PRICING_API_URL as API_URL } from '@/lib/pricing-api';
 
 interface AccountInfo {
   status?: string;
@@ -258,24 +256,23 @@ export default function ExecutionPage() {
   const strikes = [...new Set(chainRows.map((r) => r.strike))].sort((a, b) => a - b);
 
   return (
-    <main className="min-h-screen bg-[#1E1E1E] text-white p-6">
+    <main className="min-h-screen bg-[#1E1E1E] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/" className="text-gray-400 hover:text-white">&larr; Dashboard</Link>
-          <h1 className="text-3xl font-bold">Live Trading Execution</h1>
-          <span className="px-3 py-1 bg-[#FFD700]/20 text-[#FFD700] rounded text-sm font-bold">PAPER</span>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-1">
+          <h2 className="rv-h1">Live Trading Execution</h2>
+          <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-[#FFD700]/20 text-[#FFD700] rounded text-xs sm:text-sm font-bold">PAPER</span>
         </div>
-        <p className="text-gray-400 mb-6">
+        <div className="rv-sub">
           Alpaca paper trading integration for stocks and options execution.
-        </p>
+        </div>
 
         {loading ? (
           <div className="text-gray-400">Loading account data...</div>
         ) : (
           <div className="space-y-6">
             {/* Account Info */}
-            <div className="bg-[#2D2D2D] rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4">Account</h3>
+            <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold mb-4">Account</h3>
               {!isConfigured ? (
                 <div className="bg-[#1E1E1E] rounded-lg p-4 border border-[#FFD700]/30">
                   <p className="text-[#FFD700] font-bold mb-2">Alpaca Not Configured</p>
@@ -285,22 +282,22 @@ export default function ExecutionPage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                   <div className="bg-[#1E1E1E] rounded-lg p-3">
                     <p className="text-xs text-gray-500">Equity</p>
-                    <p className="text-xl font-bold text-[#00C805]">${parseFloat(account?.equity || '0').toLocaleString()}</p>
+                    <p className="text-base sm:text-xl font-bold text-[#00C805] break-all">${parseFloat(account?.equity || '0').toLocaleString()}</p>
                   </div>
                   <div className="bg-[#1E1E1E] rounded-lg p-3">
                     <p className="text-xs text-gray-500">Buying Power</p>
-                    <p className="text-xl font-bold">${parseFloat(account?.buying_power || '0').toLocaleString()}</p>
+                    <p className="text-base sm:text-xl font-bold break-all">${parseFloat(account?.buying_power || '0').toLocaleString()}</p>
                   </div>
                   <div className="bg-[#1E1E1E] rounded-lg p-3">
                     <p className="text-xs text-gray-500">Cash</p>
-                    <p className="text-xl font-bold">${parseFloat(account?.cash || '0').toLocaleString()}</p>
+                    <p className="text-base sm:text-xl font-bold break-all">${parseFloat(account?.cash || '0').toLocaleString()}</p>
                   </div>
                   <div className="bg-[#1E1E1E] rounded-lg p-3">
                     <p className="text-xs text-gray-500">Status</p>
-                    <p className="text-xl font-bold text-[#00C805]">{account?.status}</p>
+                    <p className="text-base sm:text-xl font-bold text-[#00C805]">{account?.status}</p>
                   </div>
                 </div>
               )}
@@ -330,9 +327,9 @@ export default function ExecutionPage() {
             {activeTab === 'stocks' && (
               <div className="space-y-6">
                 {/* Stock Order Form */}
-                <div className="bg-[#2D2D2D] rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4">Submit Stock Order</h3>
-                  <div className="grid grid-cols-5 gap-3 mb-4">
+                <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-bold mb-4">Submit Stock Order</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-4">
                     <div>
                       <label className="text-xs text-gray-400">Symbol</label>
                       <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())}
@@ -378,17 +375,18 @@ export default function ExecutionPage() {
                 </div>
 
                 {/* Stock Positions */}
-                <div className="bg-[#2D2D2D] rounded-lg p-6">
+                <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">Stock Positions ({stockPositions.length})</h3>
-                    <button onClick={fetchAll} className="px-4 py-1 bg-[#2D2D2D] border border-gray-600 rounded text-sm hover:bg-[#333]">
+                    <h3 className="text-lg sm:text-xl font-bold">Stock Positions ({stockPositions.length})</h3>
+                    <button onClick={fetchAll} className="px-4 py-1 bg-[#2D2D2D] border border-gray-600 rounded text-xs sm:text-sm hover:bg-[#333]">
                       Refresh
                     </button>
                   </div>
                   {stockPositions.length === 0 ? (
                     <p className="text-gray-500">No open stock positions</p>
                   ) : (
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-xs sm:text-sm min-w-[500px]">
                       <thead className="text-gray-500">
                         <tr>
                           <th className="text-left pb-2">Symbol</th>
@@ -412,16 +410,18 @@ export default function ExecutionPage() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   )}
                 </div>
 
                 {/* Stock Orders */}
-                <div className="bg-[#2D2D2D] rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4">Stock Orders ({stockOrders.length})</h3>
+                <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-bold mb-4">Stock Orders ({stockOrders.length})</h3>
                   {stockOrders.length === 0 ? (
                     <p className="text-gray-500">No open stock orders</p>
                   ) : (
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-xs sm:text-sm min-w-[500px]">
                       <thead className="text-gray-500">
                         <tr>
                           <th className="text-left pb-2">Symbol</th>
@@ -450,6 +450,7 @@ export default function ExecutionPage() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   )}
                 </div>
               </div>
@@ -457,11 +458,11 @@ export default function ExecutionPage() {
 
             {/* ===== OPTIONS TAB ===== */}
             {activeTab === 'options' && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Options Chain Lookup */}
-                <div className="bg-[#2D2D2D] rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4">Options Chain Lookup</h3>
-                  <div className="flex gap-3 items-end mb-4">
+                <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-bold mb-4">Options Chain Lookup</h3>
+                  <div className="flex flex-wrap gap-2 sm:gap-3 items-end mb-4">
                     <div>
                       <label className="text-xs text-gray-400">Underlying</label>
                       <input
@@ -509,8 +510,8 @@ export default function ExecutionPage() {
 
                   {/* Options Chain Table */}
                   {strikes.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
+                    <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                      <table className="w-full text-xs min-w-[640px]">
                         <thead className="text-gray-500">
                           <tr>
                             <th className="text-right pb-2 px-2">Delta</th>
@@ -599,16 +600,16 @@ export default function ExecutionPage() {
                 </div>
 
                 {/* Options Order Form */}
-                <div className="bg-[#2D2D2D] rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4">Options Order</h3>
+                <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-bold mb-4">Options Order</h3>
                   {optSymbol && (
                     <div className="mb-3 bg-[#1E1E1E] rounded-lg p-3 border border-[#00C805]/30">
                       <p className="text-xs text-gray-400">Selected Contract</p>
-                      <p className="text-lg font-bold text-[#00C805]">{formatOCCReadable(optSymbol)}</p>
-                      <p className="text-xs text-gray-500">{optSymbol}</p>
+                      <p className="text-base sm:text-lg font-bold text-[#00C805] break-all">{formatOCCReadable(optSymbol)}</p>
+                      <p className="text-xs text-gray-500 break-all">{optSymbol}</p>
                     </div>
                   )}
-                  <div className="grid grid-cols-5 gap-3 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-4">
                     <div>
                       <label className="text-xs text-gray-400">OCC Symbol</label>
                       <input
@@ -685,17 +686,18 @@ export default function ExecutionPage() {
                 </div>
 
                 {/* Options Positions */}
-                <div className="bg-[#2D2D2D] rounded-lg p-6">
+                <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">Options Positions ({optionPositions.length})</h3>
-                    <button onClick={fetchAll} className="px-4 py-1 bg-[#2D2D2D] border border-gray-600 rounded text-sm hover:bg-[#333]">
+                    <h3 className="text-lg sm:text-xl font-bold">Options Positions ({optionPositions.length})</h3>
+                    <button onClick={fetchAll} className="px-4 py-1 bg-[#2D2D2D] border border-gray-600 rounded text-xs sm:text-sm hover:bg-[#333]">
                       Refresh
                     </button>
                   </div>
                   {optionPositions.length === 0 ? (
                     <p className="text-gray-500">No open options positions</p>
                   ) : (
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-xs sm:text-sm min-w-[600px]">
                       <thead className="text-gray-500">
                         <tr>
                           <th className="text-left pb-2">Contract</th>
@@ -720,7 +722,7 @@ export default function ExecutionPage() {
                             <td className={`py-2 text-right ${parseFloat(pos.unrealized_pl || '0') >= 0 ? 'text-[#00C805]' : 'text-[#FF006E]'}`}>
                               ${parseFloat(pos.unrealized_pl || '0').toFixed(2)}
                             </td>
-                            <td className="py-2 text-right space-x-2">
+                            <td className="py-2 text-right space-x-2 whitespace-nowrap">
                               <button
                                 onClick={() => handleExercise(pos.symbol)}
                                 className="text-xs px-2 py-1 bg-[#FFD700]/20 text-[#FFD700] rounded hover:bg-[#FFD700]/30"
@@ -738,16 +740,18 @@ export default function ExecutionPage() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   )}
                 </div>
 
                 {/* Options Orders */}
-                <div className="bg-[#2D2D2D] rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4">Options Orders ({optionOrders.length})</h3>
+                <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-bold mb-4">Options Orders ({optionOrders.length})</h3>
                   {optionOrders.length === 0 ? (
                     <p className="text-gray-500">No open options orders</p>
                   ) : (
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-xs sm:text-sm min-w-[700px]">
                       <thead className="text-gray-500">
                         <tr>
                           <th className="text-left pb-2">Contract</th>
@@ -784,6 +788,7 @@ export default function ExecutionPage() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   )}
                 </div>
               </div>

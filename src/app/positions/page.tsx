@@ -2,7 +2,6 @@
 
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import {
   getPortfolioSummary,
   getPositionsWithGreeks,
@@ -128,26 +127,24 @@ function PositionsInner() {
   };
 
   return (
-    <main className="min-h-screen bg-[#1E1E1E] text-white p-6">
+    <main className="min-h-screen bg-[#1E1E1E] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/" className="text-gray-400 hover:text-white">&larr; Dashboard</Link>
-          <h1 className="text-3xl font-bold">Positions</h1>
-        </div>
+        <h2 className="rv-h1">Positions</h2>
+        <div className="rv-sub">Per-ticker position detail with chart, market value, and trade ticket.</div>
 
         {/* Ticker Search */}
-        <form onSubmit={handleTickerChange} className="flex gap-3 mb-6">
+        <form onSubmit={handleTickerChange} className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
           <input
             type="text"
             value={inputTicker}
             onChange={(e) => setInputTicker(e.target.value.toUpperCase())}
             placeholder="Enter ticker"
-            className="w-32 bg-[#2D2D2D] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]"
+            className="w-full sm:w-40 bg-[#2D2D2D] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]"
           />
           <button
             type="submit"
-            className="px-6 py-2 bg-[#00C805] hover:bg-[#00A004] text-white font-bold rounded-lg transition-colors"
+            className="w-full sm:w-auto px-6 py-2 bg-[#00C805] hover:bg-[#00A004] text-white font-bold rounded-lg transition-colors"
           >
             View
           </button>
@@ -158,9 +155,9 @@ function PositionsInner() {
         {loading ? (
           <div className="text-gray-400">Loading positions data...</div>
         ) : (
-          <div className="flex gap-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
             {/* Left Column (65%) */}
-            <div className="flex-1 min-w-0" style={{ flex: '0 0 65%' }}>
+            <div className="flex-1 min-w-0 w-full lg:w-[65%]">
               <TickerHeader
                 ticker={ticker}
                 price={spotPrice}
@@ -191,7 +188,7 @@ function PositionsInner() {
               {portfolioGreeks && (
                 <div className="bg-[#2D2D2D] rounded-lg p-4 mt-4">
                   <h3 className="text-sm font-bold text-gray-400 mb-3">Portfolio Greeks</h3>
-                  <div className="grid grid-cols-5 gap-3 text-sm">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 text-xs sm:text-sm">
                     <div>
                       <p className="text-xs text-gray-500">Delta</p>
                       <p className="font-bold">{portfolioGreeks.total_delta.toFixed(2)}</p>
@@ -218,7 +215,7 @@ function PositionsInner() {
             </div>
 
             {/* Right Column (35%) */}
-            <div style={{ flex: '0 0 32%' }}>
+            <div className="w-full lg:w-[32%] lg:flex-none">
               <TradeSidebar
                 ticker={ticker}
                 buyingPower={buyingPower}

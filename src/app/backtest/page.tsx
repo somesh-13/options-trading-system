@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import BacktestPanel from '@/components/BacktestPanel';
 import MultiBacktestPanel from '@/components/MultiBacktestPanel';
-import Link from 'next/link';
+import WheelResultsTable from '@/components/WheelResultsTable';
 
 export default function BacktestPage() {
-  const [mode, setMode] = useState<'single' | 'comparison'>('comparison');
+  const [mode, setMode] = useState<'single' | 'comparison' | 'wheel'>('comparison');
   const [ticker, setTicker] = useState('CIFR');
   const [inputTicker, setInputTicker] = useState('CIFR');
 
@@ -16,19 +16,16 @@ export default function BacktestPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#1E1E1E] text-white p-6">
+    <main className="min-h-screen bg-[#1E1E1E] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/" className="text-gray-400 hover:text-white">&larr; Dashboard</Link>
-          <h1 className="text-3xl font-bold">Backtesting Framework</h1>
-        </div>
-        <p className="text-gray-400 mb-4">
+        <h2 className="rv-h1">Backtesting Framework</h2>
+        <div className="rv-sub">
           Regime-aware walk-forward backtesting with bias mitigation.
           Tests volatility arbitrage strategies on historical data with comprehensive performance metrics.
-        </p>
+        </div>
 
         {/* Mode toggle */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
           <button onClick={() => setMode('comparison')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               mode === 'comparison'
@@ -45,18 +42,28 @@ export default function BacktestPage() {
             }`}>
             Single Strategy
           </button>
+          <button onClick={() => setMode('wheel')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              mode === 'wheel'
+                ? 'bg-[#00C805] text-white'
+                : 'bg-[#2D2D2D] text-gray-400 hover:text-white'
+            }`}>
+            Wheel (CSP + CC)
+          </button>
         </div>
 
         {mode === 'comparison' ? (
           <MultiBacktestPanel />
+        ) : mode === 'wheel' ? (
+          <WheelResultsTable />
         ) : (
           <>
-            <form onSubmit={handleSubmit} className="flex gap-3 mb-6">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
               <input type="text" value={inputTicker}
                 onChange={(e) => setInputTicker(e.target.value.toUpperCase())}
-                className="w-32 bg-[#2D2D2D] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]" />
+                className="w-full sm:w-40 bg-[#2D2D2D] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]" />
               <button type="submit"
-                className="px-6 py-2 bg-[#00C805] hover:bg-[#00A004] text-white font-bold rounded-lg">
+                className="w-full sm:w-auto px-6 py-2 bg-[#00C805] hover:bg-[#00A004] text-white font-bold rounded-lg">
                 Set Ticker
               </button>
             </form>

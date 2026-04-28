@@ -3,7 +3,18 @@
  * Connects Next.js frontend to FastAPI backend (port 8000)
  */
 
-const PRICING_API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
+export const PRICING_API_URL = (() => {
+  if (process.env.NEXT_PUBLIC_PRICING_API_URL) {
+    return process.env.NEXT_PUBLIC_PRICING_API_URL;
+  }
+  // Default: same-origin. `${PRICING_API_URL}/api/...` becomes a same-origin URL
+  // that Next.js's rewrites() in next.config.ts proxy to the backend on :8000.
+  // This avoids CORS entirely and works for localhost / LAN IP / ngrok alike.
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return 'http://localhost:8000';
+})();
 
 export interface OptionParams {
   S: number;
@@ -106,6 +117,20 @@ export async function getCifrPrice(): Promise<number> {
 
   if (!response.ok) {
     throw new Error('Failed to fetch CIFR price');
+  }
+
+  const data = await response.json();
+  return data.price;
+}
+
+export async function getTickerPrice(ticker: string): Promise<number> {
+  const response = await fetch(
+    `${PRICING_API_URL}/api/market/${encodeURIComponent(ticker)}/price`
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || `Failed to fetch price for ${ticker}`);
   }
 
   const data = await response.json();
@@ -795,4 +820,216 @@ export async function runComparativeBacktest(params: {
   });
   if (!response.ok) throw new Error('Comparative backtest failed');
   return response.json();
+}
+
+// === V2: Multi-Agent Orchestrator (P1) ===
+
+export interface AgentSignalData {
+  agent_id: string;
+  ticker: string;
+  signal_type: string;
+  confidence: number;
+  reasoning: string;
+  timestamp: string;
+  data_sources: string[];
+  metadata: Record<string, unknown>;
+}
+
+export interface ConfluenceResultData {
+  ticker: string;
+  confluence_score: number;
+  recommended_strategy: string | null;
+  agent_signals: AgentSignalData[];
+  reasoning: string;
+  timestamp: string;
+}
+
+export async function runAgentAnalyze(ticker: string): Promise<ConfluenceResultData> {
+  const res = await fetch(`${PRICING_API_URL}/api/agents/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker }),
+  });
+  if (!res.ok) throw new Error(`Agent analyze failed: ${res.status}`);
+  return res.json();
+}
+
+export async function getAgentConfluence(ticker: string): Promise<ConfluenceResultData> {
+  const res = await fetch(`${PRICING_API_URL}/api/agents/confluence/${encodeURIComponent(ticker)}`);
+  if (!res.ok) throw new Error(`Confluence fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function getAgentStatus(): Promise<{ agents: Array<Record<string, unknown>> }> {
+  const res = await fetch(`${PRICING_API_URL}/api/agents/status`);
+  if (!res.ok) throw new Error(`Agent status fetch failed: ${res.status}`);
+  return res.json();
+}
+
+// === V2: Trade Recommendation (P2) ===
+
+export interface TradeRecommendationData {
+  ticker: string;
+  strategy: 'SELL_CSP' | 'BUY_LEAP' | 'SELL_COVERED_CALL';
+  expiry: string;
+  strike: number;
+  bid: number;
+  ask: number;
+  mid: number;
+  delta: number;
+  theta: number;
+  iv: number;
+  max_profit: number;
+  max_loss: number;
+  breakeven: number;
+  pop: number;
+  annualized_return: number;
+  confluence_score: number;
+  reasoning: string;
+  occ_symbol?: string | null;
+}
+
+export async function getTradeRecommendation(ticker: string, strategyOverride?: string): Promise<TradeRecommendationData> {
+  const res = await fetch(`${PRICING_API_URL}/api/agents/trade-recommendation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker, strategy_override: strategyOverride }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Trade rec failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+// === V2: Signal History + Win Rate (P3) ===
+
+export interface SignalBucketStats {
+  total: number;
+  resolved: number;
+  wins: number;
+  win_rate: number | null;
+  avg_pnl: number | null;
+}
+
+export interface WinRateResponse {
+  min_confluence: number;
+  resolved: number;
+  wins: number;
+  win_rate: number | null;
+  buckets: Record<'low' | 'mid' | 'high', SignalBucketStats>;
+}
+
+export interface SignalHistoryRow {
+  signal_id: string;
+  ticker: string;
+  timestamp: string;
+  agent_id: string;
+  signal_type: string;
+  confidence: number;
+  confluence_score: number;
+  recommended_strategy: string | null;
+  pnl: number | null;
+  pnl_pct: number | null;
+  outcome: 'WIN' | 'LOSS' | 'OPEN' | 'EXPIRED' | null;
+  exit_reason: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export async function getSignalHistory(opts: { ticker?: string; days?: number; minConfluence?: number; limit?: number } = {}): Promise<{ signals: SignalHistoryRow[] }> {
+  const params = new URLSearchParams();
+  if (opts.ticker) params.set('ticker', opts.ticker);
+  if (opts.days !== undefined) params.set('days', String(opts.days));
+  if (opts.minConfluence !== undefined) params.set('min_confluence', String(opts.minConfluence));
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit));
+  const qs = params.toString();
+  const res = await fetch(`${PRICING_API_URL}/api/signals/history${qs ? `?${qs}` : ''}`);
+  if (!res.ok) throw new Error(`Signal history fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function getSignalWinRate(minConfluence = 0.65): Promise<WinRateResponse> {
+  const res = await fetch(`${PRICING_API_URL}/api/signals/win-rate?min_confluence=${minConfluence}`);
+  if (!res.ok) throw new Error(`Win rate fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export interface StrategyPerformanceRow {
+  strategy: string;
+  total: number;
+  resolved: number;
+  wins: number;
+  win_rate: number | null;
+  avg_pnl: number | null;
+  sharpe: number | null;
+}
+
+export async function getSignalPerformance(): Promise<{ total_signals: number; buckets: Record<'low' | 'mid' | 'high', SignalBucketStats>; strategies: StrategyPerformanceRow[] }> {
+  const res = await fetch(`${PRICING_API_URL}/api/signals/performance`);
+  if (!res.ok) throw new Error(`Signal performance fetch failed: ${res.status}`);
+  return res.json();
+}
+
+// === V2: Historical Replay (P6) ===
+
+export interface ReplayDayResult {
+  day: string;
+  price: number;
+  iv_hv_ratio: number;
+  keltner_position: string;
+  iv_regime: string;
+  confluence_score: number;
+  strategy: string | null;
+  trade: {
+    ticker: string;
+    open_day: string;
+    resolution_day: string;
+    strategy: string;
+    strike: number;
+    entry_price: number;
+    iv: number;
+    premium: number;
+    pnl?: number;
+  } | null;
+  resolved_pnl: number | null;
+}
+
+export interface ReplayResult {
+  replay_id: string;
+  ticker: string;
+  start: string;
+  end: string;
+  timeline: ReplayDayResult[];
+  metrics: {
+    total_pnl: number;
+    trades: number;
+    wins: number;
+    losses: number;
+    win_rate: number | null;
+    avg_pnl: number;
+    max_drawdown: number;
+    sharpe: number | null;
+    by_confluence_bucket: Record<'low' | 'mid' | 'high', { trades: number; wins: number }>;
+    by_strategy: Record<string, { trades: number; pnl: number; wins: number }>;
+    still_open: number;
+  };
+  coaching: string;
+  generated_at: string;
+}
+
+export async function runReplay(ticker: string, start: string, end: string): Promise<ReplayResult> {
+  const res = await fetch(`${PRICING_API_URL}/api/replay/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker, start, end }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Replay failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export function replayPdfUrl(replayId: string): string {
+  return `${PRICING_API_URL}/api/replay/${encodeURIComponent(replayId)}/pdf`;
 }

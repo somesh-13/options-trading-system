@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { PRICING_API_URL } from '@/lib/pricing-api';
 
-const WS_URL =
-  typeof window !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000').replace(/^http/, 'ws') + '/ws/live'
-    : 'ws://localhost:8000/ws/live';
+const WS_URL = PRICING_API_URL.replace(/^http/, 'ws') + '/ws/live';
 
 const SAMPLE_RATE = 16000;
 

@@ -31,6 +31,109 @@ def get_ticker_price(ticker: str) -> float:
     return float(data['Close'].iloc[-1])
 
 
+def get_ticker_detail(ticker: str) -> Dict:
+    """
+    Rich ticker snapshot for the stock detail page: price, day/52w range,
+    volume, market cap, P/E, company name. Tolerant of yfinance flakiness —
+    missing fields come back as None rather than raising.
+    """
+    stock = yf.Ticker(ticker)
+    hist = stock.history(period="5d")
+
+    if hist.empty:
+        raise ValueError(f"Unable to fetch price for {ticker}")
+
+    last = hist.iloc[-1]
+    prev_close = float(hist['Close'].iloc[-2]) if len(hist) >= 2 else float(last['Open'])
+    price = float(last['Close'])
+    change = price - prev_close
+    change_pct = (change / prev_close * 100.0) if prev_close else 0.0
+
+    info: Dict = {}
+    try:
+        info = stock.info or {}
+    except Exception:
+        info = {}
+
+    def _f(key):
+        v = info.get(key)
+        try:
+            return float(v) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    def _i(key):
+        v = info.get(key)
+        try:
+            return int(v) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    market_cap_raw = info.get('marketCap')
+    market_cap_str = _format_market_cap(market_cap_raw) if market_cap_raw else "—"
+
+    # DCF-friendly fundamentals. All in absolute dollars (not $M) so the client
+    # can decide its own display units. Any missing field stays as None so the
+    # frontend can fall back to a sensible default.
+    total_debt = _f('totalDebt')
+    total_cash = _f('totalCash') or _f('totalCashPerShare')
+    net_debt_abs = None
+    if total_debt is not None:
+        net_debt_abs = total_debt - (total_cash or 0.0)
+
+    fundamentals = {
+        'revenue':          _f('totalRevenue'),        # TTM revenue ($)
+        'operatingMargin':  _f('operatingMargins'),    # decimal (0.25 = 25%)
+        'profitMargin':     _f('profitMargins'),       # decimal
+        'sharesOutstanding': _f('sharesOutstanding'),  # shares, not millions
+        'totalDebt':        total_debt,
+        'totalCash':        total_cash,
+        'netDebt':          net_debt_abs,
+        'ebitda':           _f('ebitda'),
+        'revenueGrowth':    _f('revenueGrowth'),       # decimal YoY
+        'beta':             _f('beta'),
+    }
+
+    return {
+        'ticker': ticker.upper(),
+        'name': info.get('longName') or info.get('shortName') or ticker.upper(),
+        'price': round(price, 4),
+        'change': round(change, 4),
+        'changePercent': round(change_pct, 4),
+        'volume': int(last['Volume']) if not pd.isna(last['Volume']) else 0,
+        'marketCap': market_cap_str,
+        'marketCapValue': _f('marketCap'),
+        'dayHigh': round(float(last['High']), 4),
+        'dayLow': round(float(last['Low']), 4),
+        'open': round(float(last['Open']), 4),
+        'previousClose': round(prev_close, 4),
+        'pe': _f('trailingPE'),
+        'yearHigh': _f('fiftyTwoWeekHigh'),
+        'yearLow': _f('fiftyTwoWeekLow'),
+        'avgVolume': _i('averageVolume'),
+        'lastUpdated': str(hist.index[-1]),
+        'fundamentals': fundamentals,
+    }
+
+
+def _format_market_cap(value: float) -> str:
+    """Format market cap as $1.23T / $45.6B / $123M / $45K."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return "—"
+    abs_v = abs(v)
+    if abs_v >= 1e12:
+        return f"${v / 1e12:.2f}T"
+    if abs_v >= 1e9:
+        return f"${v / 1e9:.2f}B"
+    if abs_v >= 1e6:
+        return f"${v / 1e6:.2f}M"
+    if abs_v >= 1e3:
+        return f"${v / 1e3:.2f}K"
+    return f"${v:.2f}"
+
+
 def detect_mispricing(ticker: str) -> Dict:
     """
     Detect IV vs HV mispricing for any ticker.
@@ -159,11 +262,19 @@ def get_price_history(ticker: str, period: str = "1M", interval: str = "1D") -> 
 
     Args:
         ticker: Stock symbol
-        period: 1D, 1W, 1M, 3M, 1Y, ALL
+        period: 1D, 5D, 1W, 1M, 3M, 6M, 1Y, 2Y, 5Y, ALL
         interval: Auto-mapped from period if not specified
     """
-    period_map = {"1D": "1d", "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y", "ALL": "max"}
-    interval_map = {"1D": "5m", "1W": "30m", "1M": "1d", "3M": "1d", "1Y": "1wk", "ALL": "1wk"}
+    period_map = {
+        "1D": "1d", "5D": "5d", "1W": "5d",
+        "1M": "1mo", "3M": "3mo", "6M": "6mo",
+        "1Y": "1y", "2Y": "2y", "5Y": "5y", "ALL": "max",
+    }
+    interval_map = {
+        "1D": "5m", "5D": "30m", "1W": "30m",
+        "1M": "1d", "3M": "1d", "6M": "1d",
+        "1Y": "1d", "2Y": "1wk", "5Y": "1wk", "ALL": "1wk",
+    }
 
     yf_period = period_map.get(period.upper(), "1mo")
     yf_interval = interval_map.get(period.upper(), "1d")
@@ -176,13 +287,17 @@ def get_price_history(ticker: str, period: str = "1M", interval: str = "1D") -> 
 
     records = []
     for idx, row in data.iterrows():
+        ts_ns = idx.value if hasattr(idx, "value") else int(pd.Timestamp(idx).value)
+        timestamp_ms = int(ts_ns // 1_000_000)
+        date_iso = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)[:10]
         records.append({
-            "date": str(idx),
+            "timestamp": timestamp_ms,
+            "date": date_iso,
             "open": round(float(row["Open"]), 4),
             "high": round(float(row["High"]), 4),
             "low": round(float(row["Low"]), 4),
             "close": round(float(row["Close"]), 4),
-            "volume": int(row["Volume"]),
+            "volume": int(row["Volume"]) if not pd.isna(row["Volume"]) else 0,
         })
 
     return {

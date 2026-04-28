@@ -1,0 +1,3240 @@
+[
+  {
+    "route": "/options-chain",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/options-chain",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 14,
+    "tag": "span",
+    "label": "+2.4%",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 15,
+    "tag": "div",
+    "label": "7dApr 26ATM IV 68%12k OI",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 16,
+    "tag": "div",
+    "label": "14dMay 03ATM IV 71%18k OI",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 17,
+    "tag": "div",
+    "label": "24dMay 17ATM IV 72%44k OI",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 18,
+    "tag": "div",
+    "label": "45dJun 07ATM IV 69%22k OI",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 19,
+    "tag": "div",
+    "label": "80dJul 12ATM IV 62%14k OI",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 20,
+    "tag": "div",
+    "label": "170dOct 11ATM IV 55%8k OI",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 21,
+    "tag": "span",
+    "label": "BUY · $41",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 22,
+    "tag": "span",
+    "label": "ATM",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 23,
+    "tag": "span",
+    "label": "SELL · $82",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 24,
+    "tag": "span",
+    "label": "SELL PREMIUM",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/options-chain",
+    "index": 25,
+    "tag": "button",
+    "label": "Open Next.js Dev Tools",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/pricing",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/pricing",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/pricing",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/pricing",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/pricing",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/pricing",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/pricing",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/options-chain"
+  },
+  {
+    "route": "/pricing",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/portfolio"
+  },
+  {
+    "route": "/pricing",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/positions"
+  },
+  {
+    "route": "/pricing",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/risk-mgmt"
+  },
+  {
+    "route": "/pricing",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/auto-engine"
+  },
+  {
+    "route": "/pricing",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/backtest"
+  },
+  {
+    "route": "/pricing",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/sentiment"
+  },
+  {
+    "route": "/pricing",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/agent"
+  },
+  {
+    "route": "/pricing",
+    "index": 14,
+    "tag": "button",
+    "label": "Price from IV",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/pricing",
+    "index": 15,
+    "tag": "button",
+    "label": "IV from price",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/pricing",
+    "index": 16,
+    "tag": "span",
+    "label": "0.0%",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/portfolio",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/scanner"
+  },
+  {
+    "route": "/portfolio",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/pricing"
+  },
+  {
+    "route": "/portfolio",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/positions"
+  },
+  {
+    "route": "/portfolio",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/auto-engine"
+  },
+  {
+    "route": "/portfolio",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/backtest"
+  },
+  {
+    "route": "/portfolio",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/sentiment"
+  },
+  {
+    "route": "/portfolio",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/agent"
+  },
+  {
+    "route": "/portfolio",
+    "index": 14,
+    "tag": "span",
+    "label": "short vol",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 15,
+    "tag": "span",
+    "label": "short call",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 16,
+    "tag": "span",
+    "label": "short call",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 17,
+    "tag": "span",
+    "label": "long call",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/portfolio",
+    "index": 18,
+    "tag": "span",
+    "label": "long put",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 1
+  },
+  {
+    "route": "/scanner",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/scanner",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 1
+  },
+  {
+    "route": "/scanner",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 14,
+    "tag": "button",
+    "label": "Submit",
+    "outcome": "disabled",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 15,
+    "tag": "button",
+    "label": "Is CIFR overpriced vs its 30-day HV?",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 16,
+    "tag": "button",
+    "label": "Should I buy MARA today?",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 17,
+    "tag": "button",
+    "label": "Compare AAPL and MSFT volatility",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 18,
+    "tag": "button",
+    "label": "Show me stocks with ratio > 1.3",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 19,
+    "tag": "button",
+    "label": "My list· 8",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 20,
+    "tag": "button",
+    "label": "Mispriced (IV ≫ HV)· 3",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 21,
+    "tag": "button",
+    "label": "Cheap IV· 2",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 22,
+    "tag": "button",
+    "label": "High-vol regime· 4",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 23,
+    "tag": "button",
+    "label": "Normal regime· 4",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 24,
+    "tag": "button",
+    "label": "BUY signal· 3",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 25,
+    "tag": "button",
+    "label": "SELL signal· 3",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 26,
+    "tag": "a",
+    "label": "MARA",
+    "href": "http://localhost:3000/stock/MARA",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 27,
+    "tag": "span",
+    "label": "SELL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 28,
+    "tag": "span",
+    "label": "high-vol",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 29,
+    "tag": "a",
+    "label": "chain",
+    "href": "http://localhost:3000/options-chain?ticker=MARA",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 30,
+    "tag": "a",
+    "label": "CIFR",
+    "href": "http://localhost:3000/stock/CIFR",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 31,
+    "tag": "span",
+    "label": "SELL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 32,
+    "tag": "span",
+    "label": "high-vol",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 33,
+    "tag": "a",
+    "label": "chain",
+    "href": "http://localhost:3000/options-chain?ticker=CIFR",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 34,
+    "tag": "a",
+    "label": "WULF",
+    "href": "http://localhost:3000/stock/WULF",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 35,
+    "tag": "span",
+    "label": "SELL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 36,
+    "tag": "span",
+    "label": "high-vol",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 37,
+    "tag": "a",
+    "label": "chain",
+    "href": "http://localhost:3000/options-chain?ticker=WULF",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 38,
+    "tag": "a",
+    "label": "PYPL",
+    "href": "http://localhost:3000/stock/PYPL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/scanner",
+    "index": 39,
+    "tag": "span",
+    "label": "BUY",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 14,
+    "tag": "a",
+    "label": "CIFR",
+    "href": "http://localhost:3000/stock/CIFR",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 15,
+    "tag": "span",
+    "label": "SELL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 16,
+    "tag": "span",
+    "label": "high-vol",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 17,
+    "tag": "a",
+    "label": "chain →",
+    "href": "http://localhost:3000/options-chain?ticker=CIFR",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 18,
+    "tag": "a",
+    "label": "WULF",
+    "href": "http://localhost:3000/stock/WULF",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 19,
+    "tag": "span",
+    "label": "SELL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 20,
+    "tag": "span",
+    "label": "high-vol",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 21,
+    "tag": "a",
+    "label": "chain →",
+    "href": "http://localhost:3000/options-chain?ticker=WULF",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 22,
+    "tag": "a",
+    "label": "HOOD",
+    "href": "http://localhost:3000/stock/HOOD",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 23,
+    "tag": "span",
+    "label": "NEUTRAL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 24,
+    "tag": "span",
+    "label": "normal",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 25,
+    "tag": "a",
+    "label": "chain →",
+    "href": "http://localhost:3000/options-chain?ticker=HOOD",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 26,
+    "tag": "a",
+    "label": "MARA",
+    "href": "http://localhost:3000/stock/MARA",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 27,
+    "tag": "span",
+    "label": "SELL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 28,
+    "tag": "span",
+    "label": "high-vol",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 29,
+    "tag": "a",
+    "label": "chain →",
+    "href": "http://localhost:3000/options-chain?ticker=MARA",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 30,
+    "tag": "a",
+    "label": "PYPL",
+    "href": "http://localhost:3000/stock/PYPL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 31,
+    "tag": "span",
+    "label": "BUY",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 32,
+    "tag": "span",
+    "label": "normal",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 33,
+    "tag": "a",
+    "label": "chain →",
+    "href": "http://localhost:3000/options-chain?ticker=PYPL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 34,
+    "tag": "a",
+    "label": "RIOT",
+    "href": "http://localhost:3000/stock/RIOT",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 35,
+    "tag": "span",
+    "label": "BUY",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 36,
+    "tag": "span",
+    "label": "high-vol",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 37,
+    "tag": "a",
+    "label": "chain →",
+    "href": "http://localhost:3000/options-chain?ticker=RIOT",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 38,
+    "tag": "a",
+    "label": "COIN",
+    "href": "http://localhost:3000/stock/COIN",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/",
+    "index": 39,
+    "tag": "span",
+    "label": "NEUTRAL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/auto-engine",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 14,
+    "tag": "span",
+    "label": "RUNNING",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 15,
+    "tag": "button",
+    "label": "dry run",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/auto-engine",
+    "index": 16,
+    "tag": "button",
+    "label": "■ HALT ALL",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/vol-surface",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/vol-surface",
+    "index": 14,
+    "tag": "button",
+    "label": "Load",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/sentiment",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 14,
+    "tag": "button",
+    "label": "Set Ticker",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/sentiment",
+    "index": 15,
+    "tag": "button",
+    "label": "Analyze Sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/journal",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 14,
+    "tag": "button",
+    "label": "Sync from Alpaca",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 15,
+    "tag": "button",
+    "label": "Previous",
+    "outcome": "disabled",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/journal",
+    "index": 16,
+    "tag": "button",
+    "label": "Next",
+    "outcome": "disabled",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/backtest",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 14,
+    "tag": "button",
+    "label": "Multi-Strategy Comparison",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 15,
+    "tag": "button",
+    "label": "Single Strategy",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 16,
+    "tag": "button",
+    "label": "CIFR",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 17,
+    "tag": "button",
+    "label": "WULF",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 18,
+    "tag": "button",
+    "label": "ONDS",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 19,
+    "tag": "button",
+    "label": "HOOD",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 20,
+    "tag": "button",
+    "label": "CLSK",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 21,
+    "tag": "button",
+    "label": "Compare Strategies",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/backtest",
+    "index": 22,
+    "tag": "button",
+    "label": "Open Next.js Dev Tools",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/execution",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/execution",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/positions",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/positions",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/positions",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/positions",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/positions",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/positions",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/scanner"
+  },
+  {
+    "route": "/positions",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/positions",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/pricing"
+  },
+  {
+    "route": "/positions",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/positions",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/positions",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/auto-engine"
+  },
+  {
+    "route": "/positions",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/backtest"
+  },
+  {
+    "route": "/positions",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/sentiment"
+  },
+  {
+    "route": "/positions",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/agent"
+  },
+  {
+    "route": "/positions",
+    "index": 14,
+    "tag": "button",
+    "label": "View",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/agent",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/agent",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/agent",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/agent",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/agent",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/scanner"
+  },
+  {
+    "route": "/agent",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/agent",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/options-chain"
+  },
+  {
+    "route": "/agent",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/agent",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/portfolio"
+  },
+  {
+    "route": "/agent",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/risk-mgmt"
+  },
+  {
+    "route": "/agent",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/auto-engine"
+  },
+  {
+    "route": "/agent",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/backtest"
+  },
+  {
+    "route": "/agent",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/sentiment"
+  },
+  {
+    "route": "/agent",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/agent",
+    "index": 14,
+    "tag": "button",
+    "label": "Connect to VegaEdge",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/risk",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 14,
+    "tag": "button",
+    "label": "Update",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 15,
+    "tag": "button",
+    "label": "Run Stress Test",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk",
+    "index": 16,
+    "tag": "button",
+    "label": "Generate Heatmap",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 14,
+    "tag": "button",
+    "label": "Set Ticker",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/risk-mgmt",
+    "index": 15,
+    "tag": "button",
+    "label": "Calculate VaR",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/strategy",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 14,
+    "tag": "button",
+    "label": "Calculate EV",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 15,
+    "tag": "button",
+    "label": "Remove",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 16,
+    "tag": "button",
+    "label": "+ Add Position",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/strategy",
+    "index": 17,
+    "tag": "button",
+    "label": "Calculate Hedge",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 0,
+    "tag": "a",
+    "label": "vegaEdge",
+    "href": "http://localhost:3000/",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 1,
+    "tag": "a",
+    "label": "Home",
+    "href": "http://localhost:3000/",
+    "outcome": "navigated",
+    "consoleErrors": 0,
+    "urlAfter": "/"
+  },
+  {
+    "route": "/replay",
+    "index": 2,
+    "tag": "button",
+    "label": "⌘K",
+    "outcome": "ok",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 3,
+    "tag": "a",
+    "label": "◎Home",
+    "href": "http://localhost:3000/",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 4,
+    "tag": "a",
+    "label": "⊞Scanner",
+    "href": "http://localhost:3000/scanner",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 5,
+    "tag": "a",
+    "label": "≣Chain",
+    "href": "http://localhost:3000/options-chain",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 6,
+    "tag": "a",
+    "label": "ƒPricing",
+    "href": "http://localhost:3000/pricing",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 7,
+    "tag": "a",
+    "label": "⊟Portfolio",
+    "href": "http://localhost:3000/portfolio",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 8,
+    "tag": "a",
+    "label": "◫Positions",
+    "href": "http://localhost:3000/positions",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 9,
+    "tag": "a",
+    "label": "△Risk",
+    "href": "http://localhost:3000/risk-mgmt",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 10,
+    "tag": "a",
+    "label": "⟳Auto",
+    "href": "http://localhost:3000/auto-engine",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 11,
+    "tag": "a",
+    "label": "⊿Backtest",
+    "href": "http://localhost:3000/backtest",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 12,
+    "tag": "a",
+    "label": "∿NLP",
+    "href": "http://localhost:3000/sentiment",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 13,
+    "tag": "a",
+    "label": "◉Agent",
+    "href": "http://localhost:3000/agent",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  },
+  {
+    "route": "/replay",
+    "index": 14,
+    "tag": "button",
+    "label": "Run Replay",
+    "outcome": "error",
+    "error": "locator.click: Timeout 4000ms exceeded.",
+    "consoleErrors": 0
+  }
+]

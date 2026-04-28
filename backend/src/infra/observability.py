@@ -1,0 +1,153 @@
+"""Structured JSON logging + in-memory metrics registry (roadmap §11.4).
+
+Designed for Cloud Run / GCP Logging which parses stdout JSON into structured
+fields. Metrics are kept in-process (no Prometheus client dependency) and
+served via a simple text-format endpoint.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import sys
+import threading
+import time
+import uuid
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
+
+
+# ---------------------------------------------------------------------------
+# JSON logging
+# ---------------------------------------------------------------------------
+
+
+class JsonFormatter(logging.Formatter):
+    """Emit a single-line JSON record per log message."""
+
+    RESERVED = {
+        "name", "msg", "args", "levelname", "levelno", "pathname", "filename",
+        "module", "exc_info", "exc_text", "stack_info", "lineno", "funcName",
+        "created", "msecs", "relativeCreated", "thread", "threadName",
+        "processName", "process", "message",
+    }
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload: Dict[str, Any] = {
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(record.created))
+                  + f".{int(record.msecs):03d}Z",
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exc"] = self.formatException(record.exc_info)
+        for key, value in record.__dict__.items():
+            if key in self.RESERVED or key.startswith("_"):
+                continue
+            payload[key] = value
+        return json.dumps(payload, default=str)
+
+
+def configure_json_logging(level: int = logging.INFO) -> None:
+    """Attach the JSON formatter to the root logger (idempotent)."""
+    root = logging.getLogger()
+    for h in list(root.handlers):
+        root.removeHandler(h)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JsonFormatter())
+    root.addHandler(handler)
+    root.setLevel(level)
+
+
+# ---------------------------------------------------------------------------
+# Correlation IDs
+# ---------------------------------------------------------------------------
+
+_current_correlation: threading.local = threading.local()
+
+
+def set_correlation_id(value: Optional[str] = None) -> str:
+    cid = value or uuid.uuid4().hex[:16]
+    _current_correlation.value = cid
+    return cid
+
+
+def get_correlation_id() -> Optional[str]:
+    return getattr(_current_correlation, "value", None)
+
+
+# ---------------------------------------------------------------------------
+# Metrics registry (in-memory, thread-safe)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class _Counter:
+    value: float = 0.0
+
+
+@dataclass
+class _Histogram:
+    samples: List[float] = field(default_factory=list)
+    max_samples: int = 1024
+
+    def observe(self, value: float) -> None:
+        if len(self.samples) >= self.max_samples:
+            self.samples.pop(0)
+        self.samples.append(float(value))
+
+
+class MetricsRegistry:
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._counters: Dict[str, _Counter] = {}
+        self._histograms: Dict[str, _Histogram] = {}
+
+    def incr(self, name: str, delta: float = 1.0) -> None:
+        with self._lock:
+            c = self._counters.setdefault(name, _Counter())
+            c.value += float(delta)
+
+    def observe(self, name: str, value: float) -> None:
+        with self._lock:
+            h = self._histograms.setdefault(name, _Histogram())
+            h.observe(value)
+
+    def snapshot(self) -> Dict[str, Any]:
+        with self._lock:
+            counters = {k: v.value for k, v in self._counters.items()}
+            histograms: Dict[str, Dict[str, float]] = {}
+            for name, h in self._histograms.items():
+                if not h.samples:
+                    continue
+                xs = sorted(h.samples)
+                n = len(xs)
+                histograms[name] = {
+                    "count": float(n),
+                    "sum": float(sum(xs)),
+                    "avg": float(sum(xs) / n),
+                    "p50": float(xs[n // 2]),
+                    "p95": float(xs[min(n - 1, int(n * 0.95))]),
+                    "p99": float(xs[min(n - 1, int(n * 0.99))]),
+                    "max": float(xs[-1]),
+                }
+        return {"counters": counters, "histograms": histograms}
+
+    def render_text(self) -> str:
+        """Render a Prometheus-ish text exposition of the current snapshot."""
+        snap = self.snapshot()
+        lines: List[str] = []
+        for name, value in snap["counters"].items():
+            lines.append(f"{name} {value}")
+        for name, stats in snap["histograms"].items():
+            for suffix, v in stats.items():
+                lines.append(f"{name}_{suffix} {v}")
+        return "\n".join(lines) + "\n"
+
+
+_metrics = MetricsRegistry()
+
+
+def metrics() -> MetricsRegistry:
+    return _metrics

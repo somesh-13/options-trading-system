@@ -3,6 +3,16 @@ node_modules/
 
 # Next.js build output
 .next/
+.next.root-owned.*/
+
+# TypeScript incremental cache
+tsconfig.tsbuildinfo
+
+# Process logs
+nohup.out
+
+# macOS resource forks
+._*
 
 # Environment variables
 .env
@@ -12,6 +22,16 @@ node_modules/
 __pycache__/
 *.pyc
 backend/venv/
+backend/.venv/
+backend/trades.db
+backend/trades.db-shm
+backend/trades.db-wal
 
 # macOS
 .DS_Store
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

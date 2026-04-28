@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { PRICING_API_URL } from '@/lib/pricing-api';
 
 interface BacktestMetrics {
   total_return_pct: number;
@@ -67,8 +68,6 @@ interface BacktestResult {
   monthly_returns: Array<{ month: string; return_pct: number }>;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
-
 export default function BacktestPanel({ ticker }: { ticker: string }) {
   const [result, setResult] = useState<BacktestResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -82,7 +81,7 @@ export default function BacktestPanel({ ticker }: { ticker: string }) {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetch(`${API_URL}/api/backtest/run`, {
+      const resp = await fetch(`${PRICING_API_URL}/api/backtest/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,11 +108,11 @@ export default function BacktestPanel({ ticker }: { ticker: string }) {
   };
 
   return (
-    <div className="bg-[#2D2D2D] rounded-lg p-6">
-      <h3 className="text-xl font-bold mb-4">Backtesting Engine</h3>
+    <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
+      <h3 className="text-lg sm:text-xl font-bold mb-4">Backtesting Engine</h3>
 
       {/* Config */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div>
           <label className="text-xs text-gray-400">Start Date</label>
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
@@ -142,7 +141,7 @@ export default function BacktestPanel({ ticker }: { ticker: string }) {
       {result && result.metrics && (
         <div className="space-y-4">
           {/* Performance Summary */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-[#1E1E1E] rounded-lg p-3">
               <MetricTooltip id="total_return_pct">
                 <p className="text-xs text-gray-500">Total Return</p>
@@ -178,7 +177,7 @@ export default function BacktestPanel({ ticker }: { ticker: string }) {
           </div>
 
           {/* Additional Metrics */}
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             <div className="bg-[#1E1E1E] rounded-lg p-3">
               <MetricTooltip id="total_trades">
                 <p className="text-xs text-gray-500">Trades</p>
@@ -214,10 +213,10 @@ export default function BacktestPanel({ ticker }: { ticker: string }) {
           </div>
 
           {/* Trade History - Expandable rows */}
-          <div className="bg-[#1E1E1E] rounded-lg p-4">
+          <div className="bg-[#1E1E1E] rounded-lg p-3 sm:p-4">
             <h4 className="text-sm text-gray-400 mb-2">Trade History ({result.trades.length} trades) — click a row to expand</h4>
-            <div className="max-h-96 overflow-y-auto">
-              <table className="w-full text-sm">
+            <div className="max-h-96 overflow-auto">
+              <table className="w-full text-xs sm:text-sm min-w-[560px]">
                 <thead className="text-gray-500 sticky top-0 bg-[#1E1E1E]">
                   <tr>
                     <th className="text-left pb-2 w-6"></th>

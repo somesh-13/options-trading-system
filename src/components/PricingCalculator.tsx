@@ -1,7 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { calculatePriceAndGreeks, type OptionParams, type PricingResponse } from '@/lib/pricing-api';
+import { useEffect, useRef, useState } from 'react';
+import {
+  calculatePriceAndGreeks,
+  getTickerPrice,
+  type OptionParams,
+  type PricingResponse,
+} from '@/lib/pricing-api';
 
 export default function PricingCalculator() {
   const [params, setParams] = useState<OptionParams>({
@@ -13,9 +18,46 @@ export default function PricingCalculator() {
     option_type: 'call',
   });
 
+  const [ticker, setTicker] = useState('CIFR');
+  const [tickerInput, setTickerInput] = useState('CIFR');
+  const [tickerLoading, setTickerLoading] = useState(false);
+  const [tickerError, setTickerError] = useState<string | null>(null);
+  const [lastQuoteAt, setLastQuoteAt] = useState<Date | null>(null);
+
   const [result, setResult] = useState<PricingResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchSpot = async (sym: string) => {
+    const symbol = sym.trim().toUpperCase();
+    if (!symbol) return;
+    setTickerLoading(true);
+    setTickerError(null);
+    try {
+      const price = await getTickerPrice(symbol);
+      setParams((p) => ({ ...p, S: price }));
+      setLastQuoteAt(new Date());
+    } catch (err: any) {
+      setTickerError(err.message || `Failed to fetch ${symbol}`);
+    } finally {
+      setTickerLoading(false);
+    }
+  };
+
+  const didInit = useRef(false);
+  useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+    fetchSpot(ticker);
+  }, [ticker]);
+
+  const handleTickerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const symbol = tickerInput.trim().toUpperCase();
+    if (!symbol) return;
+    setTicker(symbol);
+    fetchSpot(symbol);
+  };
 
   const handleCalculate = async () => {
     setLoading(true);
@@ -33,7 +75,40 @@ export default function PricingCalculator() {
   return (
     <div className="bg-[#2D2D2D] rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-6">Black-Scholes Pricing Calculator</h2>
-      
+
+      {/* Ticker Selector — populates Spot Price from Yahoo Finance */}
+      <form
+        onSubmit={handleTickerSubmit}
+        className="mb-6 flex flex-col sm:flex-row sm:items-end gap-3"
+      >
+        <div className="flex-1">
+          <label className="block text-sm text-gray-400 mb-2">Stock Ticker</label>
+          <input
+            type="text"
+            value={tickerInput}
+            onChange={(e) => setTickerInput(e.target.value.toUpperCase())}
+            placeholder="e.g. AAPL"
+            className="w-full sm:w-48 bg-[#1E1E1E] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={tickerLoading}
+          className="bg-[#00C805] hover:bg-[#00A004] text-white font-bold px-5 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {tickerLoading ? 'Fetching…' : 'Fetch Spot'}
+        </button>
+        <div className="text-xs text-gray-500 sm:ml-2">
+          {tickerError ? (
+            <span className="text-[#FF006E]">{tickerError}</span>
+          ) : lastQuoteAt ? (
+            <>Last quote ({ticker}): {lastQuoteAt.toLocaleTimeString()}</>
+          ) : (
+            <>Fetches live spot price from Yahoo Finance</>
+          )}
+        </div>
+      </form>
+
       {/* Input Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>

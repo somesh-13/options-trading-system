@@ -1,0 +1,5050 @@
+{
+  "base": "http://localhost:3000",
+  "generatedAt": "2026-04-19T06:10:18.031Z",
+  "results": [
+    {
+      "route": "/",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Pricing Calculator",
+            "w": 185,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Vol Surface",
+            "w": 185,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Risk & P&L",
+            "w": 185,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Scanner",
+            "w": 185,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "NLP Sentiment",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Backtesting",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Strategy & Hedging",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Risk Management",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Portfolio Monitor",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Live Trading",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Trade Journal",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Auto Engine",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Positions",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Option Chain",
+            "w": 185,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Live Agent",
+            "w": 185,
+            "h": 34
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__home.png"
+    },
+    {
+      "route": "/strategy",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "input",
+            "text": "150",
+            "w": 34,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "155",
+            "w": 34,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.25",
+            "w": 34,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.3",
+            "w": 34,
+            "h": 28
+          },
+          {
+            "tag": "select",
+            "text": "Call\nPut",
+            "w": 34,
+            "h": 26
+          },
+          {
+            "tag": "input",
+            "text": "10",
+            "w": 34,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.05",
+            "w": 34,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "Remove",
+            "w": 34,
+            "h": 28
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__strategy.png"
+    },
+    {
+      "route": "/pricing",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "View 3D Volatility Surface →",
+            "w": 152,
+            "h": 16
+          },
+          {
+            "tag": "select",
+            "text": "Call\nPut",
+            "w": 330,
+            "h": 35
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__pricing.png"
+    },
+    {
+      "route": "/options-chain",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 652,
+            "width": 640,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta\t\n$1.00ITM\t$19.47\t-\t$"
+          },
+          {
+            "selector": "thead.text-gray-500.bg-[#1E1E1E]",
+            "right": 652,
+            "width": 638,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta"
+          },
+          {
+            "selector": "tr",
+            "right": 652,
+            "width": 638,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta"
+          },
+          {
+            "selector": "th.text-right.py-2.px-2",
+            "right": 453,
+            "width": 69,
+            "text": "Bid"
+          },
+          {
+            "selector": "th.text-center.py-2.px-2",
+            "right": 652,
+            "width": 60,
+            "text": ""
+          },
+          {
+            "selector": "tbody",
+            "right": 652,
+            "width": 638,
+            "text": "$1.00ITM\t$19.47\t-\t$17.26\t16.05\t18.47\t-\t+\n$2.00ITM\t$20.93\t-\t$"
+          },
+          {
+            "selector": "tr.border-t.border-gray-700/50.hover:bg-[#333]",
+            "right": 652,
+            "width": 638,
+            "text": "$1.00ITM\t$19.47\t-\t$17.26\t16.05\t18.47\t-\t+"
+          },
+          {
+            "selector": "td.py-2.px-3.text-right",
+            "right": 453,
+            "width": 69,
+            "text": "16.05"
+          },
+          {
+            "selector": "td.py-2.px-3.text-center",
+            "right": 652,
+            "width": 60,
+            "text": "+"
+          }
+        ],
+        "offscreenInteractive": [
+          {
+            "selector": "button",
+            "text": "+",
+            "left": 610,
+            "right": 633
+          }
+        ],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "View Positions",
+            "w": 78,
+            "h": 16
+          },
+          {
+            "tag": "button",
+            "text": "Buy",
+            "w": 58,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Sell",
+            "w": 57,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Calls",
+            "w": 65,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Puts",
+            "w": 62,
+            "h": 32
+          },
+          {
+            "tag": "select",
+            "text": "2026-04-24 (5 DTE)",
+            "w": 169,
+            "h": 34
+          },
+          {
+            "tag": "button",
+            "text": "+",
+            "w": 23,
+            "h": 24
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "span",
+            "text": "ITM",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "LEAP",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "CC",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "iphone-16-pro__options-chain.png"
+    },
+    {
+      "route": "/portfolio",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-sm",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "thead",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "tr.text-gray-400.border-b.border-gray-700",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "th.text-right.py-2.px-2",
+            "right": 411,
+            "width": 78,
+            "text": "Mkt Value"
+          },
+          {
+            "selector": "tbody",
+            "right": 717,
+            "width": 681,
+            "text": "HOOD\tStock\t1\t$105.08\t$90.75\t$90.75\t$-14.33\t1.00\t0.00\t0.00\t0."
+          },
+          {
+            "selector": "tr.border-b.border-gray-800.hover:bg-[#333333]",
+            "right": 717,
+            "width": 681,
+            "text": "HOOD\tStock\t1\t$105.08\t$90.75\t$90.75\t$-14.33\t1.00\t0.00\t0.00\t0."
+          },
+          {
+            "selector": "td.text-right.py-2.px-2",
+            "right": 411,
+            "width": 78,
+            "text": "$90.75"
+          },
+          {
+            "selector": "tfoot",
+            "right": 717,
+            "width": 681,
+            "text": "Portfolio Total\t254.84\t3.11\t-1.71\t21.08"
+          },
+          {
+            "selector": "tr.border-t-2.border-gray-600.font-bold",
+            "right": 717,
+            "width": 681,
+            "text": "Portfolio Total\t254.84\t3.11\t-1.71\t21.08"
+          },
+          {
+            "selector": "td.py-2.px-2",
+            "right": 486,
+            "width": 450,
+            "text": "Portfolio Total"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "←",
+            "w": 16,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "15s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "30s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "60s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "Off",
+            "w": 29,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "Refresh All",
+            "w": 82,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "1D",
+            "w": 39,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1W",
+            "w": 42,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1M",
+            "w": 41,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "3M",
+            "w": 41,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1A",
+            "w": 39,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "x",
+            "w": 9,
+            "h": 18
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "span",
+            "text": "PAPER",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "02:10:31 ET",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "15s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "30s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "60s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "Off",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "iphone-16-pro__portfolio.png"
+    },
+    {
+      "route": "/positions",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "1D",
+            "w": 42,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1W",
+            "w": 45,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1M",
+            "w": 43,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "3M",
+            "w": 43,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1Y",
+            "w": 41,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "ALL",
+            "w": 51,
+            "h": 28
+          },
+          {
+            "tag": "a",
+            "text": "Live Trading",
+            "w": 346,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "Portfolio Monitor",
+            "w": 346,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "Risk Management",
+            "w": 346,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__positions.png"
+    },
+    {
+      "route": "/journal",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L\nNo "
+          },
+          {
+            "selector": "thead",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L"
+          },
+          {
+            "selector": "tr.border-b.border-gray-700.text-gray-400",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L"
+          },
+          {
+            "selector": "th.px-4.py-3.text-left",
+            "right": 442,
+            "width": 84,
+            "text": "TYPE"
+          },
+          {
+            "selector": "th.px-4.py-3.text-right",
+            "right": 525,
+            "width": 84,
+            "text": "LIMIT"
+          },
+          {
+            "selector": "tbody",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          },
+          {
+            "selector": "tr",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          },
+          {
+            "selector": "td.px-4.py-8.text-center",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Sync from Alpaca",
+            "w": 117,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Previous",
+            "w": 78,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "Next",
+            "w": 53,
+            "h": 28
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "p",
+            "text": "TOTAL P&L",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "WIN RATE",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "0W / 0L",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "PROFIT FACTOR",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "AVG WIN / LOSS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "Best: $0.00 | Worst: $0.00",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "iphone-16-pro__journal.png"
+    },
+    {
+      "route": "/replay",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__replay.png"
+    },
+    {
+      "route": "/agent",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "←",
+            "w": 16,
+            "h": 24
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__agent.png"
+    },
+    {
+      "route": "/auto-engine",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼\nFeb 11, 11:20:00 A"
+          },
+          {
+            "selector": "tbody",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼\nFeb 11, 11:20:00 A"
+          },
+          {
+            "selector": "tr.border-b.border-gray-700/30.hover:bg-[#333333]/50",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼"
+          },
+          {
+            "selector": "td.px-4.py-2.text-gray-400",
+            "right": 561,
+            "width": 229,
+            "text": "no_signal"
+          },
+          {
+            "selector": "td.px-4.py-2.text-right",
+            "right": 612,
+            "width": 51,
+            "text": "▼"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Config",
+            "w": 165,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Start Engine",
+            "w": 173,
+            "h": 32
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "p",
+            "text": "SCANS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "TRADES EXECUTED",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "TRADES SKIPPED",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "ERRORS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "LAST SCAN",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "iphone-16-pro__auto-engine.png"
+    },
+    {
+      "route": "/backtest",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "CIFR",
+            "w": 57,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "WULF",
+            "w": 64,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "ONDS",
+            "w": 64,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "HOOD",
+            "w": 66,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "CLSK",
+            "w": 61,
+            "h": 28
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__backtest.png"
+    },
+    {
+      "route": "/execution",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L\nHOOD\t1\t$105.08\t$90.75\t$-14.33\nO"
+          },
+          {
+            "selector": "thead.text-gray-500",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L"
+          },
+          {
+            "selector": "tr",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L"
+          },
+          {
+            "selector": "th.text-right.pb-2",
+            "right": 421,
+            "width": 114,
+            "text": "Current"
+          },
+          {
+            "selector": "tbody",
+            "right": 528,
+            "width": 500,
+            "text": "HOOD\t1\t$105.08\t$90.75\t$-14.33\nONDS\t1\t$12.00\t$10.00\t$-2.00\nQS"
+          },
+          {
+            "selector": "tr.border-t.border-gray-700",
+            "right": 528,
+            "width": 500,
+            "text": "HOOD\t1\t$105.08\t$90.75\t$-14.33"
+          },
+          {
+            "selector": "td.py-2.text-right",
+            "right": 421,
+            "width": 114,
+            "text": "$90.75"
+          },
+          {
+            "selector": "td.py-2.text-right.text-[#FF006E]",
+            "right": 528,
+            "width": 107,
+            "text": "$-14.33"
+          },
+          {
+            "selector": "td.py-2.text-right.text-[#00C805]",
+            "right": 528,
+            "width": 107,
+            "text": "$7.40"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "Buy\nSell",
+            "w": 346,
+            "h": 35
+          },
+          {
+            "tag": "select",
+            "text": "Market\nLimit",
+            "w": 346,
+            "h": 35
+          },
+          {
+            "tag": "button",
+            "text": "Refresh",
+            "w": 76,
+            "h": 26
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__execution.png"
+    },
+    {
+      "route": "/risk",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "input",
+            "text": "0",
+            "w": 153,
+            "h": 16
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__risk.png"
+    },
+    {
+      "route": "/risk-mgmt",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "95%\n99%",
+            "w": 102,
+            "h": 35
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__risk-mgmt.png"
+    },
+    {
+      "route": "/scanner",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "x",
+            "w": 7,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__scanner.png"
+    },
+    {
+      "route": "/sentiment",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__sentiment.png"
+    },
+    {
+      "route": "/vol-surface",
+      "viewport": "iPhone 16 Pro",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 402,
+        "documentWidth": 402,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "w": 24,
+            "h": 22
+          },
+          {
+            "tag": "a",
+            "text": "",
+            "w": 24,
+            "h": 22
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-16-pro__vol-surface.png"
+    },
+    {
+      "route": "/",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Pricing Calculator",
+            "w": 144,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Vol Surface",
+            "w": 144,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Risk & P&L",
+            "w": 144,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Scanner",
+            "w": 144,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "NLP Sentiment",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Backtesting",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Strategy & Hedging",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Risk Management",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Portfolio Monitor",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Live Trading",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Trade Journal",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Auto Engine",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Positions",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Option Chain",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Live Agent",
+            "w": 144,
+            "h": 34
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__home.png"
+    },
+    {
+      "route": "/strategy",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "Sell (Short)\nBuy (Long)",
+            "w": 125,
+            "h": 35
+          },
+          {
+            "tag": "select",
+            "text": "Call\nPut",
+            "w": 72,
+            "h": 35
+          },
+          {
+            "tag": "input",
+            "text": "150",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "155",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.25",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.3",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "10",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.05",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "Remove",
+            "w": 24,
+            "h": 28
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__strategy.png"
+    },
+    {
+      "route": "/pricing",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "View 3D Volatility Surface →",
+            "w": 152,
+            "h": 16
+          },
+          {
+            "tag": "select",
+            "text": "Call\nPut",
+            "w": 248,
+            "h": 35
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__pricing.png"
+    },
+    {
+      "route": "/options-chain",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 652,
+            "width": 640,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta\t\n$1.00ITM\t$19.47\t-\t$"
+          },
+          {
+            "selector": "thead.text-gray-500.bg-[#1E1E1E]",
+            "right": 652,
+            "width": 638,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta"
+          },
+          {
+            "selector": "tr",
+            "right": 652,
+            "width": 638,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta"
+          },
+          {
+            "selector": "th.text-right.py-2.px-2",
+            "right": 384,
+            "width": 78,
+            "text": "Price"
+          },
+          {
+            "selector": "th.text-center.py-2.px-2",
+            "right": 652,
+            "width": 60,
+            "text": ""
+          },
+          {
+            "selector": "tbody",
+            "right": 652,
+            "width": 638,
+            "text": "$1.00ITM\t$19.47\t-\t$17.26\t16.05\t18.47\t-\t+\n$2.00ITM\t$20.93\t-\t$"
+          },
+          {
+            "selector": "tr.border-t.border-gray-700/50.hover:bg-[#333]",
+            "right": 652,
+            "width": 638,
+            "text": "$1.00ITM\t$19.47\t-\t$17.26\t16.05\t18.47\t-\t+"
+          },
+          {
+            "selector": "td.py-2.px-3.text-right",
+            "right": 384,
+            "width": 78,
+            "text": "$17.26"
+          },
+          {
+            "selector": "td.py-2.px-3.text-center",
+            "right": 652,
+            "width": 60,
+            "text": "+"
+          }
+        ],
+        "offscreenInteractive": [
+          {
+            "selector": "button",
+            "text": "+",
+            "left": 610,
+            "right": 633
+          }
+        ],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "View Positions",
+            "w": 78,
+            "h": 16
+          },
+          {
+            "tag": "button",
+            "text": "Buy",
+            "w": 58,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Sell",
+            "w": 57,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Calls",
+            "w": 65,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Puts",
+            "w": 62,
+            "h": 32
+          },
+          {
+            "tag": "select",
+            "text": "2026-04-24 (5 DTE)",
+            "w": 169,
+            "h": 34
+          },
+          {
+            "tag": "button",
+            "text": "+",
+            "w": 23,
+            "h": 24
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "span",
+            "text": "ITM",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "LEAP",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "CC",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "iphone-se__options-chain.png"
+    },
+    {
+      "route": "/portfolio",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-sm",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "thead",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "tr.text-gray-400.border-b.border-gray-700",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "th.text-right.py-2.px-2",
+            "right": 333,
+            "width": 67,
+            "text": "Current"
+          },
+          {
+            "selector": "tbody",
+            "right": 717,
+            "width": 681,
+            "text": "HOOD\tStock\t1\t$105.08\t$90.75\t$90.75\t$-14.33\t1.00\t0.00\t0.00\t0."
+          },
+          {
+            "selector": "tr.border-b.border-gray-800.hover:bg-[#333333]",
+            "right": 717,
+            "width": 681,
+            "text": "HOOD\tStock\t1\t$105.08\t$90.75\t$90.75\t$-14.33\t1.00\t0.00\t0.00\t0."
+          },
+          {
+            "selector": "td.text-right.py-2.px-2",
+            "right": 333,
+            "width": 67,
+            "text": "$90.75"
+          },
+          {
+            "selector": "tfoot",
+            "right": 717,
+            "width": 681,
+            "text": "Portfolio Total\t254.84\t3.11\t-1.71\t21.08"
+          },
+          {
+            "selector": "tr.border-t-2.border-gray-600.font-bold",
+            "right": 717,
+            "width": 681,
+            "text": "Portfolio Total\t254.84\t3.11\t-1.71\t21.08"
+          },
+          {
+            "selector": "td.py-2.px-2",
+            "right": 486,
+            "width": 450,
+            "text": "Portfolio Total"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "←",
+            "w": 16,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "15s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "30s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "60s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "Off",
+            "w": 29,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "Refresh All",
+            "w": 82,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "1D",
+            "w": 39,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1W",
+            "w": 42,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1M",
+            "w": 41,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "3M",
+            "w": 41,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1A",
+            "w": 39,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "x",
+            "w": 9,
+            "h": 18
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "span",
+            "text": "PAPER",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "02:11:19 ET",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "15s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "30s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "60s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "Off",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "iphone-se__portfolio.png"
+    },
+    {
+      "route": "/positions",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "1D",
+            "w": 42,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1W",
+            "w": 45,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1M",
+            "w": 43,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "3M",
+            "w": 43,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1Y",
+            "w": 41,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "ALL",
+            "w": 51,
+            "h": 28
+          },
+          {
+            "tag": "a",
+            "text": "Live Trading",
+            "w": 264,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "Portfolio Monitor",
+            "w": 264,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "Risk Management",
+            "w": 264,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__positions.png"
+    },
+    {
+      "route": "/journal",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L\nNo "
+          },
+          {
+            "selector": "thead",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L"
+          },
+          {
+            "selector": "tr.border-b.border-gray-700.text-gray-400",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L"
+          },
+          {
+            "selector": "th.px-4.py-3.text-right",
+            "right": 358,
+            "width": 75,
+            "text": "QTY"
+          },
+          {
+            "selector": "th.px-4.py-3.text-left",
+            "right": 442,
+            "width": 84,
+            "text": "TYPE"
+          },
+          {
+            "selector": "tbody",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          },
+          {
+            "selector": "tr",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          },
+          {
+            "selector": "td.px-4.py-8.text-center",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Sync from Alpaca",
+            "w": 117,
+            "h": 32
+          },
+          {
+            "tag": "select",
+            "text": "All Sources\nManual\nAuto Engine",
+            "w": 296,
+            "h": 34
+          },
+          {
+            "tag": "button",
+            "text": "Previous",
+            "w": 78,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "Next",
+            "w": 53,
+            "h": 28
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "p",
+            "text": "TOTAL P&L",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "WIN RATE",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "0W / 0L",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "PROFIT FACTOR",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "AVG WIN / LOSS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "Best: $0.00 | Worst: $0.00",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "iphone-se__journal.png"
+    },
+    {
+      "route": "/replay",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__replay.png"
+    },
+    {
+      "route": "/agent",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "←",
+            "w": 16,
+            "h": 24
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__agent.png"
+    },
+    {
+      "route": "/auto-engine",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼\nFeb 11, 11:20:00 A"
+          },
+          {
+            "selector": "tbody",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼\nFeb 11, 11:20:00 A"
+          },
+          {
+            "selector": "tr.border-b.border-gray-700/30.hover:bg-[#333333]/50",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼"
+          },
+          {
+            "selector": "td.px-4.py-2.font-mono",
+            "right": 332,
+            "width": 64,
+            "text": "HOOD"
+          },
+          {
+            "selector": "td.px-4.py-2.text-gray-400",
+            "right": 561,
+            "width": 229,
+            "text": "no_signal"
+          },
+          {
+            "selector": "td.px-4.py-2.text-right",
+            "right": 612,
+            "width": 51,
+            "text": "▼"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Config",
+            "w": 124,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Start Engine",
+            "w": 132,
+            "h": 32
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "p",
+            "text": "SCANS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "TRADES EXECUTED",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "TRADES SKIPPED",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "ERRORS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "LAST SCAN",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "iphone-se__auto-engine.png"
+    },
+    {
+      "route": "/backtest",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "CIFR",
+            "w": 57,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "WULF",
+            "w": 64,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "ONDS",
+            "w": 64,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "HOOD",
+            "w": 66,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "CLSK",
+            "w": 61,
+            "h": 28
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__backtest.png"
+    },
+    {
+      "route": "/execution",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L\nHOOD\t1\t$105.08\t$90.75\t$-14.33\nO"
+          },
+          {
+            "selector": "thead.text-gray-500",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L"
+          },
+          {
+            "selector": "tr",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L"
+          },
+          {
+            "selector": "th.text-right.pb-2",
+            "right": 421,
+            "width": 114,
+            "text": "Current"
+          },
+          {
+            "selector": "tbody",
+            "right": 528,
+            "width": 500,
+            "text": "HOOD\t1\t$105.08\t$90.75\t$-14.33\nONDS\t1\t$12.00\t$10.00\t$-2.00\nQS"
+          },
+          {
+            "selector": "tr.border-t.border-gray-700",
+            "right": 528,
+            "width": 500,
+            "text": "HOOD\t1\t$105.08\t$90.75\t$-14.33"
+          },
+          {
+            "selector": "td.py-2.text-right",
+            "right": 421,
+            "width": 114,
+            "text": "$90.75"
+          },
+          {
+            "selector": "td.py-2.text-right.text-[#FF006E]",
+            "right": 528,
+            "width": 107,
+            "text": "$-14.33"
+          },
+          {
+            "selector": "td.py-2.text-right.text-[#00C805]",
+            "right": 528,
+            "width": 107,
+            "text": "$7.40"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "Buy\nSell",
+            "w": 264,
+            "h": 35
+          },
+          {
+            "tag": "select",
+            "text": "Market\nLimit",
+            "w": 264,
+            "h": 35
+          },
+          {
+            "tag": "button",
+            "text": "Refresh",
+            "w": 76,
+            "h": 26
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__execution.png"
+    },
+    {
+      "route": "/risk",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "input",
+            "text": "0",
+            "w": 112,
+            "h": 16
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__risk.png"
+    },
+    {
+      "route": "/risk-mgmt",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "95%\n99%",
+            "w": 75,
+            "h": 35
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__risk-mgmt.png"
+    },
+    {
+      "route": "/scanner",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "x",
+            "w": 7,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__scanner.png"
+    },
+    {
+      "route": "/sentiment",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__sentiment.png"
+    },
+    {
+      "route": "/vol-surface",
+      "viewport": "iPhone SE",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "w": 24,
+            "h": 22
+          },
+          {
+            "tag": "a",
+            "text": "",
+            "w": 24,
+            "h": 22
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "iphone-se__vol-surface.png"
+    },
+    {
+      "route": "/",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Pricing Calculator",
+            "w": 190,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Vol Surface",
+            "w": 190,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Risk & P&L",
+            "w": 190,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Scanner",
+            "w": 190,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "NLP Sentiment",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Backtesting",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Strategy & Hedging",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Risk Management",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Portfolio Monitor",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Live Trading",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Trade Journal",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Auto Engine",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Positions",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Option Chain",
+            "w": 190,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Live Agent",
+            "w": 190,
+            "h": 34
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__home.png"
+    },
+    {
+      "route": "/strategy",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "input",
+            "text": "150",
+            "w": 36,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "155",
+            "w": 36,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.25",
+            "w": 36,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.3",
+            "w": 36,
+            "h": 28
+          },
+          {
+            "tag": "select",
+            "text": "Call\nPut",
+            "w": 36,
+            "h": 26
+          },
+          {
+            "tag": "input",
+            "text": "10",
+            "w": 36,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.05",
+            "w": 36,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "Remove",
+            "w": 36,
+            "h": 28
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__strategy.png"
+    },
+    {
+      "route": "/pricing",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "View 3D Volatility Surface →",
+            "w": 152,
+            "h": 16
+          },
+          {
+            "tag": "select",
+            "text": "Call\nPut",
+            "w": 340,
+            "h": 35
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__pricing.png"
+    },
+    {
+      "route": "/options-chain",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 652,
+            "width": 640,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta\t\n$1.00ITM\t$19.47\t-\t$"
+          },
+          {
+            "selector": "thead.text-gray-500.bg-[#1E1E1E]",
+            "right": 652,
+            "width": 638,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta"
+          },
+          {
+            "selector": "tr",
+            "right": 652,
+            "width": 638,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta"
+          },
+          {
+            "selector": "th.text-right.py-2.px-2",
+            "right": 453,
+            "width": 69,
+            "text": "Bid"
+          },
+          {
+            "selector": "th.text-center.py-2.px-2",
+            "right": 652,
+            "width": 60,
+            "text": ""
+          },
+          {
+            "selector": "tbody",
+            "right": 652,
+            "width": 638,
+            "text": "$1.00ITM\t$19.47\t-\t$17.26\t16.05\t18.47\t-\t+\n$2.00ITM\t$20.93\t-\t$"
+          },
+          {
+            "selector": "tr.border-t.border-gray-700/50.hover:bg-[#333]",
+            "right": 652,
+            "width": 638,
+            "text": "$1.00ITM\t$19.47\t-\t$17.26\t16.05\t18.47\t-\t+"
+          },
+          {
+            "selector": "td.py-2.px-3.text-right",
+            "right": 453,
+            "width": 69,
+            "text": "16.05"
+          },
+          {
+            "selector": "td.py-2.px-3.text-center",
+            "right": 652,
+            "width": 60,
+            "text": "+"
+          }
+        ],
+        "offscreenInteractive": [
+          {
+            "selector": "button",
+            "text": "+",
+            "left": 610,
+            "right": 633
+          }
+        ],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "View Positions",
+            "w": 78,
+            "h": 16
+          },
+          {
+            "tag": "button",
+            "text": "Buy",
+            "w": 58,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Sell",
+            "w": 57,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Calls",
+            "w": 65,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Puts",
+            "w": 62,
+            "h": 32
+          },
+          {
+            "tag": "select",
+            "text": "2026-04-24 (5 DTE)",
+            "w": 169,
+            "h": 34
+          },
+          {
+            "tag": "button",
+            "text": "+",
+            "w": 23,
+            "h": 24
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "span",
+            "text": "ITM",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "LEAP",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "CC",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "pixel-7__options-chain.png"
+    },
+    {
+      "route": "/portfolio",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-sm",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "thead",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "tr.text-gray-400.border-b.border-gray-700",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "th.text-right.py-2.px-2",
+            "right": 486,
+            "width": 75,
+            "text": "Unreal P&L"
+          },
+          {
+            "selector": "tbody",
+            "right": 717,
+            "width": 681,
+            "text": "HOOD\tStock\t1\t$105.08\t$90.75\t$90.75\t$-14.33\t1.00\t0.00\t0.00\t0."
+          },
+          {
+            "selector": "tr.border-b.border-gray-800.hover:bg-[#333333]",
+            "right": 717,
+            "width": 681,
+            "text": "HOOD\tStock\t1\t$105.08\t$90.75\t$90.75\t$-14.33\t1.00\t0.00\t0.00\t0."
+          },
+          {
+            "selector": "td.text-right.py-2.px-2",
+            "right": 486,
+            "width": 75,
+            "text": "$-14.33"
+          },
+          {
+            "selector": "tfoot",
+            "right": 717,
+            "width": 681,
+            "text": "Portfolio Total\t254.84\t3.11\t-1.71\t21.08"
+          },
+          {
+            "selector": "tr.border-t-2.border-gray-600.font-bold",
+            "right": 717,
+            "width": 681,
+            "text": "Portfolio Total\t254.84\t3.11\t-1.71\t21.08"
+          },
+          {
+            "selector": "td.py-2.px-2",
+            "right": 486,
+            "width": 450,
+            "text": "Portfolio Total"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "←",
+            "w": 16,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "15s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "30s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "60s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "Off",
+            "w": 29,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "Refresh All",
+            "w": 82,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "1D",
+            "w": 39,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1W",
+            "w": 42,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1M",
+            "w": 41,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "3M",
+            "w": 41,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1A",
+            "w": 39,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "x",
+            "w": 9,
+            "h": 18
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "span",
+            "text": "PAPER",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "02:12:06 ET",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "15s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "30s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "60s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "Off",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "pixel-7__portfolio.png"
+    },
+    {
+      "route": "/positions",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "1D",
+            "w": 42,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1W",
+            "w": 45,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1M",
+            "w": 43,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "3M",
+            "w": 43,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1Y",
+            "w": 41,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "ALL",
+            "w": 51,
+            "h": 28
+          },
+          {
+            "tag": "a",
+            "text": "Live Trading",
+            "w": 356,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "Portfolio Monitor",
+            "w": 356,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "Risk Management",
+            "w": 356,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__positions.png"
+    },
+    {
+      "route": "/journal",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L\nNo "
+          },
+          {
+            "selector": "thead",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L"
+          },
+          {
+            "selector": "tr.border-b.border-gray-700.text-gray-400",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L"
+          },
+          {
+            "selector": "th.px-4.py-3.text-left",
+            "right": 442,
+            "width": 84,
+            "text": "TYPE"
+          },
+          {
+            "selector": "th.px-4.py-3.text-right",
+            "right": 525,
+            "width": 84,
+            "text": "LIMIT"
+          },
+          {
+            "selector": "tbody",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          },
+          {
+            "selector": "tr",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          },
+          {
+            "selector": "td.px-4.py-8.text-center",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Sync from Alpaca",
+            "w": 117,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Previous",
+            "w": 78,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "Next",
+            "w": 53,
+            "h": 28
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "p",
+            "text": "TOTAL P&L",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "WIN RATE",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "0W / 0L",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "PROFIT FACTOR",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "AVG WIN / LOSS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "Best: $0.00 | Worst: $0.00",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "pixel-7__journal.png"
+    },
+    {
+      "route": "/replay",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__replay.png"
+    },
+    {
+      "route": "/agent",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "←",
+            "w": 16,
+            "h": 24
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__agent.png"
+    },
+    {
+      "route": "/auto-engine",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼\nFeb 11, 11:20:00 A"
+          },
+          {
+            "selector": "tbody",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼\nFeb 11, 11:20:00 A"
+          },
+          {
+            "selector": "tr.border-b.border-gray-700/30.hover:bg-[#333333]/50",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼"
+          },
+          {
+            "selector": "td.px-4.py-2.text-gray-400",
+            "right": 561,
+            "width": 229,
+            "text": "no_signal"
+          },
+          {
+            "selector": "td.px-4.py-2.text-right",
+            "right": 612,
+            "width": 51,
+            "text": "▼"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Config",
+            "w": 170,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Start Engine",
+            "w": 178,
+            "h": 32
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "p",
+            "text": "SCANS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "TRADES EXECUTED",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "TRADES SKIPPED",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "ERRORS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "LAST SCAN",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "pixel-7__auto-engine.png"
+    },
+    {
+      "route": "/backtest",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "CIFR",
+            "w": 57,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "WULF",
+            "w": 64,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "ONDS",
+            "w": 64,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "HOOD",
+            "w": 66,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "CLSK",
+            "w": 61,
+            "h": 28
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__backtest.png"
+    },
+    {
+      "route": "/execution",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L\nHOOD\t1\t$105.08\t$90.75\t$-14.33\nO"
+          },
+          {
+            "selector": "thead.text-gray-500",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L"
+          },
+          {
+            "selector": "tr",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L"
+          },
+          {
+            "selector": "th.text-right.pb-2",
+            "right": 421,
+            "width": 114,
+            "text": "Current"
+          },
+          {
+            "selector": "tbody",
+            "right": 528,
+            "width": 500,
+            "text": "HOOD\t1\t$105.08\t$90.75\t$-14.33\nONDS\t1\t$12.00\t$10.00\t$-2.00\nQS"
+          },
+          {
+            "selector": "tr.border-t.border-gray-700",
+            "right": 528,
+            "width": 500,
+            "text": "HOOD\t1\t$105.08\t$90.75\t$-14.33"
+          },
+          {
+            "selector": "td.py-2.text-right",
+            "right": 421,
+            "width": 114,
+            "text": "$90.75"
+          },
+          {
+            "selector": "td.py-2.text-right.text-[#FF006E]",
+            "right": 528,
+            "width": 107,
+            "text": "$-14.33"
+          },
+          {
+            "selector": "td.py-2.text-right.text-[#00C805]",
+            "right": 528,
+            "width": 107,
+            "text": "$7.40"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "Buy\nSell",
+            "w": 356,
+            "h": 35
+          },
+          {
+            "tag": "select",
+            "text": "Market\nLimit",
+            "w": 356,
+            "h": 35
+          },
+          {
+            "tag": "button",
+            "text": "Refresh",
+            "w": 76,
+            "h": 26
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__execution.png"
+    },
+    {
+      "route": "/risk",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "input",
+            "text": "0",
+            "w": 158,
+            "h": 16
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__risk.png"
+    },
+    {
+      "route": "/risk-mgmt",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "95%\n99%",
+            "w": 105,
+            "h": 35
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__risk-mgmt.png"
+    },
+    {
+      "route": "/scanner",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "x",
+            "w": 7,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__scanner.png"
+    },
+    {
+      "route": "/sentiment",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__sentiment.png"
+    },
+    {
+      "route": "/vol-surface",
+      "viewport": "Pixel 7",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 412,
+        "documentWidth": 412,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "w": 24,
+            "h": 22
+          },
+          {
+            "tag": "a",
+            "text": "",
+            "w": 24,
+            "h": 22
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "pixel-7__vol-surface.png"
+    },
+    {
+      "route": "/",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Pricing Calculator",
+            "w": 144,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Vol Surface",
+            "w": 144,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Risk & P&L",
+            "w": 144,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "Scanner",
+            "w": 144,
+            "h": 32
+          },
+          {
+            "tag": "a",
+            "text": "NLP Sentiment",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Backtesting",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Strategy & Hedging",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Risk Management",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Portfolio Monitor",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Live Trading",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Trade Journal",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Auto Engine",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Positions",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Option Chain",
+            "w": 144,
+            "h": 34
+          },
+          {
+            "tag": "a",
+            "text": "Live Agent",
+            "w": 144,
+            "h": 34
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__home.png"
+    },
+    {
+      "route": "/strategy",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "Sell (Short)\nBuy (Long)",
+            "w": 125,
+            "h": 35
+          },
+          {
+            "tag": "select",
+            "text": "Call\nPut",
+            "w": 72,
+            "h": 35
+          },
+          {
+            "tag": "input",
+            "text": "150",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "155",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.25",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.3",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "10",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "input",
+            "text": "0.05",
+            "w": 24,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "Remove",
+            "w": 24,
+            "h": 28
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__strategy.png"
+    },
+    {
+      "route": "/pricing",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "View 3D Volatility Surface →",
+            "w": 152,
+            "h": 16
+          },
+          {
+            "tag": "select",
+            "text": "Call\nPut",
+            "w": 248,
+            "h": 35
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__pricing.png"
+    },
+    {
+      "route": "/options-chain",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 652,
+            "width": 640,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta\t\n$1.00ITM\t$19.47\t-\t$"
+          },
+          {
+            "selector": "thead.text-gray-500.bg-[#1E1E1E]",
+            "right": 652,
+            "width": 638,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta"
+          },
+          {
+            "selector": "tr",
+            "right": 652,
+            "width": 638,
+            "text": "Strike\tBreakeven\tIV\tPrice\tBid\tAsk\tDelta"
+          },
+          {
+            "selector": "th.text-right.py-2.px-2",
+            "right": 384,
+            "width": 78,
+            "text": "Price"
+          },
+          {
+            "selector": "th.text-center.py-2.px-2",
+            "right": 652,
+            "width": 60,
+            "text": ""
+          },
+          {
+            "selector": "tbody",
+            "right": 652,
+            "width": 638,
+            "text": "$1.00ITM\t$19.47\t-\t$17.26\t16.05\t18.47\t-\t+\n$2.00ITM\t$20.93\t-\t$"
+          },
+          {
+            "selector": "tr.border-t.border-gray-700/50.hover:bg-[#333]",
+            "right": 652,
+            "width": 638,
+            "text": "$1.00ITM\t$19.47\t-\t$17.26\t16.05\t18.47\t-\t+"
+          },
+          {
+            "selector": "td.py-2.px-3.text-right",
+            "right": 384,
+            "width": 78,
+            "text": "$17.26"
+          },
+          {
+            "selector": "td.py-2.px-3.text-center",
+            "right": 652,
+            "width": 60,
+            "text": "+"
+          }
+        ],
+        "offscreenInteractive": [
+          {
+            "selector": "button",
+            "text": "+",
+            "left": 610,
+            "right": 633
+          }
+        ],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "View Positions",
+            "w": 78,
+            "h": 16
+          },
+          {
+            "tag": "button",
+            "text": "Buy",
+            "w": 58,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Sell",
+            "w": 57,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Calls",
+            "w": 65,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Puts",
+            "w": 62,
+            "h": 32
+          },
+          {
+            "tag": "select",
+            "text": "2026-04-24 (5 DTE)",
+            "w": 169,
+            "h": 34
+          },
+          {
+            "tag": "button",
+            "text": "+",
+            "w": 23,
+            "h": 24
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "span",
+            "text": "ITM",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "LEAP",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "CC",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "galaxy-s9__options-chain.png"
+    },
+    {
+      "route": "/portfolio",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-sm",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "thead",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "tr.text-gray-400.border-b.border-gray-700",
+            "right": 717,
+            "width": 681,
+            "text": "Symbol ^\tType\tQty\tEntry\tCurrent\tMkt Value\tUnreal P&L\tDelta\tG"
+          },
+          {
+            "selector": "th.text-right.py-2.px-2",
+            "right": 333,
+            "width": 67,
+            "text": "Current"
+          },
+          {
+            "selector": "tbody",
+            "right": 717,
+            "width": 681,
+            "text": "HOOD\tStock\t1\t$105.08\t$90.75\t$90.75\t$-14.33\t1.00\t0.00\t0.00\t0."
+          },
+          {
+            "selector": "tr.border-b.border-gray-800.hover:bg-[#333333]",
+            "right": 717,
+            "width": 681,
+            "text": "HOOD\tStock\t1\t$105.08\t$90.75\t$90.75\t$-14.33\t1.00\t0.00\t0.00\t0."
+          },
+          {
+            "selector": "td.text-right.py-2.px-2",
+            "right": 333,
+            "width": 67,
+            "text": "$90.75"
+          },
+          {
+            "selector": "tfoot",
+            "right": 717,
+            "width": 681,
+            "text": "Portfolio Total\t254.84\t3.11\t-1.71\t21.08"
+          },
+          {
+            "selector": "tr.border-t-2.border-gray-600.font-bold",
+            "right": 717,
+            "width": 681,
+            "text": "Portfolio Total\t254.84\t3.11\t-1.71\t21.08"
+          },
+          {
+            "selector": "td.py-2.px-2",
+            "right": 486,
+            "width": 450,
+            "text": "Portfolio Total"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "←",
+            "w": 16,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "15s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "30s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "60s",
+            "w": 32,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "Off",
+            "w": 29,
+            "h": 23
+          },
+          {
+            "tag": "button",
+            "text": "Refresh All",
+            "w": 82,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "1D",
+            "w": 39,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1W",
+            "w": 42,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1M",
+            "w": 41,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "3M",
+            "w": 41,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "1A",
+            "w": 39,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "x",
+            "w": 9,
+            "h": 18
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "span",
+            "text": "PAPER",
+            "fontSize": 10
+          },
+          {
+            "tag": "span",
+            "text": "02:12:54 ET",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "15s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "30s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "60s",
+            "fontSize": 10
+          },
+          {
+            "tag": "button",
+            "text": "Off",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "galaxy-s9__portfolio.png"
+    },
+    {
+      "route": "/positions",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "1D",
+            "w": 42,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1W",
+            "w": 45,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1M",
+            "w": 43,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "3M",
+            "w": 43,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "1Y",
+            "w": 41,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "ALL",
+            "w": 51,
+            "h": 28
+          },
+          {
+            "tag": "a",
+            "text": "Live Trading",
+            "w": 264,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "Portfolio Monitor",
+            "w": 264,
+            "h": 20
+          },
+          {
+            "tag": "a",
+            "text": "Risk Management",
+            "w": 264,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__positions.png"
+    },
+    {
+      "route": "/journal",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L\nNo "
+          },
+          {
+            "selector": "thead",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L"
+          },
+          {
+            "selector": "tr.border-b.border-gray-700.text-gray-400",
+            "right": 912,
+            "width": 900,
+            "text": "TIME\tSYMBOL\tSIDE\tQTY\tTYPE\tLIMIT\tFILLED\tSTATUS\tSOURCE\tP&L"
+          },
+          {
+            "selector": "th.px-4.py-3.text-right",
+            "right": 358,
+            "width": 75,
+            "text": "QTY"
+          },
+          {
+            "selector": "th.px-4.py-3.text-left",
+            "right": 442,
+            "width": 84,
+            "text": "TYPE"
+          },
+          {
+            "selector": "tbody",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          },
+          {
+            "selector": "tr",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          },
+          {
+            "selector": "td.px-4.py-8.text-center",
+            "right": 912,
+            "width": 900,
+            "text": "No trades found"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Sync from Alpaca",
+            "w": 117,
+            "h": 32
+          },
+          {
+            "tag": "select",
+            "text": "All Sources\nManual\nAuto Engine",
+            "w": 296,
+            "h": 34
+          },
+          {
+            "tag": "button",
+            "text": "Previous",
+            "w": 78,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "Next",
+            "w": 53,
+            "h": 28
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "p",
+            "text": "TOTAL P&L",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "WIN RATE",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "0W / 0L",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "PROFIT FACTOR",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "AVG WIN / LOSS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "Best: $0.00 | Worst: $0.00",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "galaxy-s9__journal.png"
+    },
+    {
+      "route": "/replay",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__replay.png"
+    },
+    {
+      "route": "/agent",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "←",
+            "w": 16,
+            "h": 24
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__agent.png"
+    },
+    {
+      "route": "/auto-engine",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼\nFeb 11, 11:20:00 A"
+          },
+          {
+            "selector": "tbody",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼\nFeb 11, 11:20:00 A"
+          },
+          {
+            "selector": "tr.border-b.border-gray-700/30.hover:bg-[#333333]/50",
+            "right": 612,
+            "width": 600,
+            "text": "Feb 11, 11:20:01 AM\tSKIP\tHOOD\tno_signal\t▼"
+          },
+          {
+            "selector": "td.px-4.py-2.font-mono",
+            "right": 332,
+            "width": 64,
+            "text": "HOOD"
+          },
+          {
+            "selector": "td.px-4.py-2.text-gray-400",
+            "right": 561,
+            "width": 229,
+            "text": "no_signal"
+          },
+          {
+            "selector": "td.px-4.py-2.text-right",
+            "right": 612,
+            "width": 51,
+            "text": "▼"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Config",
+            "w": 124,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "text": "Start Engine",
+            "w": 132,
+            "h": 32
+          }
+        ],
+        "tinyText": [
+          {
+            "tag": "p",
+            "text": "SCANS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "TRADES EXECUTED",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "TRADES SKIPPED",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "ERRORS",
+            "fontSize": 10
+          },
+          {
+            "tag": "p",
+            "text": "LAST SCAN",
+            "fontSize": 10
+          }
+        ]
+      },
+      "screenshot": "galaxy-s9__auto-engine.png"
+    },
+    {
+      "route": "/backtest",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "CIFR",
+            "w": 57,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "WULF",
+            "w": 64,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "ONDS",
+            "w": 64,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "HOOD",
+            "w": 66,
+            "h": 28
+          },
+          {
+            "tag": "button",
+            "text": "CLSK",
+            "w": 61,
+            "h": 28
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__backtest.png"
+    },
+    {
+      "route": "/execution",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [
+          {
+            "selector": "table.w-full.text-xs.sm:text-sm",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L\nHOOD\t1\t$105.08\t$90.75\t$-14.33\nO"
+          },
+          {
+            "selector": "thead.text-gray-500",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L"
+          },
+          {
+            "selector": "tr",
+            "right": 528,
+            "width": 500,
+            "text": "Symbol\tQty\tEntry\tCurrent\tP&L"
+          },
+          {
+            "selector": "th.text-right.pb-2",
+            "right": 421,
+            "width": 114,
+            "text": "Current"
+          },
+          {
+            "selector": "tbody",
+            "right": 528,
+            "width": 500,
+            "text": "HOOD\t1\t$105.08\t$90.75\t$-14.33\nONDS\t1\t$12.00\t$10.00\t$-2.00\nQS"
+          },
+          {
+            "selector": "tr.border-t.border-gray-700",
+            "right": 528,
+            "width": 500,
+            "text": "HOOD\t1\t$105.08\t$90.75\t$-14.33"
+          },
+          {
+            "selector": "td.py-2.text-right",
+            "right": 421,
+            "width": 114,
+            "text": "$90.75"
+          },
+          {
+            "selector": "td.py-2.text-right.text-[#FF006E]",
+            "right": 528,
+            "width": 107,
+            "text": "$-14.33"
+          },
+          {
+            "selector": "td.py-2.text-right.text-[#00C805]",
+            "right": 528,
+            "width": 107,
+            "text": "$7.40"
+          }
+        ],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "Buy\nSell",
+            "w": 264,
+            "h": 35
+          },
+          {
+            "tag": "select",
+            "text": "Market\nLimit",
+            "w": 264,
+            "h": 35
+          },
+          {
+            "tag": "button",
+            "text": "Refresh",
+            "w": 76,
+            "h": 26
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__execution.png"
+    },
+    {
+      "route": "/risk",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "input",
+            "text": "0",
+            "w": 112,
+            "h": 16
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__risk.png"
+    },
+    {
+      "route": "/risk-mgmt",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "95%\n99%",
+            "w": 75,
+            "h": 35
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__risk-mgmt.png"
+    },
+    {
+      "route": "/scanner",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "x",
+            "w": 7,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__scanner.png"
+    },
+    {
+      "route": "/sentiment",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "← Dashboard",
+            "w": 86,
+            "h": 20
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__sentiment.png"
+    },
+    {
+      "route": "/vol-surface",
+      "viewport": "Galaxy S9+",
+      "nav": {
+        "ok": true,
+        "status": 200
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "findings": {
+        "viewportWidth": 320,
+        "documentWidth": 320,
+        "horizontalOverflow": false,
+        "overflowAmount": 0,
+        "overflowingEls": [],
+        "offscreenInteractive": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "text": "Dashboard",
+            "w": 69,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "w": 24,
+            "h": 22
+          },
+          {
+            "tag": "a",
+            "text": "",
+            "w": 24,
+            "h": 22
+          }
+        ],
+        "tinyText": []
+      },
+      "screenshot": "galaxy-s9__vol-surface.png"
+    }
+  ]
+}

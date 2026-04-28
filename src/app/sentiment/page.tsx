@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import SentimentPanel from '@/components/SentimentPanel';
-import Link from 'next/link';
 
 export default function SentimentPage() {
   const [ticker, setTicker] = useState('CIFR');
@@ -14,23 +13,20 @@ export default function SentimentPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#1E1E1E] text-white p-6">
+    <main className="min-h-screen bg-[#1E1E1E] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/" className="text-gray-400 hover:text-white">&larr; Dashboard</Link>
-          <h1 className="text-3xl font-bold">NLP Sentiment Pipeline</h1>
-        </div>
-        <p className="text-gray-400 mb-6">
+        <h2 className="rv-h1">NLP Sentiment Pipeline</h2>
+        <div className="rv-sub">
           Phase 2: Alternative data pipeline using NLP sentiment extraction with Bayesian fair value updates.
           Analyzes news articles and IR data to generate alpha factors.
-        </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="flex gap-3 mb-6">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
           <input type="text" value={inputTicker}
             onChange={(e) => setInputTicker(e.target.value.toUpperCase())}
-            className="w-32 bg-[#2D2D2D] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]" />
+            className="w-full sm:w-40 bg-[#2D2D2D] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]" />
           <button type="submit"
-            className="px-6 py-2 bg-[#00C805] hover:bg-[#00A004] text-white font-bold rounded-lg">
+            className="w-full sm:w-auto px-6 py-2 bg-[#00C805] hover:bg-[#00A004] text-white font-bold rounded-lg">
             Set Ticker
           </button>
         </form>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PRICING_API_URL as API_URL } from '@/lib/pricing-api';
 
 interface VaRMethodResult {
   method: string;
@@ -24,8 +25,6 @@ interface VaRData {
     recommendation: string;
   };
 }
-
-const API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
 
 export default function VaRPanel({ ticker }: { ticker: string }) {
   const [data, setData] = useState<VaRData | null>(null);

@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import sys
 from pathlib import Path
+from typing import List, Optional
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -19,7 +20,9 @@ from pricing.implied_vol import implied_volatility_compare
 from pricing.vol_surface import generate_vol_surface
 from pricing.hedge_stability import forecast_delta_decay, forecast_vol_shock, rehedge_recommendation
 from pricing.pnl_attribution import greeks_pnl_attribution, stress_test_position, stress_test_portfolio
-from data.market_data import get_ticker_price, detect_mispricing, get_tca_data, get_price_history
+from data.market_data import get_ticker_price, detect_mispricing, get_tca_data, get_price_history, get_ticker_detail
+from data.fundamentals import get_ticker_fundamentals
+from scanner.nl_parser import parse_nl_query
 from data.hmm_regime import detect_current_regime
 from stats.hv_confidence import hv_with_confidence
 from api.models import (
@@ -50,7 +53,18 @@ from api.models import (
     PositionGreeksResponse,
     PortfolioSummaryResponse,
     EquityHistoryResponse,
+    RobinhoodHolding,
+    RobinhoodOption,
+    RobinhoodHoldingsResponse,
+    RobinhoodSummary,
+    RobinhoodActivityRow,
+    RobinhoodIngestResponse,
+    RobinhoodAccountsResponse,
 )
+
+# Robinhood activity ingestion + portfolio derivation.
+from robinhood import database as rh_db
+from robinhood import portfolio as rh_portfolio
 
 # Trade Journal
 from journal.database import (
@@ -102,6 +116,7 @@ origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"^http://(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2[0-9]|3[01])\.\d{1,3}\.\d{1,3}):3000$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -114,8 +129,90 @@ app.include_router(ws_router)
 
 @app.on_event("startup")
 def startup():
-    """Initialize trade journal database on startup."""
+    """Initialize trade journal database + scheduler + observability on startup."""
+    # Structured JSON logging (roadmap §11.4). Call first so other startup logs are JSON.
+    try:
+        from infra.observability import configure_json_logging
+        configure_json_logging()
+    except Exception:
+        pass
+
     init_db()
+
+    # Robinhood activity table + idempotent ingest from `hood reports/`.
+    try:
+        rh_db.ensure_schema()
+        from pathlib import Path as _Path
+        import sys as _sys
+
+        _scripts = _Path(__file__).parent.parent.parent / "scripts"
+        if str(_scripts) not in _sys.path:
+            _sys.path.insert(0, str(_scripts))
+        from ingest_robinhood import ingest as _rh_ingest  # type: ignore
+
+        reports = _Path(__file__).parent.parent.parent.parent / "hood reports"
+        if reports.exists():
+            _rh_ingest(reports)
+    except Exception as exc:  # noqa: BLE001
+        import logging
+        logging.getLogger(__name__).warning("Robinhood ingest skipped: %s", exc)
+
+    # APScheduler — non-fatal if startup fails (tests / CI may not want jobs running).
+    try:
+        from engine.scheduler import start_scheduler
+        start_scheduler()
+    except Exception as exc:  # noqa: BLE001
+        import logging
+        logging.getLogger(__name__).warning("Scheduler failed to start: %s", exc)
+
+
+# Correlation-ID + latency middleware (§11.4)
+@app.middleware("http")
+async def _observability_mw(request, call_next):
+    from infra.observability import get_correlation_id, metrics, set_correlation_id
+    import logging
+    import time as _time
+
+    cid = request.headers.get("x-correlation-id") or set_correlation_id()
+    if request.headers.get("x-correlation-id"):
+        set_correlation_id(cid)
+
+    start = _time.perf_counter()
+    response = await call_next(request)
+    elapsed_ms = (_time.perf_counter() - start) * 1000
+
+    metrics().incr(f"http_requests_total{{method=\"{request.method}\"}}", 1.0)
+    metrics().observe("http_request_duration_ms", elapsed_ms)
+
+    response.headers["x-correlation-id"] = cid
+    logging.getLogger("http").info(
+        "request",
+        extra={
+            "cid": cid,
+            "method": request.method,
+            "path": request.url.path,
+            "status": response.status_code,
+            "duration_ms": round(elapsed_ms, 2),
+        },
+    )
+    return response
+
+
+@app.get("/metrics")
+def metrics_endpoint():
+    from fastapi.responses import PlainTextResponse
+    from infra.observability import metrics
+
+    return PlainTextResponse(metrics().render_text(), media_type="text/plain")
+
+
+@app.on_event("shutdown")
+def shutdown():
+    try:
+        from engine.scheduler import stop_scheduler
+        stop_scheduler()
+    except Exception:
+        pass
 
 
 @app.get("/")
@@ -390,6 +487,16 @@ def get_hedge_forecast(params: HedgeForecastRequest):
         raise HTTPException(status_code=500, detail=f"Hedge forecast failed: {str(e)}")
 
 
+@app.get("/api/market/{ticker}/price")
+def get_current_ticker_price(ticker: str):
+    """Get current spot price for any ticker via Yahoo Finance."""
+    try:
+        price = get_ticker_price(ticker.upper())
+        return {"ticker": ticker.upper(), "price": price}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Price fetch failed: {str(e)}")
+
+
 @app.get("/api/market/{ticker}/mispricing")
 def get_ticker_mispricing(ticker: str):
     """Detect IV vs HV mispricing for any ticker."""
@@ -397,6 +504,39 @@ def get_ticker_mispricing(ticker: str):
         return detect_mispricing(ticker.upper())
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Mispricing detection failed: {str(e)}")
+
+
+@app.get("/api/market/{ticker}/detail")
+def get_ticker_detail_endpoint(ticker: str):
+    """Rich ticker snapshot for the stock detail page."""
+    try:
+        return get_ticker_detail(ticker.upper())
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Detail fetch failed for {ticker}: {str(e)}")
+
+
+@app.get("/api/market/{ticker}/fundamentals")
+def get_ticker_fundamentals_endpoint(ticker: str):
+    """Deep fundamentals (income stmt, cashflow, balance sheet) for the DCF page."""
+    try:
+        return get_ticker_fundamentals(ticker.upper())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fundamentals fetch failed for {ticker}: {str(e)}")
+
+
+from pydantic import BaseModel as _ScannerBaseModel  # local alias; avoids touching models.py
+
+class ScannerParseRequest(_ScannerBaseModel):
+    query: str
+
+
+@app.post("/api/scanner/parse")
+def scanner_parse(body: ScannerParseRequest):
+    """Parse a natural-language scanner query via Gemini (fallback: regex)."""
+    try:
+        return parse_nl_query(body.query)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"NL parse failed: {str(e)}")
 
 
 @app.get("/api/market/{ticker}/price-history")
@@ -1163,6 +1303,459 @@ def get_market_status():
         "current_time_et": now.strftime("%H:%M:%S ET"),
         "next_open": next_open,
         "next_close": next_close,
+    }
+
+
+# =============================================
+# Phase V2 — Multi-Agent Orchestrator (P1)
+# =============================================
+
+from agents.service import get_service as _get_agents_service
+
+
+@app.post("/api/agents/analyze")
+async def agents_analyze(payload: dict):
+    ticker = str(payload.get("ticker", "")).upper().strip()
+    if not ticker:
+        raise HTTPException(status_code=400, detail="Missing 'ticker'")
+    try:
+        result = await _get_agents_service().analyze(ticker)
+        return result.model_dump(mode="json")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Agent analyze failed: {exc}")
+
+
+@app.get("/api/agents/status")
+def agents_status():
+    return {"agents": _get_agents_service().status()}
+
+
+@app.get("/api/agents/confluence/{ticker}")
+async def agents_confluence(ticker: str):
+    svc = _get_agents_service()
+    cached = svc.cached(ticker)
+    if cached is None:
+        try:
+            cached = await svc.analyze(ticker)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Agent analyze failed: {exc}")
+    return cached.model_dump(mode="json")
+
+
+# =============================================
+# Phase V2 — Signal History & Win Rate (P3)
+# =============================================
+
+from journal.database import (
+    get_signal_history as _db_signal_history,
+    get_signal_performance as _db_signal_perf,
+    get_win_rate_by_bucket as _db_win_rate_bucket,
+)
+
+
+@app.get("/api/signals/history")
+def signals_history(ticker: Optional[str] = None, days: int = 30, min_confluence: Optional[float] = None, limit: int = 500):
+    return {"signals": _db_signal_history(ticker=ticker, days=days, min_confluence=min_confluence, limit=limit)}
+
+
+@app.get("/api/signals/win-rate")
+def signals_win_rate(min_confluence: float = 0.65):
+    buckets = _db_win_rate_bucket()
+    # Headline number: union of buckets that meet the threshold.
+    if min_confluence >= 0.65:
+        filtered = [buckets.get("high", {})]
+    elif min_confluence >= 0.50:
+        filtered = [buckets.get("mid", {}), buckets.get("high", {})]
+    else:
+        filtered = list(buckets.values())
+    resolved = sum(b.get("resolved", 0) or 0 for b in filtered)
+    wins = sum(b.get("wins", 0) or 0 for b in filtered)
+    rate = round(wins / resolved, 4) if resolved else None
+    return {"min_confluence": min_confluence, "resolved": resolved, "wins": wins, "win_rate": rate, "buckets": buckets}
+
+
+@app.get("/api/signals/performance")
+def signals_performance():
+    return _db_signal_perf()
+
+
+# =============================================
+# Phase V2 — Per-Agent Memory (P5)
+# =============================================
+
+from agents.memory import memory_overview as _memory_overview
+
+
+@app.get("/api/agents/memory/{ticker}")
+def agents_memory(ticker: str):
+    return _memory_overview(ticker)
+
+
+# =============================================
+# Phase V2 — Historical Replay (P6)
+# =============================================
+
+from datetime import date as _date
+
+_replay_cache: dict = {}
+
+
+@app.post("/api/replay/run")
+async def replay_run(payload: dict):
+    from replay.engine import ReplayEngine
+    import asyncio as _asyncio
+
+    ticker = str(payload.get("ticker", "")).upper().strip()
+    start_s = str(payload.get("start", "")).strip()
+    end_s = str(payload.get("end", "")).strip()
+    if not ticker or not start_s or not end_s:
+        raise HTTPException(status_code=400, detail="ticker, start, end are required (YYYY-MM-DD)")
+    try:
+        start = _date.fromisoformat(start_s)
+        end = _date.fromisoformat(end_s)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=f"Invalid date: {ve}")
+
+    engine = ReplayEngine()
+    try:
+        result = await _asyncio.to_thread(engine.run, ticker, start, end)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Replay failed: {exc}")
+
+    _replay_cache[result.replay_id] = result
+    return result.to_dict()
+
+
+@app.get("/api/replay/{replay_id}")
+def replay_get(replay_id: str):
+    rec = _replay_cache.get(replay_id)
+    if rec is None:
+        raise HTTPException(status_code=404, detail="Replay not found (cache miss)")
+    return rec.to_dict()
+
+
+@app.get("/api/replay/{replay_id}/pdf")
+def replay_pdf(replay_id: str):
+    from fastapi.responses import Response
+
+    rec = _replay_cache.get(replay_id)
+    if rec is None:
+        raise HTTPException(status_code=404, detail="Replay not found")
+
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+    except ImportError:
+        raise HTTPException(status_code=503, detail="reportlab not installed")
+
+    import io
+
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=letter)
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(72, 720, f"VegaEdge Replay — {rec.ticker}")
+    c.setFont("Helvetica", 10)
+    c.drawString(72, 700, f"{rec.start} → {rec.end}   (id {rec.replay_id[:8]})")
+
+    y = 670
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(72, y, "Metrics")
+    y -= 16
+    c.setFont("Helvetica", 10)
+    for k, v in rec.metrics.items():
+        if isinstance(v, (dict, list)):
+            continue
+        c.drawString(80, y, f"{k}: {v}")
+        y -= 14
+
+    y -= 10
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(72, y, "Coaching")
+    y -= 16
+    c.setFont("Helvetica", 10)
+    # Wrap coaching text at ~95 chars per line.
+    text = rec.coaching or "(no narrative)"
+    for line in _wrap(text, 95):
+        c.drawString(72, y, line)
+        y -= 14
+        if y < 72:
+            c.showPage()
+            y = 720
+
+    c.showPage()
+    c.save()
+    return Response(content=buf.getvalue(), media_type="application/pdf")
+
+
+def _wrap(text: str, width: int) -> list[str]:
+    words = text.split()
+    lines: list[str] = []
+    current = ""
+    for w in words:
+        if len(current) + 1 + len(w) > width:
+            lines.append(current)
+            current = w
+        else:
+            current = f"{current} {w}".strip()
+    if current:
+        lines.append(current)
+    return lines
+
+
+# =============================================
+# Phase V2 — Trade Recommendation Tool (P2)
+# =============================================
+
+from vegaedge.trade_rec import get_trade_recommendation as _get_trade_rec
+
+
+@app.post("/api/agents/trade-recommendation")
+async def agents_trade_recommendation(payload: dict):
+    ticker = str(payload.get("ticker", "")).upper().strip()
+    if not ticker:
+        raise HTTPException(status_code=400, detail="Missing 'ticker'")
+    override = payload.get("strategy_override")
+    try:
+        rec = await _get_trade_rec(ticker, strategy_override=override)
+        return rec.model_dump(mode="json")
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Trade rec failed: {exc}")
+
+
+# ---------------------------------------------------------------------------
+# Robinhood real-portfolio endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/robinhood/ingest", response_model=RobinhoodIngestResponse)
+def robinhood_ingest():
+    """Re-scan the `hood reports/` directory and upsert any new activity rows."""
+    try:
+        from pathlib import Path as _Path
+        import sys as _sys
+
+        _scripts = _Path(__file__).parent.parent.parent / "scripts"
+        if str(_scripts) not in _sys.path:
+            _sys.path.insert(0, str(_scripts))
+        from ingest_robinhood import ingest as _rh_ingest, REPORTS_DIR  # type: ignore
+
+        result = _rh_ingest(REPORTS_DIR)
+        return RobinhoodIngestResponse(**result)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Ingest failed: {exc}")
+
+
+@app.get("/api/robinhood/accounts", response_model=RobinhoodAccountsResponse)
+def robinhood_accounts():
+    """Distinct account tags present in the activity DB."""
+    return RobinhoodAccountsResponse(accounts=rh_portfolio.list_accounts())
+
+
+@app.get("/api/robinhood/holdings", response_model=RobinhoodHoldingsResponse)
+def robinhood_holdings(live_prices: bool = True, account: Optional[str] = None):
+    """Current Robinhood holdings derived from activity log.
+
+    `account` may be `brokerage`, `roth_ira`, or `all` (default). Set
+    `live_prices=false` to skip the yfinance enrichment (useful when the
+    network is flaky; purely cost-basis view still works).
+    """
+    equities = rh_portfolio.compute_equity_holdings(account)
+    if live_prices:
+        equities = rh_portfolio.enrich_equity_with_prices(equities)
+    options = rh_portfolio.compute_option_holdings(account)
+
+    return RobinhoodHoldingsResponse(
+        equities=[RobinhoodHolding(**e.__dict__) for e in equities],
+        options=[RobinhoodOption(**o.__dict__) for o in options],
+    )
+
+
+@app.get("/api/robinhood/summary", response_model=RobinhoodSummary)
+def robinhood_summary(live_prices: bool = True, account: Optional[str] = None):
+    equities = rh_portfolio.compute_equity_holdings(account)
+    if live_prices:
+        equities = rh_portfolio.enrich_equity_with_prices(equities)
+    options = rh_portfolio.compute_option_holdings(account)
+    s = rh_portfolio.compute_summary(equities, options, account)
+    return RobinhoodSummary(**s.__dict__)
+
+
+@app.get("/api/robinhood/activity", response_model=List[RobinhoodActivityRow])
+def robinhood_activity(limit: int = 50, trans_code: Optional[str] = None, account: Optional[str] = None):
+    limit = max(1, min(int(limit), 500))
+    rows = rh_portfolio.recent_activity(limit=limit, trans_code=trans_code, account=account)
+    return [RobinhoodActivityRow(**r.__dict__) for r in rows]
+
+
+# =============================================
+# Recommendation API + Remote-Agent Webhook
+# =============================================
+
+from fastapi import Header
+from recommend.engine import (
+    build_recommendation as _build_rec,
+    build_regime_signal as _build_regime_signal,
+)
+from recommend.models import RegimeSignalResponse as _RegimeSignalResponse
+from recommend.webhook import (
+    DEFAULT_WATCHLIST as _REC_DEFAULT_WATCHLIST,
+    load_webhook_config as _load_webhook_config,
+    scan_and_dispatch as _scan_and_dispatch,
+)
+
+
+@app.get("/api/recommend/{ticker}")
+async def recommend_ticker(ticker: str):
+    """On-demand verdict + ranked CC / CSP / LEAP candidates for one ticker.
+
+    Designed for a remote Claude agent to call directly. Returns full
+    RecommendationResponse JSON (verdict, mispricing snapshot, three
+    StrategyBlocks each with up to 3 ranked candidates by annualized return).
+    """
+    try:
+        rec = await _build_rec(ticker.upper().strip())
+        return rec.model_dump(mode="json")
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Recommend failed: {exc}")
+
+
+@app.get("/api/regime/{ticker}", response_model=_RegimeSignalResponse)
+async def regime_signal(ticker: str):
+    """Cron-friendly bundle: HMM regime + IV/HV ratio + 4-way verdict
+    (BUY / SELL_PUT / SELL_COVERED_CALL / HOLD) + top actionable contract.
+
+    One call replaces /api/market/{ticker}/regime + /api/market/{ticker}/mispricing
+    + /api/recommend/{ticker} for cron consumers that just want a JSON line per
+    poll.
+    """
+    try:
+        return await _build_regime_signal(ticker)
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Regime signal failed: {exc}")
+
+
+@app.get("/api/recommend")
+async def recommend_watchlist():
+    """Return recommendations for every watchlist ticker in one call.
+
+    Per-ticker errors are captured under `results[ticker].error` so a single
+    bad ticker does not 500 the whole response.
+    """
+    try:
+        from engine.config import EngineConfig
+        watchlist = list(EngineConfig().tickers) or _REC_DEFAULT_WATCHLIST
+    except Exception:
+        watchlist = _REC_DEFAULT_WATCHLIST
+
+    results: dict = {}
+    for t in watchlist:
+        try:
+            rec = await _build_rec(t)
+            results[t] = rec.model_dump(mode="json")
+        except Exception as exc:  # noqa: BLE001
+            results[t] = {"error": str(exc)}
+    return {"watchlist": watchlist, "results": results}
+
+
+@app.get("/api/backtest/wheel")
+def get_wheel_backtest():
+    """Return the latest wheel backtest output produced by
+    scripts/covered_call_backtest.py --strategy wheel. Re-read on every call so
+    re-runs of the script update the page automatically. Adds a top-level
+    `summary` block (totals across tickers) + `caveats` so consumers don't have
+    to re-aggregate or re-explain the synthetic-IV limitation.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+    candidate = _Path(__file__).resolve().parents[3] / "sweep-results" / "wheel_1y.json"
+    if not candidate.exists():
+        raise HTTPException(status_code=404, detail=f"No wheel backtest output at {candidate}")
+    try:
+        payload = _json.loads(candidate.read_text())
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Failed to read wheel JSON: {exc}")
+
+    # Aggregate totals across tickers — same numbers the frontend table renders.
+    rows = list((payload.get("results") or {}).values())
+    wheels = [r.get("wheel") for r in rows if isinstance(r, dict) and r.get("wheel")]
+    total_csp_premium = sum(w.get("csp_premium_usd", 0.0) for w in wheels)
+    total_cc_premium = sum(w.get("cc_premium_usd", 0.0) for w in wheels)
+    total_realized = sum(w.get("realized_share_pnl_usd", 0.0) for w in wheels)
+    total_unrealized = sum(w.get("unrealized_share_pnl_usd", 0.0) for w in wheels)
+    total_return = sum(w.get("total_return_usd", 0.0) for w in wheels)
+    total_max_capital = sum(w.get("max_capital_usd", 0.0) for w in wheels)
+    total_csp_fires = sum(w.get("csp_fires", 0) for w in wheels)
+    total_cc_fires = sum(w.get("cc_fires", 0) for w in wheels)
+    total_trades = sum(int(r.get("trade_count", 0)) for r in rows if isinstance(r, dict))
+    total_assignments = sum(int(r.get("exercised_count", 0)) for r in rows if isinstance(r, dict))
+    final_inventory = {
+        r["ticker"]: int(r.get("final_share_inventory", 0))
+        for r in rows
+        if isinstance(r, dict) and r.get("ticker")
+    }
+    weighted_return_pct = (total_return / total_max_capital * 100.0) if total_max_capital > 0 else 0.0
+
+    payload["summary"] = {
+        "ticker_count": len(rows),
+        "total_csp_fires": total_csp_fires,
+        "total_cc_fires": total_cc_fires,
+        "total_trades": total_trades,
+        "total_assignments": total_assignments,
+        "total_premium_usd": round(total_csp_premium + total_cc_premium, 2),
+        "total_csp_premium_usd": round(total_csp_premium, 2),
+        "total_cc_premium_usd": round(total_cc_premium, 2),
+        "total_realized_share_pnl_usd": round(total_realized, 2),
+        "total_unrealized_share_pnl_usd": round(total_unrealized, 2),
+        "total_return_usd": round(total_return, 2),
+        "total_max_capital_usd": round(total_max_capital, 2),
+        "weighted_return_pct_of_max_cap": round(weighted_return_pct, 2),
+        "final_share_inventory": final_inventory,
+    }
+
+    payload.setdefault("caveats", []).extend([
+        "Synthetic IV (rolling HV * (1 + |N(0.10, 0.15)|)) — modeled, not observed.",
+        "Per-contract sizing (1 contract = 100 shares). Multiply by your contract count.",
+        "Hold-to-expiry on both legs. CC entries are skipped if strike <= avg cost basis to avoid locking in a share-leg loss.",
+        "max_capital is the per-ticker peak; consumers summing across tickers see worst-case simultaneous deployment.",
+    ])
+
+    return payload
+
+
+@app.post("/api/webhooks/scan-now")
+async def webhook_scan_now(authorization: str = Header(...)):
+    """Manual trigger that runs the same dispatcher the cron runs.
+
+    Auth: Authorization header must equal "Bearer <REMOTE_AGENT_WEBHOOK_TOKEN>".
+    Useful for the remote agent to force-refresh, and for testing the wire.
+    """
+    cfg = _load_webhook_config()
+    if cfg is None:
+        raise HTTPException(status_code=503, detail="Webhook not configured (set REMOTE_AGENT_WEBHOOK_URL/TOKEN)")
+    if authorization != f"Bearer {cfg.bearer_token}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return await _scan_and_dispatch()
+
+
+@app.get("/api/webhooks/config")
+def webhook_config():
+    """Diagnostic — return webhook config WITHOUT exposing the bearer token."""
+    cfg = _load_webhook_config()
+    if cfg is None:
+        return {"configured": False}
+    return {
+        "configured": True,
+        "remote_url": cfg.remote_url,
+        "watchlist": cfg.watchlist,
+        "only_actionable": cfg.only_actionable,
     }
 
 

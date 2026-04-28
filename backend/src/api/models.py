@@ -373,3 +373,71 @@ class EngineConfigRequest(BaseModel):
     max_total_contracts: Optional[int] = Field(None, ge=1, le=500)
     max_daily_trades: Optional[int] = Field(None, ge=1, le=100)
     max_daily_loss: Optional[float] = Field(None, ge=0)
+
+
+class RobinhoodHolding(BaseModel):
+    symbol: str
+    quantity: float
+    avg_cost: float
+    cost_basis: float
+    realized_pnl: float
+    account: str = "all"
+    inferred_opening: bool = False
+    current_price: Optional[float] = None
+    market_value: Optional[float] = None
+    unrealized_pnl: Optional[float] = None
+
+
+class RobinhoodOption(BaseModel):
+    underlying: str
+    side: Literal["Call", "Put"]
+    strike: float
+    expiry: str
+    position: Literal["long", "short"]
+    quantity: float
+    avg_cost: float
+    cost_basis: float
+    realized_pnl: float
+    account: str = "all"
+
+
+class RobinhoodHoldingsResponse(BaseModel):
+    equities: List[RobinhoodHolding]
+    options: List[RobinhoodOption]
+
+
+class RobinhoodSummary(BaseModel):
+    cash_net_transfers: float
+    dividends_ytd: float
+    interest_ytd: float
+    fees_ytd: float
+    realized_pnl: float
+    unrealized_pnl: float
+    total_market_value: float
+    total_invested: float
+    unknown_basis_proceeds: float = 0.0
+
+
+class RobinhoodActivityRow(BaseModel):
+    activity_date: str
+    process_date: Optional[str] = None
+    settle_date: Optional[str] = None
+    instrument: Optional[str] = None
+    description: Optional[str] = None
+    trans_code: str
+    quantity: Optional[float] = None
+    price: Optional[float] = None
+    amount: Optional[float] = None
+
+
+class RobinhoodIngestResponse(BaseModel):
+    files_read: int
+    total_rows: int
+    inserted: int
+    skipped: int
+    backfilled: Optional[int] = 0
+    accounts: Optional[Dict[str, str]] = None
+
+
+class RobinhoodAccountsResponse(BaseModel):
+    accounts: List[str]

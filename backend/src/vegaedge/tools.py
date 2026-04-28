@@ -61,6 +61,44 @@ TOOL_DECLARATIONS = [
             "required": ["ticker"],
         },
     },
+    {
+        "name": "analyze_confluence",
+        "description": (
+            "Run the full 6-agent VegaEdge confluence pipeline on a ticker. "
+            "Returns a weighted consensus score (0..1), a recommended strategy "
+            "(BUY_LEAP / SELL_CSP / SELL_COVERED_CALL / HOLD), and each agent's "
+            "signal and reasoning. Use this whenever the user asks 'what's the "
+            "confluence on X' or 'analyze X with all agents'."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {"ticker": {"type": "STRING", "description": "Stock ticker symbol"}},
+            "required": ["ticker"],
+        },
+    },
+    {
+        "name": "get_trade_recommendation",
+        "description": (
+            "Produce the final trade recommendation for a ticker: exact strike, "
+            "expiry, premium, Greeks, and risk metrics (max profit, max loss, "
+            "breakeven, probability of profit, annualized return). Selects the "
+            "strike closest to the delta target for the strategy the "
+            "ConfluenceEngine picks (SELL_CSP -0.30d / 30-45 DTE, BUY_LEAP "
+            "+0.70d / 60-90 DTE, SELL_COVERED_CALL +0.30d / 21-35 DTE). Call "
+            "when the user asks 'what should I trade?' or 'give me the exact contract'."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "ticker": {"type": "STRING", "description": "Stock ticker symbol"},
+                "strategy_override": {
+                    "type": "STRING",
+                    "description": "Optional: force SELL_CSP, BUY_LEAP, or SELL_COVERED_CALL",
+                },
+            },
+            "required": ["ticker"],
+        },
+    },
 ]
 
 
@@ -138,6 +176,46 @@ def run_get_signal_details(ticker: str) -> dict[str, Any]:
     return run_analyze_ticker(ticker)
 
 
+def run_analyze_confluence(ticker: str) -> dict[str, Any]:
+    """Run the 6-agent ConfluenceEngine for `ticker` synchronously from Gemini."""
+    import asyncio
+
+    from agents.service import get_service
+
+    ticker = ticker.upper().strip()
+    svc = get_service()
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        # Fallback for the Gemini Live code path which already runs inside an event loop.
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            result = ex.submit(lambda: asyncio.run(svc.analyze(ticker))).result()
+    else:
+        result = asyncio.run(svc.analyze(ticker))
+
+    return {
+        "ticker": result.ticker,
+        "confluence_score": result.confluence_score,
+        "recommended_strategy": result.recommended_strategy,
+        "reasoning": result.reasoning,
+        "agent_signals": [
+            {
+                "agent_id": s.agent_id,
+                "signal_type": s.signal_type,
+                "confidence": s.confidence,
+                "reasoning": s.reasoning,
+                "metadata": s.metadata,
+            }
+            for s in result.agent_signals
+        ],
+    }
+
+
 def dispatch_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     """Execute a tool by name and return result dict."""
     if name == "analyze_ticker":
@@ -148,4 +226,40 @@ def dispatch_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         return run_get_keltner_chart(arguments.get("ticker", ""))
     if name == "get_signal_details":
         return run_get_signal_details(arguments.get("ticker", ""))
+    if name == "analyze_confluence":
+        return run_analyze_confluence(arguments.get("ticker", ""))
+    if name == "get_trade_recommendation":
+        return run_get_trade_recommendation(
+            arguments.get("ticker", ""),
+            arguments.get("strategy_override"),
+        )
     return {"error": f"Unknown tool: {name}"}
+
+
+def run_get_trade_recommendation(ticker: str, strategy_override: Any = None) -> dict[str, Any]:
+    """Run P2 trade recommendation synchronously from a Gemini tool call."""
+    import asyncio
+
+    from vegaedge.trade_rec import get_trade_recommendation
+
+    override = strategy_override if isinstance(strategy_override, str) and strategy_override else None
+
+    async def _go():
+        return await get_trade_recommendation(ticker, strategy_override=override)
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            rec = ex.submit(lambda: asyncio.run(_go())).result()
+    else:
+        rec = asyncio.run(_go())
+
+    payload = rec.model_dump(mode="json")
+    # Strip infinities so JSON serialization is safe; the API already normalized.
+    return payload

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PRICING_API_URL as API_URL } from '@/lib/pricing-api';
 
 interface EVResult {
   ev: number;
@@ -20,8 +21,6 @@ interface EVResult {
   delta: number;
   gamma: number;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
 
 export default function EVCalculator() {
   const [result, setResult] = useState<EVResult | null>(null);
@@ -54,7 +53,7 @@ export default function EVCalculator() {
     <div className="bg-[#2D2D2D] rounded-lg p-6">
       <h3 className="text-xl font-bold mb-4">Expected Value Calculator</h3>
 
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <div>
           <label className="text-xs text-gray-400">Spot Price</label>
           <input type="number" step="0.5" value={params.S}
@@ -81,7 +80,7 @@ export default function EVCalculator() {
         </div>
       </div>
 
-      <div className="flex gap-3 mb-4">
+      <div className="flex flex-wrap gap-3 mb-4">
         <select value={params.direction}
           onChange={(e) => setParams({ ...params, direction: e.target.value as 'sell' | 'buy' })}
           className="bg-[#1E1E1E] text-white px-3 py-2 rounded-lg">
@@ -96,9 +95,9 @@ export default function EVCalculator() {
         </select>
         <input type="number" min="1" value={params.contracts} placeholder="Contracts"
           onChange={(e) => setParams({ ...params, contracts: parseInt(e.target.value) || 1 })}
-          className="w-24 bg-[#1E1E1E] text-white px-3 py-2 rounded-lg" />
+          className="flex-1 min-w-[100px] sm:w-24 sm:flex-none bg-[#1E1E1E] text-white px-3 py-2 rounded-lg" />
         <button onClick={calculate} disabled={loading}
-          className="px-6 py-2 bg-[#FFD700] hover:bg-[#E6C300] text-black font-bold rounded-lg disabled:opacity-50">
+          className="w-full sm:w-auto px-6 py-2 bg-[#FFD700] hover:bg-[#E6C300] text-black font-bold rounded-lg disabled:opacity-50">
           {loading ? 'Calculating...' : 'Calculate EV'}
         </button>
       </div>
@@ -124,7 +123,7 @@ export default function EVCalculator() {
           </div>
 
           {/* Probabilities & P&L */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="bg-[#1E1E1E] rounded-lg p-3">
               <p className="text-xs text-gray-500">P(ITM)</p>
               <p className="text-lg font-bold text-[#FF006E]">{result.prob_itm.toFixed(1)}%</p>
@@ -141,7 +140,7 @@ export default function EVCalculator() {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-[#1E1E1E] rounded-lg p-3">
               <p className="text-xs text-gray-500">Premium</p>
               <p className="text-lg font-bold">${result.premium.toFixed(2)}</p>

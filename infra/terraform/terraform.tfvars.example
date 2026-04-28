@@ -1,0 +1,9 @@
+postgres_user     = "trading"
+postgres_password = "change-me"
+postgres_db       = "trading"
+
+alpaca_api_key    = ""
+alpaca_secret_key = ""
+alpaca_base_url   = "https://paper-api.alpaca.markets/v2"
+
+gemini_api_key    = ""

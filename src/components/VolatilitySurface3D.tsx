@@ -72,24 +72,23 @@ export default function VolatilitySurface3D({ initialTicker = 'CIFR' }: Volatili
       bgcolor: '#1E1E1E'
     },
     margin: { l: 0, r: 0, t: 30, b: 0 },
-    height: 500,
     autosize: true
   };
 
   return (
-    <div className="bg-[#2D2D2D] rounded-lg p-6">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-[#2D2D2D] rounded-lg p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         <div>
-          <h2 className="text-2xl font-bold">3D Volatility Surface</h2>
-          <p className="text-sm text-gray-400">IV across strikes and expirations</p>
+          <h2 className="text-lg sm:text-2xl font-bold">3D Volatility Surface</h2>
+          <p className="text-xs sm:text-sm text-gray-400">IV across strikes and expirations</p>
         </div>
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex flex-wrap gap-2">
           <input
             type="text"
             value={inputTicker}
             onChange={(e) => setInputTicker(e.target.value.toUpperCase())}
             placeholder="Ticker"
-            className="w-24 bg-[#1E1E1E] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]"
+            className="flex-1 min-w-0 sm:flex-none sm:w-24 bg-[#1E1E1E] text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]"
           />
           <button
             type="submit"
@@ -112,19 +111,20 @@ export default function VolatilitySurface3D({ initialTicker = 'CIFR' }: Volatili
           <div className="mb-2 text-sm text-gray-400">
             {ticker} | Spot: ${data.spot_price.toFixed(2)} | {data.expirations.length} expirations | {data.strikes.length} strikes
           </div>
-          <div className="bg-[#1E1E1E] rounded-lg overflow-hidden">
+          <div className="bg-[#1E1E1E] rounded-lg overflow-hidden h-[350px] sm:h-[500px]">
             <Plot
               data={plotData}
               layout={layout}
               config={{ responsive: true, displayModeBar: true }}
-              style={{ width: '100%', height: '500px' }}
+              style={{ width: '100%', height: '100%' }}
+              useResizeHandler
             />
           </div>
         </>
       )}
 
       {loading && !data && (
-        <div className="h-[500px] bg-[#1E1E1E] rounded-lg animate-pulse flex items-center justify-center">
+        <div className="h-[350px] sm:h-[500px] bg-[#1E1E1E] rounded-lg animate-pulse flex items-center justify-center">
           <p className="text-gray-500">Loading volatility surface...</p>
         </div>
       )}

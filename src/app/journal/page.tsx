@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import {
   getTradeHistory,
   getPnLSummary,
@@ -86,20 +85,19 @@ export default function JournalPage() {
   const sideColor = (side: string) => side === 'buy' ? 'text-[#00C805]' : 'text-[#FF006E]';
 
   return (
-    <main className="min-h-screen bg-[#1E1E1E] text-white p-6">
+    <main className="min-h-screen bg-[#1E1E1E] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-4 sm:mb-6 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <Link href="/" className="text-gray-400 hover:text-white text-sm mb-2 inline-block">&larr; Dashboard</Link>
-            <h1 className="text-3xl font-bold">Trade Journal</h1>
-            <p className="text-gray-400 text-sm mt-1">Order history, P&L tracking, and signal attribution</p>
+            <h2 className="rv-h1">Trade Journal</h2>
+            <div className="rv-sub">Order history, P&L tracking, and signal attribution</div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="px-3 py-1 bg-[#FFD700]/20 text-[#FFD700] text-xs font-bold rounded">PAPER</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-[#FFD700]/20 text-[#FFD700] text-xs font-bold rounded">PAPER</span>
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="px-4 py-2 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg text-sm transition-colors disabled:opacity-50"
+              className="px-3 sm:px-4 py-2 bg-[#2D2D2D] hover:bg-[#333333] rounded-lg text-xs sm:text-sm transition-colors disabled:opacity-50"
             >
               {syncing ? 'Syncing...' : 'Sync from Alpaca'}
             </button>
@@ -114,32 +112,32 @@ export default function JournalPage() {
 
         {/* P&L Summary Cards */}
         {pnl && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-[#2D2D2D] rounded-lg p-4">
-              <p className="text-gray-400 text-xs uppercase">Total P&L</p>
-              <p className={`text-2xl font-bold ${pnl.total_pnl >= 0 ? 'text-[#00C805]' : 'text-[#FF006E]'}`}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <div className="bg-[#2D2D2D] rounded-lg p-3 sm:p-4">
+              <p className="text-gray-400 text-[10px] sm:text-xs uppercase">Total P&L</p>
+              <p className={`text-lg sm:text-2xl font-bold break-all ${pnl.total_pnl >= 0 ? 'text-[#00C805]' : 'text-[#FF006E]'}`}>
                 ${pnl.total_pnl.toFixed(2)}
               </p>
             </div>
-            <div className="bg-[#2D2D2D] rounded-lg p-4">
-              <p className="text-gray-400 text-xs uppercase">Win Rate</p>
-              <p className="text-2xl font-bold text-white">{pnl.win_rate}%</p>
-              <p className="text-xs text-gray-500">{pnl.winning_trades}W / {pnl.losing_trades}L</p>
+            <div className="bg-[#2D2D2D] rounded-lg p-3 sm:p-4">
+              <p className="text-gray-400 text-[10px] sm:text-xs uppercase">Win Rate</p>
+              <p className="text-lg sm:text-2xl font-bold text-white">{pnl.win_rate}%</p>
+              <p className="text-[10px] sm:text-xs text-gray-500">{pnl.winning_trades}W / {pnl.losing_trades}L</p>
             </div>
-            <div className="bg-[#2D2D2D] rounded-lg p-4">
-              <p className="text-gray-400 text-xs uppercase">Profit Factor</p>
-              <p className="text-2xl font-bold text-white">
+            <div className="bg-[#2D2D2D] rounded-lg p-3 sm:p-4">
+              <p className="text-gray-400 text-[10px] sm:text-xs uppercase">Profit Factor</p>
+              <p className="text-lg sm:text-2xl font-bold text-white">
                 {pnl.profit_factor === 'inf' ? '\u221E' : pnl.profit_factor}
               </p>
             </div>
-            <div className="bg-[#2D2D2D] rounded-lg p-4">
-              <p className="text-gray-400 text-xs uppercase">Avg Win / Loss</p>
-              <p className="text-sm">
+            <div className="bg-[#2D2D2D] rounded-lg p-3 sm:p-4">
+              <p className="text-gray-400 text-[10px] sm:text-xs uppercase">Avg Win / Loss</p>
+              <p className="text-xs sm:text-sm">
                 <span className="text-[#00C805]">${pnl.avg_win.toFixed(2)}</span>
                 {' / '}
                 <span className="text-[#FF006E]">${pnl.avg_loss.toFixed(2)}</span>
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                 Best: ${pnl.best_trade.toFixed(2)} | Worst: ${pnl.worst_trade.toFixed(2)}
               </p>
             </div>
@@ -171,18 +169,18 @@ export default function JournalPage() {
         )}
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-4">
           <input
             type="text"
             value={filterSymbol}
             onChange={(e) => { setFilterSymbol(e.target.value.toUpperCase()); setPage(0); }}
             placeholder="Symbol filter"
-            className="w-32 bg-[#2D2D2D] text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C805]"
+            className="flex-1 sm:flex-none sm:w-32 min-w-[120px] bg-[#2D2D2D] text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00C805]"
           />
           <select
             value={filterStatus}
             onChange={(e) => { setFilterStatus(e.target.value); setPage(0); }}
-            className="bg-[#2D2D2D] text-white px-3 py-2 rounded-lg text-sm focus:outline-none"
+            className="flex-1 sm:flex-none bg-[#2D2D2D] text-white px-3 py-2 rounded-lg text-sm focus:outline-none"
           >
             <option value="">All Statuses</option>
             <option value="submitted">Submitted</option>
@@ -194,7 +192,7 @@ export default function JournalPage() {
           <select
             value={filterSignal}
             onChange={(e) => { setFilterSignal(e.target.value); setPage(0); }}
-            className="bg-[#2D2D2D] text-white px-3 py-2 rounded-lg text-sm focus:outline-none"
+            className="flex-1 sm:flex-none bg-[#2D2D2D] text-white px-3 py-2 rounded-lg text-sm focus:outline-none"
           >
             <option value="">All Sources</option>
             <option value="manual">Manual</option>
@@ -205,7 +203,7 @@ export default function JournalPage() {
         {/* Trade History Table */}
         <div className="bg-[#2D2D2D] rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs sm:text-sm min-w-[900px]">
               <thead>
                 <tr className="border-b border-gray-700 text-gray-400 text-xs uppercase">
                   <th className="px-4 py-3 text-left">Time</th>

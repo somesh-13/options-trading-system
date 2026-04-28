@@ -1,0 +1,2828 @@
+
+> vegaedge@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.40:3000
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 7.1s
+⚠ Cross origin request detected from precision-comply-lavish.ngrok-free.dev to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+⚠ Cross origin request detected from 192.168.0.40 to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+○ Compiling / ...
+ GET / 200 in 10.2s (compile: 9.7s, render: 485ms)
+ GET /pricing 200 in 103ms (compile: 8ms, render: 96ms)
+ GET /risk-mgmt 200 in 10.3s (compile: 9.5s, render: 734ms)
+ GET /pricing 200 in 10.3s (compile: 9.7s, render: 655ms)
+(node:96054) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ GET /scanner 200 in 2.2s (compile: 1915ms, render: 276ms)
+ GET /options-chain 200 in 839ms (compile: 582ms, render: 257ms)
+ GET /pricing 200 in 440ms (compile: 111ms, render: 328ms)
+ GET /risk-mgmt 200 in 243ms (compile: 88ms, render: 155ms)
+ GET /pricing 200 in 255ms (compile: 6ms, render: 249ms)
+ GET /pricing 200 in 328ms (compile: 5ms, render: 323ms)
+✓ Compiled in 220ms
+ GET /portfolio 200 in 1527ms (compile: 1246ms, render: 281ms)
+ GET /auto-engine 200 in 420ms (compile: 347ms, render: 73ms)
+✓ Compiled in 241ms
+✓ Compiled in 64ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /risk-mgmt 200 in 272ms (compile: 114ms, render: 158ms)
+ GET /sentiment 200 in 393ms (compile: 325ms, render: 68ms)
+ GET /journal 200 in 379ms (compile: 318ms, render: 61ms)
+ GET /vol-surface 200 in 1277ms (compile: 1211ms, render: 67ms)
+ GET /backtest 200 in 493ms (compile: 431ms, render: 61ms)
+ GET /execution 200 in 507ms (compile: 444ms, render: 63ms)
+ GET /positions 200 in 314ms (compile: 233ms, render: 81ms)
+ GET /agent 200 in 451ms (compile: 392ms, render: 58ms)
+ GET /risk 200 in 399ms (compile: 316ms, render: 82ms)
+ GET /risk-mgmt 200 in 80ms (compile: 4ms, render: 76ms)
+ GET /strategy 200 in 391ms (compile: 347ms, render: 44ms)
+ GET /replay 200 in 322ms (compile: 279ms, render: 43ms)
+ GET / 200 in 168ms (compile: 5ms, render: 163ms)
+ GET /scanner 200 in 168ms (compile: 12ms, render: 156ms)
+ GET /options-chain 200 in 178ms (compile: 10ms, render: 169ms)
+ GET /pricing 200 in 110ms (compile: 8ms, render: 102ms)
+ GET /portfolio 200 in 111ms (compile: 3ms, render: 108ms)
+ GET /auto-engine 200 in 73ms (compile: 4ms, render: 69ms)
+ GET /vol-surface 200 in 60ms (compile: 3ms, render: 57ms)
+ GET /sentiment 200 in 71ms (compile: 3ms, render: 68ms)
+ GET /backtest 200 in 53ms (compile: 3ms, render: 50ms)
+ GET /journal 200 in 56ms (compile: 2ms, render: 54ms)
+ GET /execution 200 in 42ms (compile: 2ms, render: 40ms)
+ GET /positions 200 in 36ms (compile: 2ms, render: 34ms)
+ GET /agent 200 in 50ms (compile: 3ms, render: 47ms)
+ GET /risk 200 in 42ms (compile: 2ms, render: 40ms)
+ GET /risk-mgmt 200 in 47ms (compile: 2ms, render: 44ms)
+ GET /strategy 200 in 44ms (compile: 3ms, render: 41ms)
+ GET /replay 200 in 39ms (compile: 2ms, render: 37ms)
+ GET / 200 in 130ms (compile: 11ms, render: 119ms)
+ GET / 200 in 1515ms (compile: 3ms, render: 1512ms)
+ GET / 200 in 1398ms (compile: 4ms, render: 1394ms)
+ GET / 200 in 1282ms (compile: 17ms, render: 1265ms)
+ GET / 200 in 1877ms (compile: 11ms, render: 1867ms)
+ GET /scanner 200 in 1717ms (compile: 7ms, render: 1710ms)
+ GET /scanner 200 in 1590ms (compile: 98ms, render: 1492ms)
+ GET /scanner 200 in 1724ms (compile: 128ms, render: 1597ms)
+ GET /options-chain 200 in 1524ms (compile: 109ms, render: 1416ms)
+ GET /options-chain 200 in 1360ms (compile: 10ms, render: 1349ms)
+ GET /scanner 200 in 1977ms (compile: 10ms, render: 1968ms)
+ GET /scanner 200 in 1677ms (compile: 18ms, render: 1659ms)
+ GET /options-chain 200 in 1386ms (compile: 21ms, render: 1365ms)
+ GET /options-chain 200 in 1176ms (compile: 7ms, render: 1169ms)
+ GET /options-chain 200 in 1193ms (compile: 73ms, render: 1120ms)
+ GET /pricing 200 in 1284ms (compile: 77ms, render: 1207ms)
+ GET /pricing 200 in 1421ms (compile: 11ms, render: 1410ms)
+ GET /pricing 200 in 1293ms (compile: 6ms, render: 1287ms)
+ GET /pricing 200 in 1339ms (compile: 109ms, render: 1231ms)
+ GET /pricing 200 in 1110ms (compile: 9ms, render: 1101ms)
+ GET /portfolio 200 in 998ms (compile: 12ms, render: 985ms)
+ GET /portfolio 200 in 1594ms (compile: 23ms, render: 1571ms)
+ GET /portfolio 200 in 1502ms (compile: 15ms, render: 1487ms)
+ GET /portfolio 200 in 1500ms (compile: 61ms, render: 1439ms)
+ GET /auto-engine 200 in 402ms (compile: 21ms, render: 380ms)
+ GET /auto-engine 200 in 410ms (compile: 71ms, render: 339ms)
+ GET /portfolio 200 in 1532ms (compile: 9ms, render: 1523ms)
+ GET /portfolio 200 in 1542ms (compile: 118ms, render: 1424ms)
+ GET /auto-engine 200 in 463ms (compile: 4ms, render: 458ms)
+ GET /auto-engine 200 in 401ms (compile: 4ms, render: 397ms)
+ GET /auto-engine 200 in 351ms (compile: 8ms, render: 343ms)
+ GET /auto-engine 200 in 360ms (compile: 58ms, render: 302ms)
+ GET / 200 in 1536ms (compile: 28ms, render: 1508ms)
+ GET / 200 in 1328ms (compile: 5ms, render: 1323ms)
+ GET / 200 in 1264ms (compile: 15ms, render: 1248ms)
+ GET / 200 in 1267ms (compile: 58ms, render: 1209ms)
+ GET / 200 in 1698ms (compile: 10ms, render: 1688ms)
+ GET / 200 in 1482ms (compile: 10ms, render: 1473ms)
+ GET / 200 in 1286ms (compile: 11ms, render: 1275ms)
+ GET /scanner 200 in 2.2s (compile: 14ms, render: 2.2s)
+ GET / 200 in 441ms (compile: 7ms, render: 434ms)
+ GET / 200 in 1682ms (compile: 10ms, render: 1672ms)
+ GET / 200 in 1553ms (compile: 16ms, render: 1537ms)
+ GET / 200 in 1554ms (compile: 139ms, render: 1415ms)
+ GET /scanner 200 in 1009ms (compile: 25ms, render: 984ms)
+ GET /pricing 200 in 1005ms (compile: 17ms, render: 988ms)
+ GET / 200 in 1601ms (compile: 17ms, render: 1584ms)
+ GET / 200 in 1296ms (compile: 8ms, render: 1288ms)
+ GET / 200 in 1085ms (compile: 21ms, render: 1064ms)
+ GET / 200 in 302ms (compile: 7ms, render: 295ms)
+ GET /options-chain?ticker=CIFR 200 in 493ms (compile: 29ms, render: 464ms)
+ GET /portfolio 200 in 633ms (compile: 28ms, render: 606ms)
+ GET /scanner 200 in 1220ms (compile: 4ms, render: 1216ms)
+ GET /options-chain 200 in 960ms (compile: 9ms, render: 951ms)
+ GET /pricing 200 in 810ms (compile: 9ms, render: 800ms)
+ GET /auto-engine 200 in 342ms (compile: 22ms, render: 320ms)
+ GET /portfolio 200 in 874ms (compile: 3ms, render: 871ms)
+ GET /vol-surface 200 in 426ms (compile: 7ms, render: 419ms)
+ GET /sentiment 200 in 358ms (compile: 6ms, render: 351ms)
+ GET /backtest 200 in 327ms (compile: 7ms, render: 320ms)
+ GET /journal 200 in 277ms (compile: 5ms, render: 272ms)
+ GET /execution 200 in 99ms (compile: 15ms, render: 84ms)
+ GET /positions 200 in 495ms (compile: 33ms, render: 461ms)
+ GET /agent 200 in 333ms (compile: 24ms, render: 310ms)
+ GET /risk 200 in 676ms (compile: 32ms, render: 643ms)
+ GET /risk-mgmt 200 in 552ms (compile: 25ms, render: 526ms)
+ GET /strategy 200 in 449ms (compile: 17ms, render: 432ms)
+ GET /replay 200 in 448ms (compile: 12ms, render: 436ms)
+ GET / 200 in 170ms (compile: 4ms, render: 166ms)
+ GET / 200 in 125ms (compile: 3ms, render: 122ms)
+ GET /options-chain 200 in 1557ms (compile: 181ms, render: 1375ms)
+ GET /pricing 200 in 1715ms (compile: 6ms, render: 1709ms)
+ GET / 200 in 2.2s (compile: 48ms, render: 2.2s)
+ GET /scanner 200 in 1734ms (compile: 22ms, render: 1712ms)
+ GET /auto-engine 200 in 405ms (compile: 6ms, render: 399ms)
+ GET /sentiment 200 in 388ms (compile: 59ms, render: 329ms)
+ GET /vol-surface 200 in 475ms (compile: 9ms, render: 466ms)
+ GET /portfolio 200 in 1765ms (compile: 7ms, render: 1758ms)
+ GET /backtest 200 in 535ms (compile: 12ms, render: 523ms)
+ GET /journal 200 in 420ms (compile: 33ms, render: 387ms)
+ GET /execution 200 in 381ms (compile: 16ms, render: 364ms)
+ GET /positions 200 in 347ms (compile: 17ms, render: 330ms)
+ GET /agent 200 in 640ms (compile: 31ms, render: 610ms)
+ GET /risk 200 in 492ms (compile: 6ms, render: 486ms)
+ GET /risk-mgmt 200 in 512ms (compile: 15ms, render: 497ms)
+ GET /strategy 200 in 823ms (compile: 6ms, render: 817ms)
+ GET /replay 200 in 335ms (compile: 15ms, render: 320ms)
+ GET / 200 in 1703ms (compile: 11ms, render: 1692ms)
+ GET / 200 in 1528ms (compile: 33ms, render: 1496ms)
+ GET / 200 in 1247ms (compile: 29ms, render: 1218ms)
+ GET / 200 in 956ms (compile: 12ms, render: 944ms)
+ GET / 200 in 256ms (compile: 20ms, render: 236ms)
+ GET /scanner 200 in 463ms (compile: 7ms, render: 457ms)
+ GET /pricing 200 in 328ms (compile: 11ms, render: 316ms)
+ GET /options-chain 200 in 148ms (compile: 9ms, render: 138ms)
+ GET / 200 in 554ms (compile: 7ms, render: 547ms)
+ GET / 200 in 1034ms (compile: 6ms, render: 1028ms)
+ GET /portfolio 200 in 636ms (compile: 17ms, render: 619ms)
+ GET / 200 in 1379ms (compile: 17ms, render: 1363ms)
+ GET / 200 in 1169ms (compile: 17ms, render: 1151ms)
+ GET /positions 200 in 79ms (compile: 7ms, render: 73ms)
+ GET /auto-engine 200 in 109ms (compile: 10ms, render: 99ms)
+ GET /risk-mgmt 200 in 67ms (compile: 10ms, render: 57ms)
+ GET / 200 in 1602ms (compile: 5ms, render: 1597ms)
+ GET / 200 in 1403ms (compile: 6ms, render: 1397ms)
+ GET / 200 in 1405ms (compile: 111ms, render: 1293ms)
+ GET / 200 in 1301ms (compile: 81ms, render: 1220ms)
+ GET /backtest 200 in 167ms (compile: 5ms, render: 162ms)
+ GET /agent 200 in 76ms (compile: 11ms, render: 65ms)
+ GET /sentiment 200 in 83ms (compile: 7ms, render: 76ms)
+ GET / 200 in 336ms (compile: 10ms, render: 327ms)
+ GET / 200 in 1281ms (compile: 16ms, render: 1265ms)
+ GET /scanner 200 in 1240ms (compile: 6ms, render: 1235ms)
+ GET /scanner 200 in 1260ms (compile: 185ms, render: 1075ms)
+ GET /scanner 200 in 450ms (compile: 24ms, render: 425ms)
+ GET /options-chain?ticker=CIFR 200 in 689ms (compile: 13ms, render: 676ms)
+ GET /options-chain 200 in 637ms (compile: 5ms, render: 633ms)
+ GET /options-chain 200 in 719ms (compile: 6ms, render: 714ms)
+ GET /options-chain 200 in 774ms (compile: 5ms, render: 769ms)
+ GET /pricing 200 in 684ms (compile: 10ms, render: 674ms)
+ GET /pricing 200 in 820ms (compile: 7ms, render: 813ms)
+ GET /portfolio 200 in 872ms (compile: 10ms, render: 862ms)
+ GET /pricing 200 in 732ms (compile: 5ms, render: 727ms)
+ GET /auto-engine 200 in 270ms (compile: 18ms, render: 252ms)
+ GET /auto-engine 200 in 273ms (compile: 50ms, render: 222ms)
+ GET /portfolio 200 in 1067ms (compile: 9ms, render: 1058ms)
+ GET /auto-engine 200 in 146ms (compile: 7ms, render: 139ms)
+ GET /pricing 200 in 2.2s (compile: 14ms, render: 2.1s)
+ GET /options-chain 200 in 1514ms (compile: 13ms, render: 1501ms)
+ GET / 200 in 1978ms (compile: 9ms, render: 1969ms)
+ GET /scanner 200 in 1720ms (compile: 13ms, render: 1708ms)
+ GET /auto-engine 200 in 412ms (compile: 35ms, render: 377ms)
+ GET /sentiment 200 in 416ms (compile: 11ms, render: 406ms)
+ GET /vol-surface 200 in 515ms (compile: 4ms, render: 511ms)
+ GET /portfolio 200 in 1556ms (compile: 15ms, render: 1541ms)
+ GET /journal 200 in 568ms (compile: 18ms, render: 551ms)
+ GET /backtest 200 in 465ms (compile: 10ms, render: 455ms)
+ GET /execution 200 in 512ms (compile: 15ms, render: 497ms)
+ GET /positions 200 in 521ms (compile: 18ms, render: 503ms)
+ GET /agent 200 in 476ms (compile: 4ms, render: 472ms)
+ GET /risk 200 in 420ms (compile: 15ms, render: 405ms)
+ GET /risk-mgmt 200 in 399ms (compile: 6ms, render: 392ms)
+ GET /strategy 200 in 419ms (compile: 10ms, render: 410ms)
+ GET /replay 200 in 1125ms (compile: 29ms, render: 1096ms)
+ GET / 200 in 1796ms (compile: 44ms, render: 1751ms)
+ GET / 200 in 1438ms (compile: 11ms, render: 1427ms)
+ GET / 200 in 1150ms (compile: 30ms, render: 1121ms)
+ GET / 200 in 444ms (compile: 12ms, render: 432ms)
+ GET /options-chain 200 in 543ms (compile: 24ms, render: 518ms)
+ GET / 200 in 1090ms (compile: 9ms, render: 1081ms)
+ GET /scanner 200 in 1463ms (compile: 3ms, render: 1460ms)
+ GET / 200 in 700ms (compile: 4ms, render: 696ms)
+ GET / 200 in 513ms (compile: 9ms, render: 504ms)
+ GET /pricing 200 in 365ms (compile: 87ms, render: 277ms)
+ GET /portfolio 200 in 368ms (compile: 31ms, render: 337ms)
+ GET / 200 in 668ms (compile: 16ms, render: 651ms)
+ GET /positions 200 in 99ms (compile: 15ms, render: 85ms)
+ GET /risk-mgmt 200 in 166ms (compile: 29ms, render: 137ms)
+ GET / 200 in 1470ms (compile: 5ms, render: 1464ms)
+ GET / 200 in 1316ms (compile: 11ms, render: 1304ms)
+ GET /auto-engine 200 in 181ms (compile: 26ms, render: 154ms)
+ GET /backtest 200 in 186ms (compile: 61ms, render: 125ms)
+ GET / 200 in 1368ms (compile: 4ms, render: 1364ms)
+ GET / 200 in 1145ms (compile: 25ms, render: 1120ms)
+ GET /sentiment 200 in 61ms (compile: 5ms, render: 56ms)
+ GET /agent 200 in 315ms (compile: 26ms, render: 289ms)
+ GET / 200 in 1275ms (compile: 16ms, render: 1260ms)
+ GET / 200 in 951ms (compile: 16ms, render: 935ms)
+ GET / 200 in 344ms (compile: 10ms, render: 334ms)
+ GET /scanner 200 in 951ms (compile: 7ms, render: 944ms)
+ GET /options-chain?ticker=CIFR 200 in 183ms (compile: 6ms, render: 177ms)
+ GET /options-chain 200 in 1422ms (compile: 17ms, render: 1405ms)
+ GET /options-chain 200 in 1322ms (compile: 7ms, render: 1315ms)
+ GET /scanner 200 in 2.4s (compile: 7ms, render: 2.4s)
+ GET /scanner 200 in 1994ms (compile: 9ms, render: 1985ms)
+ GET /options-chain 200 in 250ms (compile: 19ms, render: 231ms)
+ GET /pricing 200 in 694ms (compile: 15ms, render: 679ms)
+ GET /pricing 200 in 613ms (compile: 22ms, render: 591ms)
+ GET /pricing 200 in 1124ms (compile: 9ms, render: 1115ms)
+ GET /portfolio 200 in 1034ms (compile: 4ms, render: 1030ms)
+ GET /portfolio 200 in 882ms (compile: 12ms, render: 870ms)
+ GET /auto-engine 200 in 318ms (compile: 4ms, render: 314ms)
+ GET /auto-engine 200 in 352ms (compile: 80ms, render: 272ms)
+ GET /auto-engine 200 in 229ms (compile: 17ms, render: 212ms)
+ GET /scanner 200 in 2.1s (compile: 11ms, render: 2.1s)
+ GET /options-chain 200 in 1618ms (compile: 6ms, render: 1612ms)
+ GET /pricing 200 in 1388ms (compile: 35ms, render: 1352ms)
+ GET / 200 in 1606ms (compile: 15ms, render: 1591ms)
+ GET /auto-engine 200 in 463ms (compile: 15ms, render: 447ms)
+ GET /portfolio 200 in 1135ms (compile: 10ms, render: 1125ms)
+ GET /sentiment 200 in 491ms (compile: 14ms, render: 476ms)
+ GET /vol-surface 200 in 546ms (compile: 80ms, render: 466ms)
+ GET /backtest 200 in 154ms (compile: 5ms, render: 150ms)
+ GET /positions 200 in 472ms (compile: 15ms, render: 457ms)
+ GET /journal 200 in 482ms (compile: 18ms, render: 464ms)
+ GET /execution 200 in 500ms (compile: 82ms, render: 418ms)
+ GET /agent 200 in 314ms (compile: 7ms, render: 308ms)
+ GET /risk-mgmt 200 in 319ms (compile: 8ms, render: 312ms)
+ GET /risk 200 in 285ms (compile: 8ms, render: 277ms)
+ GET /strategy 200 in 312ms (compile: 6ms, render: 306ms)
+ GET /replay 200 in 356ms (compile: 10ms, render: 346ms)
+ GET / 200 in 1543ms (compile: 6ms, render: 1538ms)
+ GET / 200 in 1720ms (compile: 7ms, render: 1713ms)
+ GET / 200 in 1727ms (compile: 148ms, render: 1579ms)
+ GET / 200 in 969ms (compile: 37ms, render: 932ms)
+ GET / 200 in 353ms (compile: 23ms, render: 331ms)
+ GET /options-chain 200 in 772ms (compile: 10ms, render: 762ms)
+ GET /pricing 200 in 498ms (compile: 7ms, render: 491ms)
+ GET / 200 in 545ms (compile: 62ms, render: 484ms)
+ GET /scanner 200 in 702ms (compile: 14ms, render: 688ms)
+ GET / 200 in 666ms (compile: 7ms, render: 659ms)
+ GET /portfolio 200 in 527ms (compile: 24ms, render: 503ms)
+ GET / 200 in 748ms (compile: 4ms, render: 744ms)
+ GET /positions 200 in 309ms (compile: 15ms, render: 294ms)
+ GET / 200 in 1123ms (compile: 5ms, render: 1118ms)
+ GET /risk-mgmt 200 in 110ms (compile: 15ms, render: 96ms)
+ GET / 200 in 649ms (compile: 7ms, render: 641ms)
+ GET /auto-engine 200 in 258ms (compile: 16ms, render: 242ms)
+ GET /backtest 200 in 123ms (compile: 9ms, render: 114ms)
+ GET / 200 in 1085ms (compile: 8ms, render: 1077ms)
+ GET / 200 in 882ms (compile: 52ms, render: 830ms)
+ GET /sentiment 200 in 95ms (compile: 18ms, render: 76ms)
+ GET /agent 200 in 221ms (compile: 20ms, render: 201ms)
+ GET / 200 in 1075ms (compile: 11ms, render: 1063ms)
+ GET / 200 in 811ms (compile: 4ms, render: 807ms)
+ GET / 200 in 416ms (compile: 3ms, render: 413ms)
+ GET /options-chain?ticker=CIFR 200 in 741ms (compile: 17ms, render: 724ms)
+ GET /scanner 200 in 1740ms (compile: 9ms, render: 1731ms)
+ GET /scanner 200 in 1267ms (compile: 16ms, render: 1251ms)
+ GET /scanner 200 in 1068ms (compile: 17ms, render: 1051ms)
+ GET /options-chain 200 in 1333ms (compile: 6ms, render: 1327ms)
+ GET /options-chain 200 in 1242ms (compile: 6ms, render: 1237ms)
+ GET /options-chain 200 in 1265ms (compile: 109ms, render: 1156ms)
+ GET /pricing 200 in 1118ms (compile: 8ms, render: 1110ms)
+ GET /pricing 200 in 394ms (compile: 10ms, render: 384ms)
+ GET /pricing 200 in 745ms (compile: 12ms, render: 733ms)
+ GET /portfolio 200 in 899ms (compile: 8ms, render: 892ms)
+ GET /auto-engine 200 in 280ms (compile: 6ms, render: 274ms)
+ GET /auto-engine 200 in 358ms (compile: 43ms, render: 314ms)
+ GET /portfolio 200 in 1187ms (compile: 7ms, render: 1180ms)
+ GET /auto-engine 200 in 119ms (compile: 6ms, render: 113ms)
+ GET /pricing 200 in 1744ms (compile: 7ms, render: 1737ms)
+ GET /options-chain 200 in 1545ms (compile: 91ms, render: 1455ms)
+ GET / 200 in 2.2s (compile: 15ms, render: 2.2s)
+ GET /scanner 200 in 1638ms (compile: 28ms, render: 1610ms)
+ GET /sentiment 200 in 256ms (compile: 5ms, render: 251ms)
+ GET /auto-engine 200 in 275ms (compile: 39ms, render: 236ms)
+ GET /vol-surface 200 in 337ms (compile: 5ms, render: 332ms)
+ GET /portfolio 200 in 1372ms (compile: 7ms, render: 1365ms)
+ GET /backtest 200 in 311ms (compile: 4ms, render: 307ms)
+ GET /journal 200 in 541ms (compile: 9ms, render: 532ms)
+ GET /execution 200 in 531ms (compile: 10ms, render: 520ms)
+ GET /positions 200 in 573ms (compile: 27ms, render: 546ms)
+ GET /agent 200 in 273ms (compile: 16ms, render: 257ms)
+ GET /risk 200 in 648ms (compile: 19ms, render: 629ms)
+ GET /risk-mgmt 200 in 612ms (compile: 13ms, render: 599ms)
+ GET /strategy 200 in 696ms (compile: 45ms, render: 651ms)
+ GET /replay 200 in 232ms (compile: 8ms, render: 224ms)
+ GET / 200 in 1774ms (compile: 22ms, render: 1752ms)
+ GET / 200 in 1612ms (compile: 6ms, render: 1606ms)
+ GET / 200 in 1166ms (compile: 11ms, render: 1155ms)
+ GET / 200 in 983ms (compile: 36ms, render: 947ms)
+ GET /pricing 200 in 472ms (compile: 6ms, render: 466ms)
+ GET /options-chain 200 in 237ms (compile: 21ms, render: 216ms)
+ GET / 200 in 386ms (compile: 5ms, render: 381ms)
+ GET /scanner 200 in 699ms (compile: 8ms, render: 690ms)
+ GET / 200 in 340ms (compile: 6ms, render: 334ms)
+ GET / 200 in 828ms (compile: 26ms, render: 802ms)
+ GET / 200 in 802ms (compile: 5ms, render: 797ms)
+ GET /portfolio 200 in 345ms (compile: 16ms, render: 329ms)
+ GET / 200 in 679ms (compile: 25ms, render: 654ms)
+ GET /risk-mgmt 200 in 73ms (compile: 24ms, render: 49ms)
+ GET /positions 200 in 98ms (compile: 19ms, render: 79ms)
+ GET / 200 in 382ms (compile: 5ms, render: 378ms)
+ GET /auto-engine 200 in 150ms (compile: 8ms, render: 142ms)
+ GET / 200 in 1086ms (compile: 5ms, render: 1081ms)
+ GET / 200 in 920ms (compile: 18ms, render: 902ms)
+ GET / 200 in 489ms (compile: 8ms, render: 481ms)
+ GET /backtest 200 in 157ms (compile: 12ms, render: 145ms)
+ GET /sentiment 200 in 118ms (compile: 10ms, render: 108ms)
+ GET /agent 200 in 85ms (compile: 10ms, render: 76ms)
+ GET / 200 in 680ms (compile: 4ms, render: 676ms)
+ GET / 200 in 1176ms (compile: 7ms, render: 1170ms)
+ GET /scanner 200 in 1430ms (compile: 20ms, render: 1410ms)
+ GET /scanner 200 in 1199ms (compile: 95ms, render: 1104ms)
+ GET /options-chain?ticker=CIFR 200 in 711ms (compile: 14ms, render: 697ms)
+ GET /options-chain 200 in 1042ms (compile: 10ms, render: 1032ms)
+ GET /options-chain 200 in 1086ms (compile: 58ms, render: 1029ms)
+ GET /scanner 200 in 966ms (compile: 9ms, render: 957ms)
+ GET /options-chain 200 in 1199ms (compile: 36ms, render: 1163ms)
+ GET /pricing 200 in 1194ms (compile: 9ms, render: 1185ms)
+ GET /pricing 200 in 1224ms (compile: 85ms, render: 1139ms)
+ GET /pricing 200 in 1155ms (compile: 70ms, render: 1084ms)
+ GET /auto-engine 200 in 357ms (compile: 71ms, render: 286ms)
+ GET /auto-engine 200 in 327ms (compile: 46ms, render: 280ms)
+ GET /portfolio 200 in 1389ms (compile: 22ms, render: 1368ms)
+ GET /portfolio 200 in 1179ms (compile: 12ms, render: 1167ms)
+ GET /auto-engine 200 in 111ms (compile: 10ms, render: 101ms)
+ GET /pricing 200 in 114ms (compile: 13ms, render: 101ms)
+ GET / 200 in 50ms (compile: 2ms, render: 48ms)
+ GET /scanner 200 in 64ms (compile: 1947µs, render: 63ms)
+ GET /options-chain 200 in 71ms (compile: 9ms, render: 62ms)
+ GET /pricing 200 in 40ms (compile: 1970µs, render: 39ms)
+ GET /scanner 200 in 60ms (compile: 2ms, render: 58ms)
+ GET /scanner 200 in 55ms (compile: 1964µs, render: 53ms)
+ GET / 200 in 43ms (compile: 2ms, render: 41ms)
+ GET /pricing 200 in 41ms (compile: 1856µs, render: 39ms)
+ GET /risk-mgmt 200 in 46ms (compile: 6ms, render: 40ms)
+ GET /portfolio 200 in 76ms (compile: 5ms, render: 71ms)
+ GET /positions 200 in 18ms (compile: 1925µs, render: 16ms)
+ GET /options-chain 200 in 63ms (compile: 3ms, render: 60ms)
+ GET / 200 in 62ms (compile: 1951µs, render: 60ms)
+ GET /backtest 200 in 21ms (compile: 5ms, render: 16ms)
+ GET /backtest 200 in 46ms (compile: 2ms, render: 44ms)
+ GET / 200 in 53ms (compile: 1995µs, render: 51ms)
+ GET /vol-surface 200 in 60ms (compile: 3ms, render: 57ms)
+ GET /vol-surface 200 in 47ms (compile: 2ms, render: 45ms)
+ GET / 200 in 57ms (compile: 3ms, render: 54ms)
+ GET / 200 in 109ms (compile: 2ms, render: 106ms)
+ GET / 200 in 102ms (compile: 2ms, render: 100ms)
+ GET / 200 in 103ms (compile: 2ms, render: 101ms)
+ GET /scanner 200 in 60ms (compile: 2ms, render: 58ms)
+ GET /options-chain 200 in 63ms (compile: 20ms, render: 44ms)
+ GET /pricing 200 in 64ms (compile: 3ms, render: 61ms)
+ GET /portfolio 200 in 50ms (compile: 3ms, render: 47ms)
+ GET /positions 200 in 28ms (compile: 3ms, render: 25ms)
+ GET /risk-mgmt 200 in 28ms (compile: 4ms, render: 24ms)
+ GET /auto-engine 200 in 19ms (compile: 3ms, render: 16ms)
+ GET /risk-mgmt 200 in 18ms (compile: 3ms, render: 15ms)
+ GET /auto-engine 200 in 27ms (compile: 3ms, render: 24ms)
+ GET /backtest 200 in 18ms (compile: 1906µs, render: 16ms)
+ GET / 200 in 61ms (compile: 3ms, render: 59ms)
+ GET /scanner 200 in 59ms (compile: 1878µs, render: 57ms)
+ GET /options-chain 200 in 43ms (compile: 2ms, render: 41ms)
+ GET /risk-mgmt 200 in 28ms (compile: 3ms, render: 25ms)
+ GET /positions 200 in 20ms (compile: 3ms, render: 17ms)
+ GET /portfolio 200 in 169ms (compile: 2ms, render: 166ms)
+ GET /risk-mgmt 200 in 26ms (compile: 3ms, render: 23ms)
+ GET /positions 200 in 20ms (compile: 4ms, render: 16ms)
+ GET /auto-engine 200 in 18ms (compile: 4ms, render: 14ms)
+ GET /backtest 200 in 21ms (compile: 2ms, render: 18ms)
+ GET /sentiment 200 in 42ms (compile: 6ms, render: 36ms)
+ GET /agent 200 in 19ms (compile: 2ms, render: 17ms)
+ GET /risk-mgmt 200 in 31ms (compile: 4ms, render: 27ms)
+ GET /portfolio 200 in 58ms (compile: 5ms, render: 53ms)
+ GET /pricing 200 in 46ms (compile: 1910µs, render: 44ms)
+ GET /scanner 200 in 66ms (compile: 3ms, render: 63ms)
+ GET / 200 in 68ms (compile: 6ms, render: 63ms)
+ GET / 200 in 60ms (compile: 3ms, render: 57ms)
+ GET /risk-mgmt 200 in 18ms (compile: 1987µs, render: 16ms)
+ GET / 200 in 119ms (compile: 2ms, render: 117ms)
+ HEAD / 200 in 93ms (compile: 3ms, render: 90ms)
+ GET / 200 in 140ms (compile: 23ms, render: 117ms)
+ GET / 200 in 115ms (compile: 3ms, render: 112ms)
+ GET /scanner 200 in 73ms (compile: 3ms, render: 70ms)
+ GET /options-chain 200 in 47ms (compile: 2ms, render: 45ms)
+ GET /options-chain 200 in 49ms (compile: 1990µs, render: 47ms)
+ GET /scanner 200 in 71ms (compile: 3ms, render: 68ms)
+ GET /positions 200 in 17ms (compile: 2ms, render: 14ms)
+ GET /risk-mgmt 200 in 24ms (compile: 1984µs, render: 22ms)
+ GET /auto-engine 200 in 20ms (compile: 1963µs, render: 18ms)
+ GET /backtest 200 in 30ms (compile: 3ms, render: 27ms)
+ GET /agent 200 in 25ms (compile: 2ms, render: 23ms)
+ GET /sentiment 200 in 20ms (compile: 2ms, render: 18ms)
+ GET /pricing 200 in 46ms (compile: 3ms, render: 43ms)
+ GET /options-chain 200 in 46ms (compile: 1947µs, render: 44ms)
+ GET / 200 in 144ms (compile: 2ms, render: 141ms)
+✓ Compiled in 319ms
+ GET / 200 in 517ms (compile: 225ms, render: 292ms)
+ GET / 200 in 223ms (compile: 3ms, render: 219ms)
+ GET / 200 in 124ms (compile: 6ms, render: 117ms)
+ GET / 200 in 66ms (compile: 2ms, render: 64ms)
+ GET / 200 in 77ms (compile: 3ms, render: 75ms)
+ GET / 200 in 65ms (compile: 5ms, render: 60ms)
+ GET / 200 in 47ms (compile: 1912µs, render: 45ms)
+ GET /risk-mgmt 200 in 199ms (compile: 158ms, render: 41ms)
+ GET / 200 in 231ms (compile: 2ms, render: 229ms)
+ GET / 200 in 195ms (compile: 3ms, render: 192ms)
+ GET / 200 in 147ms (compile: 3ms, render: 144ms)
+ GET / 200 in 127ms (compile: 3ms, render: 124ms)
+ GET /risk-mgmt 200 in 31ms (compile: 3ms, render: 28ms)
+ GET / 200 in 44ms (compile: 2ms, render: 42ms)
+ GET / 200 in 117ms (compile: 7ms, render: 110ms)
+ GET /risk-mgmt 200 in 25ms (compile: 2ms, render: 23ms)
+ GET / 200 in 234ms (compile: 2ms, render: 231ms)
+ GET / 200 in 191ms (compile: 2ms, render: 188ms)
+ GET / 200 in 141ms (compile: 3ms, render: 138ms)
+ GET / 200 in 88ms (compile: 4ms, render: 84ms)
+ GET /risk-mgmt 200 in 25ms (compile: 3ms, render: 22ms)
+ GET /risk-mgmt 200 in 118ms (compile: 3ms, render: 116ms)
+ GET / 200 in 153ms (compile: 3ms, render: 150ms)
+ GET / 200 in 106ms (compile: 3ms, render: 103ms)
+ GET / 200 in 60ms (compile: 1964µs, render: 58ms)
+ GET /risk-mgmt 200 in 22ms (compile: 2ms, render: 20ms)
+ GET / 200 in 77ms (compile: 3ms, render: 74ms)
+ GET / 200 in 54ms (compile: 1985µs, render: 52ms)
+ GET /risk-mgmt 200 in 33ms (compile: 3ms, render: 30ms)
+ GET /risk-mgmt 200 in 23ms (compile: 1982µs, render: 21ms)
+ GET / 200 in 81ms (compile: 5ms, render: 76ms)
+ GET / 200 in 73ms (compile: 3ms, render: 70ms)
+ GET /risk-mgmt 200 in 25ms (compile: 2ms, render: 23ms)
+ GET /risk-mgmt 200 in 30ms (compile: 3ms, render: 27ms)
+ GET /risk-mgmt 200 in 33ms (compile: 6ms, render: 28ms)
+ GET /risk-mgmt 200 in 20ms (compile: 1997µs, render: 18ms)
+ GET /risk-mgmt 200 in 25ms (compile: 2ms, render: 22ms)
+ GET / 200 in 73ms (compile: 6ms, render: 67ms)
+ GET / 200 in 46ms (compile: 2ms, render: 44ms)
+ GET /risk-mgmt 200 in 22ms (compile: 2ms, render: 20ms)
+ GET /risk-mgmt 200 in 27ms (compile: 1965µs, render: 25ms)
+ GET /risk-mgmt 200 in 32ms (compile: 5ms, render: 27ms)
+ GET / 200 in 45ms (compile: 2ms, render: 43ms)
+ GET / 200 in 79ms (compile: 3ms, render: 76ms)
+ GET /risk-mgmt 200 in 24ms (compile: 2ms, render: 22ms)
+ GET /risk-mgmt 200 in 20ms (compile: 1995µs, render: 18ms)
+ GET /risk-mgmt 200 in 33ms (compile: 3ms, render: 30ms)
+ GET /risk-mgmt 200 in 20ms (compile: 2ms, render: 18ms)
+ GET /risk-mgmt 200 in 29ms (compile: 1982µs, render: 27ms)
+ GET /risk-mgmt 200 in 31ms (compile: 3ms, render: 28ms)
+ GET /risk-mgmt 200 in 23ms (compile: 3ms, render: 21ms)
+ GET / 200 in 53ms (compile: 1933µs, render: 51ms)
+ GET / 200 in 47ms (compile: 2ms, render: 44ms)
+ GET /risk-mgmt 200 in 31ms (compile: 7ms, render: 24ms)
+ GET / 200 in 60ms (compile: 2ms, render: 58ms)
+ GET /risk-mgmt 200 in 20ms (compile: 2ms, render: 18ms)
+ GET / 200 in 50ms (compile: 2ms, render: 48ms)
+ GET /risk-mgmt 200 in 27ms (compile: 2ms, render: 25ms)
+ GET / 200 in 45ms (compile: 1979µs, render: 43ms)
+ GET / 200 in 66ms (compile: 2ms, render: 64ms)
+ GET / 200 in 135ms (compile: 11ms, render: 124ms)
+ GET /risk-mgmt 200 in 27ms (compile: 2ms, render: 25ms)
+ GET / 200 in 76ms (compile: 2ms, render: 74ms)
+ GET /risk-mgmt 200 in 22ms (compile: 2ms, render: 20ms)
+ GET / 200 in 46ms (compile: 3ms, render: 43ms)
+ GET / 200 in 60ms (compile: 2ms, render: 58ms)
+ GET / 200 in 48ms (compile: 1936µs, render: 46ms)
+ GET /risk-mgmt 200 in 20ms (compile: 2ms, render: 18ms)
+ GET /risk-mgmt 200 in 24ms (compile: 2ms, render: 22ms)
+ GET / 200 in 79ms (compile: 3ms, render: 76ms)
+ GET /risk-mgmt 200 in 24ms (compile: 3ms, render: 21ms)
+ GET /risk-mgmt 200 in 94ms (compile: 6ms, render: 87ms)
+ GET / 200 in 55ms (compile: 3ms, render: 52ms)
+ GET /risk-mgmt 200 in 31ms (compile: 3ms, render: 28ms)
+ GET /risk-mgmt 200 in 22ms (compile: 1957µs, render: 20ms)
+ GET / 200 in 53ms (compile: 2ms, render: 51ms)
+ GET /risk-mgmt 200 in 20ms (compile: 2ms, render: 18ms)
+ GET /risk-mgmt 200 in 63ms (compile: 3ms, render: 60ms)
+ GET / 200 in 46ms (compile: 2ms, render: 43ms)
+ GET /risk-mgmt 200 in 48ms (compile: 20ms, render: 28ms)
+ GET / 200 in 64ms (compile: 1853µs, render: 62ms)
+ GET / 200 in 64ms (compile: 3ms, render: 62ms)
+ GET / 200 in 50ms (compile: 1919µs, render: 48ms)
+ GET /risk-mgmt 200 in 21ms (compile: 3ms, render: 19ms)
+ GET /risk-mgmt 200 in 41ms (compile: 3ms, render: 38ms)
+ GET /risk-mgmt 200 in 28ms (compile: 3ms, render: 25ms)
+ GET /risk-mgmt 200 in 29ms (compile: 3ms, render: 26ms)
+ GET /risk-mgmt 200 in 21ms (compile: 1960µs, render: 19ms)
+ GET /risk-mgmt 200 in 19ms (compile: 2ms, render: 17ms)
+ GET /risk-mgmt 200 in 41ms (compile: 4ms, render: 37ms)
+ GET /risk-mgmt 200 in 20ms (compile: 1981µs, render: 18ms)
+ GET /risk-mgmt 200 in 20ms (compile: 3ms, render: 18ms)
+ GET / 200 in 308ms (compile: 5ms, render: 303ms)
+✓ Compiled in 137ms
+ GET / 200 in 371ms (compile: 120ms, render: 251ms)
+✓ Compiled in 142ms
+✓ Compiled in 143ms
+ GET / 200 in 439ms (compile: 94ms, render: 346ms)
+ GET / 200 in 133ms (compile: 2ms, render: 131ms)
+ GET / 200 in 81ms (compile: 3ms, render: 78ms)
+ GET /risk-mgmt 200 in 300ms (compile: 94ms, render: 206ms)
+ GET / 200 in 149ms (compile: 3ms, render: 146ms)
+ HEAD / 200 in 122ms (compile: 3ms, render: 119ms)
+ GET /scanner 200 in 255ms (compile: 167ms, render: 88ms)
+ GET /pricing 200 in 236ms (compile: 153ms, render: 83ms)
+ GET /scanner 200 in 73ms (compile: 3ms, render: 70ms)
+ GET / 200 in 49ms (compile: 2ms, render: 47ms)
+ GET /us-tickers.json 404 in 779ms (compile: 655ms, render: 123ms)
+⨯ ./src/components/charts/StockPriceChart.tsx:18:1
+Module not found: Can't resolve 'chartjs-adapter-date-fns'
+[0m [90m 16 |[39m } [36mfrom[39m [32m'chart.js'[39m[33m;[39m
+ [90m 17 |[39m [36mimport[39m { [33mLine[39m } [36mfrom[39m [32m'react-chartjs-2'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 18 |[39m [36mimport[39m [32m'chartjs-adapter-date-fns'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 19 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m
+ [90m 20 |[39m
+ [90m 21 |[39m [33mChartJS[39m[33m.[39mregister([0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/charts/StockPriceChart.tsx [Client Component Browser]
+    ./src/app/stock/[ticker]/StockDetailClient.tsx [Client Component Browser]
+    ./src/app/stock/[ticker]/StockDetailClient.tsx [Server Component]
+    ./src/app/stock/[ticker]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/charts/StockPriceChart.tsx [Client Component SSR]
+    ./src/app/stock/[ticker]/StockDetailClient.tsx [Client Component SSR]
+    ./src/app/stock/[ticker]/StockDetailClient.tsx [Server Component]
+    ./src/app/stock/[ticker]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+
+./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+○ Compiling /_error ...
+ HEAD /stock/AAPL 500 in 6.0s (compile: 5.4s, render: 531ms)
+⨯ ./src/components/charts/StockPriceChart.tsx:18:1
+Module not found: Can't resolve 'chartjs-adapter-date-fns'
+[0m [90m 16 |[39m } [36mfrom[39m [32m'chart.js'[39m[33m;[39m
+ [90m 17 |[39m [36mimport[39m { [33mLine[39m } [36mfrom[39m [32m'react-chartjs-2'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 18 |[39m [36mimport[39m [32m'chartjs-adapter-date-fns'[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 19 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m
+ [90m 20 |[39m
+ [90m 21 |[39m [33mChartJS[39m[33m.[39mregister([0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/charts/StockPriceChart.tsx [Client Component Browser]
+    ./src/app/stock/[ticker]/StockDetailClient.tsx [Client Component Browser]
+    ./src/app/stock/[ticker]/StockDetailClient.tsx [Server Component]
+    ./src/app/stock/[ticker]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/charts/StockPriceChart.tsx [Client Component SSR]
+    ./src/app/stock/[ticker]/StockDetailClient.tsx [Client Component SSR]
+    ./src/app/stock/[ticker]/StockDetailClient.tsx [Server Component]
+    ./src/app/stock/[ticker]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+
+./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+ GET /stock/AAPL 500 in 64ms (compile: 52ms, render: 12ms)
+ GET /us-tickers.json 404 in 89ms (compile: 4ms, render: 85ms)
+ GET / 200 in 253ms (compile: 4ms, render: 249ms)
+ GET / 200 in 155ms (compile: 3ms, render: 152ms)
+ HEAD / 200 in 148ms (compile: 4ms, render: 144ms)
+ GET / 200 in 116ms (compile: 5ms, render: 112ms)
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/stock/[ticker]/StockDetailClient.tsx:5:1
+Module not found: Can't resolve 'lucide-react'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useEffect[33m,[39m useCallback } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m'next/link'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mTrendingUp[39m[33m,[39m [33mTrendingDown[39m[33m,[39m [33mBarChart3[39m[33m,[39m [33mLineChart[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m [33mStockPriceChart[39m [36mfrom[39m [32m'@/components/charts/StockPriceChart'[39m[33m;[39m
+ [90m 7 |[39m [36mimport[39m [33mMispricingDetector[39m [36mfrom[39m [32m'@/components/MispricingDetector'[39m[33m;[39m
+ [90m 8 |[39m [36mimport[39m type { [33mHistoricalDataPoint[39m[33m,[39m [33mTimeRange[39m } [36mfrom[39m [32m'@/lib/types/historicalPrice'[39m[33m;[39m[0m
+
+
+
+Import trace:
+  Server Component:
+    ./src/app/stock/[ticker]/StockDetailClient.tsx
+    ./src/app/stock/[ticker]/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+✓ Compiled in 150ms
+ GET / 200 in 138ms (compile: 3ms, render: 135ms)
+ GET / 200 in 88ms (compile: 3ms, render: 85ms)
+ HEAD /stock/AAPL 200 in 3.6s (compile: 3.3s, render: 285ms)
+ GET /stock/AAPL 200 in 168ms (compile: 87ms, render: 81ms)
+ GET / 200 in 182ms (compile: 5ms, render: 177ms)
+ GET / 200 in 185ms (compile: 2ms, render: 182ms)
+ GET /us-tickers.json 404 in 67ms (compile: 6ms, render: 61ms)
+ GET /stock/RDW 200 in 129ms (compile: 84ms, render: 45ms)
+✓ Compiled in 197ms
+ GET /stock/RDW 200 in 143ms (compile: 79ms, render: 64ms)
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+ GET / 200 in 6.5s (compile: 110ms, render: 6.4s)
+✓ Compiled in 124ms
+ GET /stock/RDW 200 in 160ms (compile: 85ms, render: 75ms)
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+ GET /options-chain?ticker=RDW 200 in 360ms (compile: 254ms, render: 106ms)
+ GET / 500 in 6.4s (compile: 3ms, render: 6.4s)
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+ GET / 200 in 6.7s (compile: 3ms, render: 6.7s)
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+ HEAD / 500 in 5.3s (compile: 3ms, render: 5.3s)
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+ GET / 500 in 5.9s (compile: 3ms, render: 5.9s)
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '859103548'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1425754748'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter={function onMouseEnter} onMouseLeave=... children=...>
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '581995474'
+}
+⨯ Error: Event handlers cannot be passed to Client Component props.
+  <... href=... prefetch={true} style=... onMouseEnter=... onMouseLeave={function onMouseLeave} children=...>
+                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1826090002'
+}
+ GET / 500 in 5.6s (compile: 2ms, render: 5.6s)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 426ms (compile: 148ms, render: 279ms)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 217ms (compile: 3ms, render: 213ms)
+✓ Compiled in 496ms
+ GET / 200 in 104ms (compile: 5ms, render: 99ms)
+ GET / 200 in 72ms (compile: 2ms, render: 69ms)
+ HEAD / 200 in 117ms (compile: 5ms, render: 113ms)
+ HEAD /scanner 200 in 544ms (compile: 202ms, render: 342ms)
+✓ Compiled in 1978ms
+ HEAD / 200 in 314ms (compile: 106ms, render: 209ms)
+✓ Compiled in 164ms
+ HEAD / 200 in 292ms (compile: 100ms, render: 192ms)
+ HEAD /stock/AAPL 200 in 441ms (compile: 174ms, render: 267ms)
+ GET / 200 in 126ms (compile: 2ms, render: 124ms)
+ GET / 200 in 347ms (compile: 5ms, render: 342ms)
+ GET /stock/QXO 200 in 165ms (compile: 91ms, render: 74ms)
+✓ Compiled in 1262ms
+ GET /stock/QXO 200 in 599ms (compile: 206ms, render: 393ms)
+✓ Compiled in 31ms
+✓ Compiled in 866ms
+ GET / 200 in 474ms (compile: 102ms, render: 373ms)
+✓ Compiled in 1287ms
+ HEAD / 200 in 120ms (compile: 3ms, render: 117ms)
+ HEAD /stock/AAPL 200 in 177ms (compile: 103ms, render: 74ms)
+ GET /stock/AAPL 200 in 72ms (compile: 6ms, render: 65ms)
+ GET /stock/QXO 200 in 165ms (compile: 76ms, render: 88ms)
+ GET / 200 in 68ms (compile: 2ms, render: 66ms)
+ GET / 200 in 52ms (compile: 4ms, render: 48ms)
+ GET /stock/CIFR 200 in 114ms (compile: 76ms, render: 37ms)
+ GET / 200 in 56ms (compile: 3ms, render: 53ms)
+ GET /scanner 200 in 409ms (compile: 327ms, render: 82ms)
+✓ Compiled in 246ms
+✓ Compiled in 649ms
+✓ Compiled in 898ms
+✓ Compiled in 131ms
+✓ Compiled in 155ms
+✓ Compiled in 116ms
+ HEAD /stock/CIFR 200 in 592ms (compile: 211ms, render: 381ms)
+ HEAD /stock/AAPL 200 in 196ms (compile: 17ms, render: 179ms)
+ GET /stock/CIFR 200 in 65ms (compile: 4ms, render: 61ms)
+✓ Compiled in 173ms
+ GET /stock/CIFR 200 in 475ms (compile: 190ms, render: 285ms)
+✓ Compiled in 212ms
+ HEAD /stock/CIFR 200 in 500ms (compile: 211ms, render: 289ms)
+ HEAD /stock/AAPL 200 in 109ms (compile: 3ms, render: 106ms)
+ GET / 200 in 153ms (compile: 5ms, render: 147ms)
+ GET / 200 in 172ms (compile: 7ms, render: 166ms)
+ GET / 200 in 56ms (compile: 2ms, render: 54ms)
+ GET /scanner 200 in 82ms (compile: 3ms, render: 80ms)
+ GET /stock/PYPL 200 in 142ms (compile: 90ms, render: 52ms)
+✓ Compiled in 170ms
+⨯ ReferenceError: ROWS is not defined
+    at ScannerTable (src/components/scanner/ScannerTable.tsx:71:12)
+  69 |         </thead>
+  70 |         <tbody>
+> 71 |           {ROWS.map((o, i) => {
+     |            ^
+  72 |             const volK = (Math.abs(Math.sin(o.seed)) * 600) | 0;
+  73 |             return (
+  74 |               <tr key={o.ticker} className={i === 0 ? 'sel' : ''}> {
+  digest: '541258918'
+}
+ GET /scanner 200 in 240ms (compile: 183ms, render: 57ms)
+ GET /stock/PYPL 200 in 131ms (compile: 80ms, render: 51ms)
+✓ Compiled in 157ms
+ GET /stock/PYPL 200 in 377ms (compile: 122ms, render: 254ms)
+ GET /scanner 200 in 978ms (compile: 124ms, render: 854ms)
+✓ Compiled in 143ms
+ GET /scanner 200 in 200ms (compile: 103ms, render: 97ms)
+ GET /stock/PYPL 200 in 118ms (compile: 81ms, render: 37ms)
+ GET /scanner 200 in 266ms (compile: 120ms, render: 146ms)
+ GET /stock/PYPL 200 in 173ms (compile: 101ms, render: 72ms)
+✓ Compiled in 929ms
+ GET /scanner 200 in 272ms (compile: 115ms, render: 157ms)
+ GET /stock/PYPL 200 in 133ms (compile: 79ms, render: 54ms)
+ HEAD /scanner 200 in 68ms (compile: 2ms, render: 66ms)
+ POST /api/scanner/parse 404 in 604ms (compile: 325ms, render: 279ms)
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.40:3000
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 8.1s
+⚠ Cross origin request detected from 192.168.0.40 to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+⚠ Cross origin request detected from precision-comply-lavish.ngrok-free.dev to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+(node:144976) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+○ Compiling /scanner ...
+ HEAD /scanner 200 in 3.6s (compile: 3.4s, render: 235ms)
+ GET /scanner 200 in 108ms (compile: 12ms, render: 96ms)
+ GET /scanner 200 in 10.9s (compile: 10.2s, render: 689ms)
+ GET /stock/PYPL 200 in 10.6s (compile: 10.4s, render: 147ms)
+ GET /scanner 200 in 94ms (compile: 6ms, render: 88ms)
+✓ Compiled in 644ms
+✓ Compiled in 169ms
+✓ Compiled in 324ms
+ HEAD /stock/CIFR 200 in 379ms (compile: 123ms, render: 256ms)
+ HEAD /stock/AAPL 200 in 61ms (compile: 6ms, render: 55ms)
+ GET /stock/CIFR 200 in 145ms (compile: 39ms, render: 106ms)
+ GET /stock/AAPL 200 in 80ms (compile: 6ms, render: 74ms)
+ GET /stock/CIFR 200 in 135ms (compile: 38ms, render: 97ms)
+ GET /stock/CIFR 200 in 73ms (compile: 37ms, render: 36ms)
+✓ Compiled in 123ms
+✓ Compiled in 148ms
+✓ Compiled in 163ms
+✓ Compiled in 107ms
+ HEAD /stock/AAPL 200 in 379ms (compile: 135ms, render: 244ms)
+ GET /stock/PYPL 200 in 135ms (compile: 56ms, render: 80ms)
+ GET / 200 in 616ms (compile: 27ms, render: 589ms)
+✓ Compiled in 223ms
+ GET / 200 in 320ms (compile: 9ms, render: 310ms)
+✓ Compiled in 3ms
+ GET / 200 in 151ms (compile: 9ms, render: 142ms)
+ GET /stock/HOOD 200 in 436ms (compile: 237ms, render: 199ms)
+ GET /stock/HOOD 200 in 81ms (compile: 49ms, render: 31ms)
+○ Compiling /vol-surface ...
+Failed to proxy http://localhost:8000/api/market/HOOD/mispricing Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+✓ Finished writing to filesystem cache in 45s
+Failed to proxy http://localhost:8000/api/market/HOOD/regime Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+Failed to proxy http://localhost:8000/api/market/HOOD/regime Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+Failed to proxy http://localhost:8000/api/market/HOOD/hv-confidence?window=30 Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+Failed to proxy http://localhost:8000/api/market/HOOD/hv-confidence?window=30 Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+Error: socket hang up
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+✓ Finished writing to filesystem cache in 6.3min
+✓ Finished writing to filesystem cache in 16.5s
+ GET / 200 in 687ms (compile: 70ms, render: 617ms)
+ GET / 200 in 122ms (compile: 2ms, render: 119ms)
+ GET / 200 in 2.6s (compile: 3ms, render: 2.6s)
+ GET / 200 in 3.4s (compile: 6ms, render: 3.4s)
+ GET / 200 in 823ms (compile: 4ms, render: 819ms)
+ GET / 200 in 741ms (compile: 5ms, render: 736ms)
+ GET /scanner 200 in 384ms (compile: 55ms, render: 328ms)
+ GET / 200 in 754ms (compile: 3ms, render: 750ms)
+ GET /scanner 200 in 788ms (compile: 89ms, render: 699ms)
+ GET /scanner 200 in 123ms (compile: 3ms, render: 120ms)
+ GET /scanner 200 in 221ms (compile: 3ms, render: 218ms)
+ GET /scanner 200 in 183ms (compile: 6ms, render: 177ms)
+○ Compiling /options-chain ...
+ GET /options-chain 200 in 8.3s (compile: 7.6s, render: 662ms)
+ GET /options-chain 200 in 8.4s (compile: 7.8s, render: 520ms)
+ GET /options-chain 200 in 461ms (compile: 3ms, render: 458ms)
+ GET /options-chain 200 in 389ms (compile: 8ms, render: 380ms)
+ GET /options-chain 200 in 211ms (compile: 3ms, render: 208ms)
+ GET /pricing 200 in 2.7s (compile: 2.1s, render: 531ms)
+ GET /pricing 200 in 1814ms (compile: 1380ms, render: 434ms)
+ GET /pricing 200 in 453ms (compile: 4ms, render: 449ms)
+ GET /pricing 200 in 318ms (compile: 4ms, render: 314ms)
+ GET /pricing 200 in 248ms (compile: 4ms, render: 244ms)
+ GET /portfolio 200 in 1596ms (compile: 964ms, render: 632ms)
+ GET /portfolio 200 in 2.4s (compile: 1783ms, render: 594ms)
+ GET /portfolio 200 in 510ms (compile: 5ms, render: 505ms)
+ GET /portfolio 200 in 441ms (compile: 5ms, render: 437ms)
+ GET /portfolio 200 in 677ms (compile: 4ms, render: 673ms)
+ GET /portfolio 200 in 518ms (compile: 4ms, render: 514ms)
+ GET /auto-engine 200 in 2.6s (compile: 1889ms, render: 699ms)
+ GET /auto-engine 200 in 2.6s (compile: 1959ms, render: 670ms)
+ GET /auto-engine 200 in 174ms (compile: 3ms, render: 171ms)
+ GET /auto-engine 200 in 110ms (compile: 7ms, render: 103ms)
+ GET /auto-engine 200 in 131ms (compile: 4ms, render: 127ms)
+ GET /auto-engine 200 in 84ms (compile: 5ms, render: 79ms)
+ GET / 200 in 700ms (compile: 4ms, render: 696ms)
+ GET / 200 in 570ms (compile: 4ms, render: 567ms)
+ GET /scanner 200 in 138ms (compile: 3ms, render: 135ms)
+ GET / 200 in 238ms (compile: 3ms, render: 235ms)
+ GET / 200 in 171ms (compile: 5ms, render: 166ms)
+ GET / 200 in 224ms (compile: 3ms, render: 221ms)
+ GET / 200 in 243ms (compile: 13ms, render: 230ms)
+ GET / 200 in 208ms (compile: 3ms, render: 205ms)
+ GET / 200 in 193ms (compile: 2ms, render: 191ms)
+ GET / 200 in 137ms (compile: 4ms, render: 133ms)
+ GET /scanner 200 in 109ms (compile: 4ms, render: 105ms)
+ GET /pricing 200 in 297ms (compile: 4ms, render: 293ms)
+ GET / 200 in 251ms (compile: 3ms, render: 247ms)
+ GET / 200 in 190ms (compile: 3ms, render: 187ms)
+ GET / 200 in 227ms (compile: 4ms, render: 222ms)
+ GET / 200 in 202ms (compile: 4ms, render: 198ms)
+ GET /stock/CIFR 200 in 310ms (compile: 154ms, render: 156ms)
+ GET / 200 in 408ms (compile: 8ms, render: 400ms)
+ GET /stock/ASPS 200 in 43ms (compile: 5ms, render: 38ms)
+ GET / 200 in 152ms (compile: 4ms, render: 148ms)
+ GET /scanner 200 in 103ms (compile: 3ms, render: 99ms)
+ GET /options-chain 200 in 159ms (compile: 5ms, render: 153ms)
+ GET /pricing 200 in 218ms (compile: 4ms, render: 214ms)
+ GET /portfolio 200 in 141ms (compile: 3ms, render: 138ms)
+ GET /vol-surface 200 in 344ms (compile: 123ms, render: 222ms)
+ GET /auto-engine 200 in 351ms (compile: 282ms, render: 69ms)
+○ Compiling /sentiment ...
+✓ Finished writing to filesystem cache in 14.7s
+ GET /sentiment 200 in 6.2s (compile: 6.1s, render: 67ms)
+ GET /backtest 200 in 5.7s (compile: 5.7s, render: 54ms)
+ GET /journal 200 in 1084ms (compile: 1008ms, render: 76ms)
+ GET /execution 200 in 3.0s (compile: 2.9s, render: 58ms)
+○ Compiling /execution ...
+ GET /positions 200 in 3.1s (compile: 3.0s, render: 121ms)
+ GET /agent 200 in 1606ms (compile: 1527ms, render: 79ms)
+ GET /risk 200 in 1308ms (compile: 1198ms, render: 110ms)
+ GET /strategy 200 in 1981ms (compile: 1906ms, render: 74ms)
+ GET /risk-mgmt 200 in 2.6s (compile: 2.5s, render: 101ms)
+ GET /replay 200 in 1088ms (compile: 1027ms, render: 62ms)
+ GET / 200 in 245ms (compile: 4ms, render: 241ms)
+ GET /options-chain 200 in 138ms (compile: 3ms, render: 135ms)
+ GET /scanner 200 in 209ms (compile: 4ms, render: 205ms)
+ GET /pricing 200 in 384ms (compile: 3ms, render: 381ms)
+ GET /portfolio 200 in 255ms (compile: 14ms, render: 241ms)
+ GET /auto-engine 200 in 72ms (compile: 3ms, render: 69ms)
+ GET /vol-surface 200 in 180ms (compile: 4ms, render: 177ms)
+ GET /sentiment 200 in 151ms (compile: 20ms, render: 131ms)
+ GET /backtest 200 in 84ms (compile: 3ms, render: 81ms)
+ GET /journal 200 in 192ms (compile: 8ms, render: 184ms)
+ GET /execution 200 in 84ms (compile: 10ms, render: 73ms)
+ GET /positions 200 in 120ms (compile: 4ms, render: 116ms)
+ GET /agent 200 in 225ms (compile: 7ms, render: 218ms)
+ GET /risk 200 in 164ms (compile: 4ms, render: 160ms)
+ GET /risk-mgmt 200 in 69ms (compile: 4ms, render: 65ms)
+ GET /strategy 200 in 175ms (compile: 8ms, render: 167ms)
+ GET /replay 200 in 73ms (compile: 3ms, render: 70ms)
+ GET / 200 in 407ms (compile: 7ms, render: 399ms)
+ GET / 200 in 259ms (compile: 4ms, render: 255ms)
+ GET / 200 in 130ms (compile: 16ms, render: 114ms)
+ GET / 200 in 176ms (compile: 3ms, render: 173ms)
+ GET /scanner 200 in 38ms (compile: 3ms, render: 36ms)
+ GET /options-chain 200 in 356ms (compile: 6ms, render: 351ms)
+ GET / 200 in 342ms (compile: 6ms, render: 337ms)
+ GET /pricing 200 in 74ms (compile: 3ms, render: 71ms)
+ GET / 200 in 185ms (compile: 2ms, render: 183ms)
+ GET / 200 in 167ms (compile: 3ms, render: 164ms)
+ GET /portfolio 200 in 105ms (compile: 4ms, render: 102ms)
+ GET /positions 200 in 32ms (compile: 4ms, render: 28ms)
+ GET / 200 in 205ms (compile: 4ms, render: 200ms)
+ GET / 200 in 190ms (compile: 5ms, render: 185ms)
+ GET /risk-mgmt 200 in 35ms (compile: 4ms, render: 31ms)
+ GET /auto-engine 200 in 28ms (compile: 4ms, render: 24ms)
+ GET / 200 in 143ms (compile: 5ms, render: 138ms)
+ GET / 200 in 274ms (compile: 9ms, render: 266ms)
+ GET / 200 in 476ms (compile: 5ms, render: 472ms)
+ GET /backtest 200 in 54ms (compile: 4ms, render: 50ms)
+ GET /sentiment 200 in 43ms (compile: 3ms, render: 40ms)
+ GET / 200 in 229ms (compile: 4ms, render: 226ms)
+ GET / 200 in 139ms (compile: 4ms, render: 135ms)
+ GET /agent 200 in 44ms (compile: 4ms, render: 41ms)
+ GET / 200 in 538ms (compile: 3ms, render: 534ms)
+ GET / 200 in 424ms (compile: 4ms, render: 420ms)
+ GET /stock/WULF 200 in 122ms (compile: 57ms, render: 65ms)
+ GET /scanner 200 in 90ms (compile: 5ms, render: 85ms)
+ GET /scanner 200 in 65ms (compile: 6ms, render: 59ms)
+ GET /scanner 200 in 60ms (compile: 3ms, render: 57ms)
+ GET /options-chain 200 in 141ms (compile: 4ms, render: 138ms)
+ GET /options-chain 200 in 117ms (compile: 4ms, render: 113ms)
+ GET /options-chain 200 in 144ms (compile: 3ms, render: 141ms)
+ GET /pricing 200 in 141ms (compile: 2ms, render: 138ms)
+ GET /pricing 200 in 241ms (compile: 5ms, render: 235ms)
+ GET /pricing 200 in 344ms (compile: 2ms, render: 342ms)
+ GET /portfolio 200 in 298ms (compile: 4ms, render: 294ms)
+ GET /portfolio 200 in 185ms (compile: 1959µs, render: 183ms)
+ GET /auto-engine 200 in 81ms (compile: 4ms, render: 77ms)
+ GET /auto-engine 200 in 51ms (compile: 3ms, render: 48ms)
+ GET /auto-engine 200 in 99ms (compile: 2ms, render: 97ms)
+ GET / 200 in 100ms (compile: 4ms, render: 96ms)
+ GET /positions 200 in 17ms (compile: 2ms, render: 15ms)
+ GET /risk-mgmt 200 in 19ms (compile: 2ms, render: 16ms)
+ GET /positions 200 in 21ms (compile: 3ms, render: 18ms)
+ GET /auto-engine 200 in 42ms (compile: 6ms, render: 36ms)
+ GET /sentiment 200 in 17ms (compile: 2ms, render: 15ms)
+ GET /backtest 200 in 17ms (compile: 1923µs, render: 15ms)
+ GET /agent 200 in 30ms (compile: 3ms, render: 26ms)
+ GET / 200 in 114ms (compile: 6ms, render: 109ms)
+ GET / 200 in 130ms (compile: 3ms, render: 127ms)
+ GET /pricing 200 in 381ms (compile: 32ms, render: 350ms)
+ GET / 200 in 583ms (compile: 4ms, render: 579ms)
+ GET / 200 in 491ms (compile: 11ms, render: 480ms)
+ GET / 200 in 746ms (compile: 6ms, render: 739ms)
+ GET / 200 in 564ms (compile: 30ms, render: 534ms)
+ GET / 200 in 167ms (compile: 3ms, render: 163ms)
+ GET / 200 in 86ms (compile: 4ms, render: 82ms)
+ GET /scanner 200 in 35ms (compile: 5ms, render: 30ms)
+ GET / 200 in 659ms (compile: 3ms, render: 655ms)
+ GET / 200 in 499ms (compile: 17ms, render: 481ms)
+ GET / 200 in 168ms (compile: 7ms, render: 161ms)
+ GET / 200 in 90ms (compile: 4ms, render: 86ms)
+ GET / 200 in 681ms (compile: 4ms, render: 677ms)
+ GET / 200 in 570ms (compile: 14ms, render: 556ms)
+ GET / 200 in 180ms (compile: 3ms, render: 177ms)
+ GET / 200 in 61ms (compile: 3ms, render: 58ms)
+ GET / 200 in 335ms (compile: 1817µs, render: 333ms)
+ GET /scanner 200 in 51ms (compile: 4ms, render: 47ms)
+ GET / 200 in 141ms (compile: 18ms, render: 123ms)
+ GET / 200 in 309ms (compile: 6ms, render: 303ms)
+ GET /options-chain 200 in 91ms (compile: 4ms, render: 88ms)
+ GET / 200 in 635ms (compile: 4ms, render: 631ms)
+ GET / 200 in 545ms (compile: 12ms, render: 533ms)
+ GET / 200 in 143ms (compile: 6ms, render: 137ms)
+ GET /pricing 200 in 74ms (compile: 5ms, render: 70ms)
+ GET / 200 in 604ms (compile: 4ms, render: 600ms)
+ GET / 200 in 472ms (compile: 15ms, render: 456ms)
+ GET /scanner 200 in 24ms (compile: 3ms, render: 22ms)
+ GET /portfolio 200 in 112ms (compile: 4ms, render: 108ms)
+ GET / 200 in 506ms (compile: 6ms, render: 499ms)
+ GET / 200 in 386ms (compile: 11ms, render: 375ms)
+ GET /positions 200 in 112ms (compile: 4ms, render: 108ms)
+ GET /options-chain 200 in 99ms (compile: 12ms, render: 88ms)
+ GET / 200 in 664ms (compile: 3ms, render: 660ms)
+ GET / 200 in 490ms (compile: 20ms, render: 470ms)
+ GET /pricing 200 in 60ms (compile: 6ms, render: 54ms)
+ GET /risk-mgmt 200 in 25ms (compile: 4ms, render: 21ms)
+ GET / 200 in 635ms (compile: 4ms, render: 630ms)
+ GET / 200 in 536ms (compile: 16ms, render: 521ms)
+ GET /auto-engine 200 in 32ms (compile: 5ms, render: 27ms)
+ GET /portfolio 200 in 121ms (compile: 2ms, render: 118ms)
+ GET / 200 in 501ms (compile: 9ms, render: 492ms)
+ GET / 200 in 364ms (compile: 13ms, render: 352ms)
+ GET /positions 200 in 90ms (compile: 5ms, render: 85ms)
+ GET /backtest 200 in 57ms (compile: 7ms, render: 50ms)
+ GET / 200 in 652ms (compile: 7ms, render: 644ms)
+ GET / 200 in 486ms (compile: 22ms, render: 464ms)
+ GET /sentiment 200 in 86ms (compile: 4ms, render: 81ms)
+ GET /risk-mgmt 200 in 41ms (compile: 7ms, render: 34ms)
+ GET / 200 in 527ms (compile: 4ms, render: 524ms)
+ GET / 200 in 382ms (compile: 15ms, render: 368ms)
+ GET /auto-engine 200 in 86ms (compile: 6ms, render: 80ms)
+ GET /agent 200 in 36ms (compile: 7ms, render: 29ms)
+ GET / 200 in 528ms (compile: 3ms, render: 525ms)
+ GET / 200 in 422ms (compile: 15ms, render: 407ms)
+ GET /backtest 200 in 49ms (compile: 4ms, render: 45ms)
+ GET / 200 in 488ms (compile: 4ms, render: 484ms)
+ GET / 200 in 399ms (compile: 11ms, render: 388ms)
+ GET /sentiment 200 in 41ms (compile: 7ms, render: 34ms)
+ GET / 200 in 578ms (compile: 3ms, render: 575ms)
+ GET / 200 in 488ms (compile: 14ms, render: 474ms)
+ GET /agent 200 in 44ms (compile: 6ms, render: 38ms)
+ GET / 200 in 427ms (compile: 4ms, render: 423ms)
+ GET / 200 in 347ms (compile: 5ms, render: 342ms)
+ GET / 200 in 579ms (compile: 2ms, render: 576ms)
+ GET / 200 in 496ms (compile: 13ms, render: 483ms)
+ GET /stock/CIFR 200 in 151ms (compile: 88ms, render: 63ms)
+ GET / 200 in 1002ms (compile: 17ms, render: 985ms)
+ GET / 200 in 792ms (compile: 36ms, render: 757ms)
+ GET / 200 in 223ms (compile: 3ms, render: 220ms)
+ GET / 200 in 255ms (compile: 5ms, render: 250ms)
+ GET /options-chain?ticker=CIFR 200 in 86ms (compile: 2ms, render: 84ms)
+ GET / 200 in 246ms (compile: 11ms, render: 235ms)
+ GET /stock/WULF 200 in 129ms (compile: 63ms, render: 67ms)
+ GET / 200 in 912ms (compile: 5ms, render: 908ms)
+ GET / 200 in 574ms (compile: 32ms, render: 542ms)
+ GET / 200 in 133ms (compile: 2ms, render: 131ms)
+ GET / 200 in 160ms (compile: 1810µs, render: 159ms)
+ GET / 200 in 633ms (compile: 4ms, render: 629ms)
+ GET / 200 in 512ms (compile: 9ms, render: 502ms)
+ GET / 200 in 171ms (compile: 5ms, render: 166ms)
+ GET / 200 in 87ms (compile: 3ms, render: 84ms)
+ GET / 200 in 178ms (compile: 3ms, render: 176ms)
+ GET / 200 in 108ms (compile: 4ms, render: 104ms)
+ GET / 200 in 73ms (compile: 3ms, render: 70ms)
+ GET /scanner 200 in 39ms (compile: 5ms, render: 35ms)
+ GET /options-chain 200 in 69ms (compile: 7ms, render: 62ms)
+ GET / 200 in 265ms (compile: 4ms, render: 262ms)
+ GET /pricing 200 in 68ms (compile: 4ms, render: 64ms)
+ GET / 200 in 283ms (compile: 4ms, render: 278ms)
+ GET /portfolio 200 in 65ms (compile: 4ms, render: 61ms)
+ GET / 200 in 256ms (compile: 6ms, render: 250ms)
+ GET /positions 200 in 26ms (compile: 3ms, render: 23ms)
+ GET / 200 in 152ms (compile: 5ms, render: 147ms)
+ GET /risk-mgmt 200 in 39ms (compile: 13ms, render: 26ms)
+ GET / 200 in 213ms (compile: 5ms, render: 208ms)
+ GET /auto-engine 200 in 40ms (compile: 3ms, render: 37ms)
+ GET / 200 in 233ms (compile: 3ms, render: 231ms)
+ GET /backtest 200 in 51ms (compile: 6ms, render: 45ms)
+ GET / 200 in 170ms (compile: 2ms, render: 168ms)
+ GET /sentiment 200 in 37ms (compile: 6ms, render: 31ms)
+ GET / 200 in 190ms (compile: 2ms, render: 188ms)
+ GET /agent 200 in 31ms (compile: 5ms, render: 26ms)
+ GET / 200 in 276ms (compile: 4ms, render: 272ms)
+ GET /stock/CIFR 200 in 109ms (compile: 69ms, render: 41ms)
+ GET / 200 in 243ms (compile: 4ms, render: 239ms)
+ GET /stock/WULF 200 in 124ms (compile: 73ms, render: 51ms)
+ GET / 200 in 297ms (compile: 3ms, render: 294ms)
+ GET /scanner 200 in 80ms (compile: 3ms, render: 76ms)
+ GET / 200 in 89ms (compile: 3ms, render: 86ms)
+ GET / 200 in 79ms (compile: 5ms, render: 74ms)
+ GET /scanner 200 in 97ms (compile: 3ms, render: 94ms)
+ GET / 200 in 91ms (compile: 5ms, render: 86ms)
+ GET /scanner 200 in 30ms (compile: 3ms, render: 26ms)
+ GET /options-chain 200 in 104ms (compile: 10ms, render: 94ms)
+ GET /pricing 200 in 84ms (compile: 5ms, render: 78ms)
+ GET /scanner 200 in 97ms (compile: 6ms, render: 90ms)
+ GET /portfolio 200 in 135ms (compile: 12ms, render: 122ms)
+ GET /positions 200 in 100ms (compile: 9ms, render: 91ms)
+ GET /scanner 200 in 182ms (compile: 3ms, render: 179ms)
+ GET /risk-mgmt 200 in 56ms (compile: 14ms, render: 42ms)
+ GET /scanner 200 in 78ms (compile: 2ms, render: 75ms)
+ GET /auto-engine 200 in 40ms (compile: 8ms, render: 32ms)
+ GET /scanner 200 in 107ms (compile: 4ms, render: 103ms)
+ GET /backtest 200 in 51ms (compile: 3ms, render: 48ms)
+ GET /scanner 200 in 59ms (compile: 3ms, render: 56ms)
+ GET /sentiment 200 in 188ms (compile: 4ms, render: 184ms)
+ GET /agent 200 in 41ms (compile: 6ms, render: 35ms)
+ GET /scanner 200 in 76ms (compile: 1934µs, render: 74ms)
+ GET /scanner 200 in 84ms (compile: 1996µs, render: 82ms)
+ GET / 200 in 100ms (compile: 3ms, render: 97ms)
+ GET / 200 in 81ms (compile: 4ms, render: 77ms)
+ GET /scanner 200 in 85ms (compile: 4ms, render: 81ms)
+ GET /options-chain 200 in 192ms (compile: 2ms, render: 190ms)
+ GET / 200 in 112ms (compile: 6ms, render: 106ms)
+ GET / 200 in 65ms (compile: 3ms, render: 62ms)
+ GET /options-chain 200 in 481ms (compile: 3ms, render: 478ms)
+ GET /pricing 200 in 235ms (compile: 3ms, render: 232ms)
+ GET / 200 in 82ms (compile: 3ms, render: 79ms)
+ GET / 200 in 98ms (compile: 4ms, render: 94ms)
+ GET /pricing 200 in 202ms (compile: 3ms, render: 199ms)
+ GET /portfolio 200 in 134ms (compile: 2ms, render: 132ms)
+ GET / 200 in 100ms (compile: 4ms, render: 96ms)
+ GET / 200 in 371ms (compile: 4ms, render: 367ms)
+ GET /portfolio 200 in 239ms (compile: 13ms, render: 227ms)
+ GET /auto-engine 200 in 77ms (compile: 2ms, render: 75ms)
+ GET / 200 in 77ms (compile: 5ms, render: 72ms)
+ GET / 200 in 100ms (compile: 6ms, render: 94ms)
+ GET /auto-engine 200 in 132ms (compile: 5ms, render: 127ms)
+ GET /vol-surface 200 in 66ms (compile: 2ms, render: 64ms)
+ GET / 200 in 90ms (compile: 4ms, render: 87ms)
+ GET / 200 in 74ms (compile: 4ms, render: 70ms)
+ GET /vol-surface 200 in 69ms (compile: 2ms, render: 67ms)
+ GET /sentiment 200 in 78ms (compile: 5ms, render: 73ms)
+ GET / 200 in 98ms (compile: 7ms, render: 91ms)
+ GET / 200 in 67ms (compile: 4ms, render: 63ms)
+ GET /sentiment 200 in 59ms (compile: 1802µs, render: 57ms)
+ GET /backtest 200 in 63ms (compile: 3ms, render: 61ms)
+ GET / 200 in 79ms (compile: 4ms, render: 75ms)
+ GET / 200 in 72ms (compile: 5ms, render: 68ms)
+ GET /backtest 200 in 80ms (compile: 3ms, render: 77ms)
+ GET /journal 200 in 56ms (compile: 2ms, render: 53ms)
+ GET / 200 in 91ms (compile: 4ms, render: 87ms)
+ GET / 200 in 65ms (compile: 3ms, render: 62ms)
+ GET /journal 200 in 66ms (compile: 4ms, render: 62ms)
+ GET /execution 200 in 62ms (compile: 3ms, render: 59ms)
+ GET / 200 in 116ms (compile: 4ms, render: 112ms)
+ GET / 200 in 75ms (compile: 3ms, render: 72ms)
+ GET /execution 200 in 58ms (compile: 3ms, render: 55ms)
+ GET /positions 200 in 73ms (compile: 2ms, render: 71ms)
+ GET / 200 in 114ms (compile: 10ms, render: 103ms)
+ GET / 200 in 74ms (compile: 7ms, render: 67ms)
+ GET /positions 200 in 71ms (compile: 4ms, render: 67ms)
+ GET /agent 200 in 61ms (compile: 3ms, render: 59ms)
+ GET / 200 in 89ms (compile: 2ms, render: 87ms)
+ GET / 200 in 84ms (compile: 4ms, render: 81ms)
+ GET /agent 200 in 57ms (compile: 2ms, render: 55ms)
+ GET /risk 200 in 57ms (compile: 3ms, render: 54ms)
+ GET / 200 in 88ms (compile: 6ms, render: 83ms)
+ GET / 200 in 75ms (compile: 5ms, render: 70ms)
+ GET /risk 200 in 97ms (compile: 4ms, render: 93ms)
+ GET /risk-mgmt 200 in 62ms (compile: 2ms, render: 60ms)
+ GET / 200 in 72ms (compile: 2ms, render: 70ms)
+ GET / 200 in 69ms (compile: 3ms, render: 65ms)
+ GET /risk-mgmt 200 in 89ms (compile: 3ms, render: 86ms)
+ GET /strategy 200 in 68ms (compile: 2ms, render: 66ms)
+ GET / 200 in 92ms (compile: 4ms, render: 88ms)
+ GET / 200 in 76ms (compile: 7ms, render: 69ms)
+ GET /strategy 200 in 76ms (compile: 4ms, render: 72ms)
+ GET /replay 200 in 62ms (compile: 2ms, render: 60ms)
+ GET / 200 in 82ms (compile: 4ms, render: 78ms)
+ GET / 200 in 71ms (compile: 3ms, render: 68ms)
+ GET /replay 200 in 62ms (compile: 3ms, render: 59ms)
+ GET / 200 in 104ms (compile: 5ms, render: 100ms)
+ GET /scanner 200 in 28ms (compile: 3ms, render: 25ms)
+ GET /replay 200 in 129ms (compile: 4ms, render: 125ms)
+ GET /options-chain 200 in 85ms (compile: 4ms, render: 81ms)
+ GET /replay 200 in 73ms (compile: 6ms, render: 68ms)
+ GET /pricing 200 in 63ms (compile: 3ms, render: 59ms)
+ GET /replay 200 in 91ms (compile: 3ms, render: 88ms)
+ GET /portfolio 200 in 74ms (compile: 3ms, render: 71ms)
+ GET /replay 200 in 62ms (compile: 4ms, render: 59ms)
+ GET /positions 200 in 27ms (compile: 4ms, render: 23ms)
+ GET /replay 200 in 88ms (compile: 8ms, render: 80ms)
+ GET /risk-mgmt 200 in 27ms (compile: 3ms, render: 24ms)
+ GET /replay 200 in 56ms (compile: 2ms, render: 54ms)
+ GET /auto-engine 200 in 25ms (compile: 5ms, render: 20ms)
+ GET /replay 200 in 57ms (compile: 5ms, render: 53ms)
+ GET /backtest 200 in 28ms (compile: 5ms, render: 23ms)
+ GET /replay 200 in 56ms (compile: 2ms, render: 54ms)
+ GET /sentiment 200 in 42ms (compile: 5ms, render: 37ms)
+ GET /replay 200 in 56ms (compile: 1913µs, render: 54ms)
+ GET /agent 200 in 28ms (compile: 4ms, render: 24ms)
+ GET /replay 200 in 62ms (compile: 4ms, render: 58ms)
+ GET / 200 in 163ms (compile: 38ms, render: 125ms)
+ GET / 200 in 102ms (compile: 3ms, render: 99ms)
+ GET /options-chain 200 in 598ms (compile: 5ms, render: 593ms)
+ GET /pricing 200 in 942ms (compile: 10ms, render: 932ms)
+ GET /portfolio 200 in 773ms (compile: 6ms, render: 767ms)
+ GET / 200 in 132ms (compile: 4ms, render: 128ms)
+ GET / 200 in 103ms (compile: 7ms, render: 96ms)
+ GET / 200 in 232ms (compile: 6ms, render: 225ms)
+ GET / 200 in 110ms (compile: 6ms, render: 104ms)
+ GET /options-chain 200 in 171ms (compile: 3ms, render: 167ms)
+ GET / 200 in 337ms (compile: 4ms, render: 333ms)
+ GET /pricing 200 in 348ms (compile: 4ms, render: 344ms)
+ GET / 200 in 128ms (compile: 5ms, render: 123ms)
+ GET /portfolio 200 in 257ms (compile: 4ms, render: 253ms)
+ GET / 200 in 86ms (compile: 8ms, render: 78ms)
+ GET /scanner 200 in 71ms (compile: 26ms, render: 45ms)
+ GET / 200 in 396ms (compile: 5ms, render: 391ms)
+ GET /options-chain 200 in 309ms (compile: 5ms, render: 304ms)
+ GET / 200 in 155ms (compile: 12ms, render: 142ms)
+ GET /scanner 200 in 37ms (compile: 3ms, render: 33ms)
+ GET /scanner 200 in 107ms (compile: 3ms, render: 104ms)
+ GET /portfolio 200 in 203ms (compile: 3ms, render: 199ms)
+ GET /options-chain 200 in 151ms (compile: 5ms, render: 146ms)
+ GET /options-chain 200 in 92ms (compile: 5ms, render: 87ms)
+ GET /pricing 200 in 320ms (compile: 16ms, render: 304ms)
+ GET /pricing 200 in 511ms (compile: 3ms, render: 508ms)
+ GET /options-chain 200 in 134ms (compile: 23ms, render: 111ms)
+ GET /portfolio 200 in 126ms (compile: 4ms, render: 122ms)
+ GET /pricing 200 in 346ms (compile: 17ms, render: 329ms)
+ GET /options-chain 200 in 737ms (compile: 4ms, render: 734ms)
+ GET /pricing 200 in 525ms (compile: 6ms, render: 519ms)
+ GET /portfolio 200 in 217ms (compile: 32ms, render: 186ms)
+ GET /portfolio 200 in 466ms (compile: 19ms, render: 447ms)
+ GET /positions 200 in 226ms (compile: 4ms, render: 222ms)
+ GET /positions 200 in 163ms (compile: 6ms, render: 158ms)
+ GET /portfolio 200 in 274ms (compile: 3ms, render: 270ms)
+ GET /risk-mgmt 200 in 53ms (compile: 8ms, render: 45ms)
+ GET /positions 200 in 37ms (compile: 6ms, render: 31ms)
+ GET /pricing 200 in 387ms (compile: 5ms, render: 382ms)
+ GET /risk-mgmt 200 in 84ms (compile: 9ms, render: 75ms)
+ GET /risk-mgmt 200 in 311ms (compile: 15ms, render: 296ms)
+ GET /auto-engine 200 in 310ms (compile: 150ms, render: 159ms)
+ GET /backtest 200 in 136ms (compile: 8ms, render: 129ms)
+ GET /options-chain 200 in 1132ms (compile: 19ms, render: 1114ms)
+ GET /portfolio 200 in 653ms (compile: 77ms, render: 576ms)
+ GET /sentiment 200 in 41ms (compile: 4ms, render: 37ms)
+ GET /auto-engine 200 in 142ms (compile: 12ms, render: 130ms)
+ GET /auto-engine 200 in 111ms (compile: 6ms, render: 105ms)
+ GET /pricing 200 in 502ms (compile: 4ms, render: 499ms)
+ GET /backtest 200 in 41ms (compile: 5ms, render: 36ms)
+ GET /backtest 200 in 37ms (compile: 4ms, render: 33ms)
+ GET /agent 200 in 178ms (compile: 52ms, render: 126ms)
+ GET /options-chain 200 in 644ms (compile: 13ms, render: 630ms)
+ GET /portfolio 200 in 789ms (compile: 4ms, render: 785ms)
+ GET /pricing 200 in 205ms (compile: 6ms, render: 200ms)
+ GET /sentiment 200 in 157ms (compile: 4ms, render: 153ms)
+ GET /sentiment 200 in 81ms (compile: 31ms, render: 50ms)
+ GET /agent 200 in 72ms (compile: 6ms, render: 67ms)
+ GET /agent 200 in 28ms (compile: 4ms, render: 24ms)
+ GET /options-chain 200 in 562ms (compile: 8ms, render: 554ms)
+ GET /portfolio 200 in 468ms (compile: 14ms, render: 454ms)
+ GET /auto-engine 200 in 81ms (compile: 4ms, render: 77ms)
+ GET / 200 in 98ms (compile: 4ms, render: 94ms)
+ GET / 200 in 84ms (compile: 4ms, render: 79ms)
+ GET /auto-engine 200 in 73ms (compile: 3ms, render: 70ms)
+ GET / 200 in 98ms (compile: 3ms, render: 94ms)
+ GET /scanner 200 in 31ms (compile: 4ms, render: 27ms)
+ GET /auto-engine 200 in 95ms (compile: 4ms, render: 91ms)
+ GET /options-chain 200 in 72ms (compile: 4ms, render: 68ms)
+ GET /auto-engine 200 in 74ms (compile: 5ms, render: 69ms)
+ GET /pricing 200 in 63ms (compile: 2ms, render: 60ms)
+ GET /auto-engine 200 in 76ms (compile: 4ms, render: 72ms)
+ GET /portfolio 200 in 72ms (compile: 2ms, render: 70ms)
+ GET /auto-engine 200 in 73ms (compile: 3ms, render: 70ms)
+ GET /positions 200 in 35ms (compile: 4ms, render: 32ms)
+ GET /auto-engine 200 in 98ms (compile: 11ms, render: 87ms)
+ GET /risk-mgmt 200 in 32ms (compile: 5ms, render: 27ms)
+ GET /auto-engine 200 in 86ms (compile: 1933µs, render: 84ms)
+ GET /auto-engine 200 in 102ms (compile: 6ms, render: 96ms)
+ GET /backtest 200 in 56ms (compile: 4ms, render: 52ms)
+ GET /auto-engine 200 in 67ms (compile: 1906µs, render: 66ms)
+ GET /sentiment 200 in 43ms (compile: 3ms, render: 40ms)
+ GET /auto-engine 200 in 109ms (compile: 2ms, render: 107ms)
+ GET /agent 200 in 47ms (compile: 8ms, render: 39ms)
+ GET /auto-engine 200 in 69ms (compile: 4ms, render: 65ms)
+ GET /vol-surface 200 in 137ms (compile: 3ms, render: 134ms)
+ GET / 200 in 109ms (compile: 4ms, render: 105ms)
+ GET / 200 in 90ms (compile: 9ms, render: 81ms)
+ GET /vol-surface 200 in 102ms (compile: 6ms, render: 96ms)
+ GET /sentiment 200 in 88ms (compile: 2ms, render: 86ms)
+ GET / 200 in 329ms (compile: 3ms, render: 325ms)
+ GET / 200 in 155ms (compile: 18ms, render: 137ms)
+ GET /sentiment 200 in 164ms (compile: 7ms, render: 157ms)
+ GET /backtest 200 in 319ms (compile: 7ms, render: 312ms)
+ GET / 200 in 403ms (compile: 11ms, render: 392ms)
+ GET / 200 in 120ms (compile: 4ms, render: 115ms)
+ GET /scanner 200 in 207ms (compile: 4ms, render: 203ms)
+ GET / 200 in 617ms (compile: 3ms, render: 614ms)
+ GET /scanner 200 in 57ms (compile: 10ms, render: 46ms)
+ GET / 200 in 516ms (compile: 9ms, render: 507ms)
+ GET /options-chain 200 in 477ms (compile: 4ms, render: 473ms)
+ GET /sentiment 200 in 192ms (compile: 37ms, render: 155ms)
+ GET /vol-surface 200 in 196ms (compile: 6ms, render: 191ms)
+ GET /options-chain 200 in 341ms (compile: 14ms, render: 327ms)
+ GET /pricing 200 in 1527ms (compile: 10ms, render: 1516ms)
+ GET /positions 200 in 533ms (compile: 102ms, render: 431ms)
+ GET /risk-mgmt 200 in 178ms (compile: 25ms, render: 153ms)
+ GET /backtest 200 in 867ms (compile: 151ms, render: 716ms)
+ GET /vol-surface 200 in 885ms (compile: 154ms, render: 731ms)
+ GET /auto-engine 200 in 440ms (compile: 67ms, render: 373ms)
+ GET /pricing 200 in 1818ms (compile: 38ms, render: 1780ms)
+ GET /backtest 200 in 159ms (compile: 21ms, render: 138ms)
+ GET /portfolio 200 in 1499ms (compile: 7ms, render: 1492ms)
+ GET /sentiment 200 in 268ms (compile: 48ms, render: 220ms)
+ GET / 200 in 1090ms (compile: 4ms, render: 1086ms)
+ GET /positions 200 in 376ms (compile: 21ms, render: 356ms)
+ GET /sentiment 200 in 1000ms (compile: 74ms, render: 926ms)
+ GET /backtest 200 in 1650ms (compile: 30ms, render: 1620ms)
+ GET /risk-mgmt 200 in 1377ms (compile: 117ms, render: 1260ms)
+ GET /sentiment 200 in 414ms (compile: 128ms, render: 285ms)
+ GET /auto-engine 200 in 913ms (compile: 18ms, render: 895ms)
+ GET /portfolio 200 in 2.8s (compile: 106ms, render: 2.7s)
+ GET /backtest 200 in 899ms (compile: 31ms, render: 868ms)
+ GET /agent 200 in 1062ms (compile: 23ms, render: 1039ms)
+ GET /scanner 200 in 875ms (compile: 55ms, render: 819ms)
+ GET /sentiment 200 in 512ms (compile: 7ms, render: 504ms)
+ GET /journal 200 in 540ms (compile: 21ms, render: 519ms)
+ GET /backtest 200 in 544ms (compile: 25ms, render: 519ms)
+ GET /sentiment? 200 in 823ms (compile: 34ms, render: 789ms)
+ GET / 200 in 894ms (compile: 19ms, render: 874ms)
+ GET /options-chain 200 in 718ms (compile: 14ms, render: 704ms)
+ GET /sentiment 200 in 594ms (compile: 19ms, render: 574ms)
+ GET /journal 200 in 561ms (compile: 18ms, render: 543ms)
+ GET /backtest 200 in 602ms (compile: 16ms, render: 586ms)
+ GET /pricing 200 in 618ms (compile: 55ms, render: 563ms)
+ GET /execution 200 in 429ms (compile: 26ms, render: 403ms)
+ GET /journal 200 in 351ms (compile: 10ms, render: 341ms)
+ GET /backtest 200 in 425ms (compile: 16ms, render: 409ms)
+ GET / 200 in 1606ms (compile: 93ms, render: 1513ms)
+ GET /positions 200 in 210ms (compile: 12ms, render: 197ms)
+ GET /risk-mgmt 200 in 104ms (compile: 9ms, render: 94ms)
+ GET /portfolio 200 in 867ms (compile: 308ms, render: 559ms)
+ GET / 200 in 308ms (compile: 31ms, render: 277ms)
+ GET / 200 in 369ms (compile: 3ms, render: 365ms)
+ GET /auto-engine 200 in 70ms (compile: 9ms, render: 62ms)
+ GET /backtest 200 in 159ms (compile: 6ms, render: 152ms)
+ GET /backtest 200 in 145ms (compile: 4ms, render: 141ms)
+ GET /sentiment 200 in 162ms (compile: 4ms, render: 158ms)
+ GET /backtest 200 in 361ms (compile: 15ms, render: 346ms)
+ GET /agent 200 in 213ms (compile: 9ms, render: 204ms)
+ GET / 200 in 129ms (compile: 17ms, render: 112ms)
+ GET /backtest 200 in 106ms (compile: 4ms, render: 103ms)
+ GET /scanner 200 in 40ms (compile: 5ms, render: 35ms)
+ GET /journal 200 in 188ms (compile: 4ms, render: 184ms)
+ GET /execution 200 in 221ms (compile: 6ms, render: 215ms)
+ GET /options-chain 200 in 917ms (compile: 222ms, render: 695ms)
+ GET / 200 in 676ms (compile: 29ms, render: 647ms)
+ GET /journal 200 in 386ms (compile: 9ms, render: 377ms)
+ GET /execution 200 in 318ms (compile: 16ms, render: 302ms)
+ GET /scanner 200 in 493ms (compile: 84ms, render: 409ms)
+ GET /execution 200 in 822ms (compile: 257ms, render: 565ms)
+ GET /positions 200 in 657ms (compile: 20ms, render: 637ms)
+ GET /risk-mgmt 200 in 512ms (compile: 32ms, render: 480ms)
+ GET /pricing 200 in 1462ms (compile: 16ms, render: 1447ms)
+ GET /auto-engine 200 in 135ms (compile: 48ms, render: 87ms)
+ GET /portfolio 200 in 1212ms (compile: 7ms, render: 1205ms)
+ GET /options-chain 200 in 877ms (compile: 45ms, render: 833ms)
+ GET /backtest 200 in 496ms (compile: 13ms, render: 483ms)
+ GET /sentiment 200 in 306ms (compile: 19ms, render: 286ms)
+ GET /execution 200 in 584ms (compile: 66ms, render: 518ms)
+ GET /agent 200 in 191ms (compile: 15ms, render: 177ms)
+ GET /journal 200 in 514ms (compile: 30ms, render: 485ms)
+ GET /positions 200 in 147ms (compile: 18ms, render: 129ms)
+ GET /pricing 200 in 956ms (compile: 20ms, render: 936ms)
+ GET /positions 200 in 437ms (compile: 3ms, render: 434ms)
+ GET /risk-mgmt 200 in 256ms (compile: 9ms, render: 247ms)
+ GET /portfolio 200 in 1151ms (compile: 3ms, render: 1148ms)
+ GET /auto-engine 200 in 173ms (compile: 12ms, render: 160ms)
+ GET /execution 200 in 456ms (compile: 9ms, render: 447ms)
+ GET /positions 200 in 735ms (compile: 183ms, render: 552ms)
+ GET /backtest 200 in 163ms (compile: 14ms, render: 149ms)
+ GET / 200 in 1549ms (compile: 59ms, render: 1490ms)
+ GET /execution 200 in 598ms (compile: 15ms, render: 583ms)
+ GET / 200 in 1029ms (compile: 90ms, render: 940ms)
+ GET /positions 200 in 525ms (compile: 36ms, render: 489ms)
+ GET /sentiment 200 in 529ms (compile: 97ms, render: 432ms)
+ GET /execution 200 in 542ms (compile: 8ms, render: 534ms)
+ GET /agent 200 in 416ms (compile: 7ms, render: 408ms)
+ GET /agent 200 in 630ms (compile: 399ms, render: 231ms)
+ GET / 200 in 155ms (compile: 12ms, render: 143ms)
+ GET / 200 in 297ms (compile: 3ms, render: 293ms)
+ GET /agent 200 in 138ms (compile: 6ms, render: 132ms)
+ GET /scanner 200 in 174ms (compile: 24ms, render: 150ms)
+ GET / 200 in 724ms (compile: 6ms, render: 719ms)
+ GET /options-chain 200 in 269ms (compile: 6ms, render: 263ms)
+ GET /pricing 200 in 152ms (compile: 4ms, render: 148ms)
+ GET /positions 200 in 238ms (compile: 6ms, render: 232ms)
+ GET /portfolio 200 in 135ms (compile: 6ms, render: 129ms)
+ GET /positions 200 in 93ms (compile: 45ms, render: 48ms)
+ GET /risk-mgmt 200 in 60ms (compile: 4ms, render: 56ms)
+ GET /auto-engine 200 in 54ms (compile: 6ms, render: 48ms)
+ GET /backtest 200 in 57ms (compile: 3ms, render: 54ms)
+ GET /positions 200 in 270ms (compile: 5ms, render: 265ms)
+ GET /scanner 200 in 102ms (compile: 17ms, render: 85ms)
+ GET / 200 in 460ms (compile: 13ms, render: 447ms)
+ GET /sentiment 200 in 31ms (compile: 3ms, render: 28ms)
+ GET /positions 200 in 108ms (compile: 4ms, render: 104ms)
+ GET /options-chain 200 in 254ms (compile: 12ms, render: 243ms)
+ GET /agent 200 in 120ms (compile: 11ms, render: 109ms)
+ GET /agent 200 in 760ms (compile: 38ms, render: 722ms)
+ GET /positions 200 in 429ms (compile: 184ms, render: 245ms)
+ GET /pricing 200 in 675ms (compile: 77ms, render: 598ms)
+ GET /agent 200 in 267ms (compile: 22ms, render: 245ms)
+ GET /positions 200 in 90ms (compile: 10ms, render: 81ms)
+ GET /risk 200 in 399ms (compile: 10ms, render: 390ms)
+ GET /portfolio 200 in 606ms (compile: 5ms, render: 602ms)
+ GET /risk-mgmt 200 in 52ms (compile: 3ms, render: 48ms)
+ GET /agent 200 in 424ms (compile: 4ms, render: 420ms)
+ GET / 200 in 230ms (compile: 18ms, render: 212ms)
+ GET /auto-engine 200 in 67ms (compile: 5ms, render: 63ms)
+ GET /agent 200 in 186ms (compile: 5ms, render: 181ms)
+ GET / 200 in 128ms (compile: 11ms, render: 117ms)
+ GET /risk 200 in 230ms (compile: 4ms, render: 226ms)
+ GET /backtest 200 in 51ms (compile: 4ms, render: 47ms)
+ GET /agent 200 in 107ms (compile: 3ms, render: 104ms)
+ GET /sentiment 200 in 75ms (compile: 6ms, render: 70ms)
+ GET /agent 200 in 95ms (compile: 5ms, render: 90ms)
+ GET /agent 200 in 47ms (compile: 3ms, render: 43ms)
+ GET /risk-mgmt 200 in 71ms (compile: 3ms, render: 68ms)
+ GET / 200 in 127ms (compile: 3ms, render: 124ms)
+ GET / 200 in 107ms (compile: 10ms, render: 96ms)
+ GET /risk-mgmt 200 in 84ms (compile: 3ms, render: 80ms)
+ GET / 200 in 178ms (compile: 14ms, render: 164ms)
+ GET /scanner 200 in 35ms (compile: 4ms, render: 32ms)
+ GET /risk 200 in 61ms (compile: 4ms, render: 57ms)
+ GET /options-chain 200 in 74ms (compile: 4ms, render: 71ms)
+ GET /risk 200 in 101ms (compile: 4ms, render: 97ms)
+ GET /pricing 200 in 86ms (compile: 3ms, render: 83ms)
+ GET /risk 200 in 77ms (compile: 2ms, render: 75ms)
+ GET /portfolio 200 in 107ms (compile: 9ms, render: 98ms)
+ GET /positions 200 in 46ms (compile: 3ms, render: 43ms)
+ GET /risk 200 in 79ms (compile: 3ms, render: 76ms)
+ GET /risk-mgmt 200 in 83ms (compile: 35ms, render: 48ms)
+ GET /risk 200 in 192ms (compile: 3ms, render: 189ms)
+ GET / 200 in 175ms (compile: 9ms, render: 166ms)
+ GET /auto-engine 200 in 114ms (compile: 4ms, render: 110ms)
+ GET /scanner 200 in 58ms (compile: 16ms, render: 42ms)
+ GET /backtest 200 in 37ms (compile: 3ms, render: 34ms)
+ GET /risk-mgmt 200 in 301ms (compile: 4ms, render: 297ms)
+ GET /risk 200 in 180ms (compile: 10ms, render: 171ms)
+ GET /sentiment 200 in 220ms (compile: 9ms, render: 212ms)
+ GET /options-chain 200 in 445ms (compile: 14ms, render: 431ms)
+ GET /risk-mgmt 200 in 387ms (compile: 10ms, render: 377ms)
+ GET /risk 200 in 427ms (compile: 9ms, render: 417ms)
+ GET /pricing 200 in 669ms (compile: 12ms, render: 657ms)
+ GET /agent 200 in 395ms (compile: 13ms, render: 382ms)
+ GET /risk-mgmt 200 in 642ms (compile: 32ms, render: 610ms)
+ GET /risk 200 in 992ms (compile: 53ms, render: 939ms)
+ GET /portfolio 200 in 551ms (compile: 23ms, render: 527ms)
+ GET /risk-mgmt 200 in 194ms (compile: 35ms, render: 159ms)
+ GET /risk? 200 in 284ms (compile: 7ms, render: 277ms)
+ GET /risk 200 in 319ms (compile: 17ms, render: 303ms)
+ GET /positions 200 in 237ms (compile: 13ms, render: 224ms)
+ GET /risk-mgmt 200 in 373ms (compile: 30ms, render: 343ms)
+ GET /risk-mgmt 200 in 36ms (compile: 4ms, render: 32ms)
+ GET /auto-engine 200 in 32ms (compile: 4ms, render: 28ms)
+ GET /risk-mgmt 200 in 151ms (compile: 3ms, render: 149ms)
+ GET /backtest 200 in 33ms (compile: 4ms, render: 30ms)
+ GET /risk-mgmt 200 in 62ms (compile: 3ms, render: 60ms)
+ GET /sentiment 200 in 38ms (compile: 5ms, render: 33ms)
+ GET /risk-mgmt 200 in 73ms (compile: 3ms, render: 70ms)
+ GET /agent 200 in 42ms (compile: 4ms, render: 39ms)
+ GET /risk-mgmt 200 in 56ms (compile: 3ms, render: 53ms)
+ GET /strategy 200 in 92ms (compile: 3ms, render: 88ms)
+ GET / 200 in 83ms (compile: 3ms, render: 80ms)
+ GET / 200 in 72ms (compile: 2ms, render: 70ms)
+ GET /strategy 200 in 92ms (compile: 3ms, render: 88ms)
+ GET /replay 200 in 67ms (compile: 3ms, render: 64ms)
+ GET / 200 in 116ms (compile: 3ms, render: 113ms)
+ GET / 200 in 98ms (compile: 7ms, render: 91ms)
+ GET /replay 200 in 85ms (compile: 3ms, render: 82ms)
+ GET / 200 in 86ms (compile: 4ms, render: 81ms)
+ GET /strategy 200 in 72ms (compile: 2ms, render: 69ms)
+ GET /scanner 200 in 47ms (compile: 5ms, render: 42ms)
+ GET /options-chain 200 in 116ms (compile: 3ms, render: 113ms)
+ GET /strategy 200 in 109ms (compile: 3ms, render: 106ms)
+ GET /pricing 200 in 84ms (compile: 5ms, render: 79ms)
+ GET /portfolio 200 in 104ms (compile: 5ms, render: 100ms)
+ GET /strategy 200 in 85ms (compile: 5ms, render: 80ms)
+ GET /positions 200 in 37ms (compile: 9ms, render: 29ms)
+ GET /strategy 200 in 107ms (compile: 9ms, render: 98ms)
+ GET /risk-mgmt 200 in 100ms (compile: 4ms, render: 96ms)
+ GET /strategy 200 in 152ms (compile: 44ms, render: 108ms)
+ GET / 200 in 133ms (compile: 7ms, render: 126ms)
+ GET /auto-engine 200 in 74ms (compile: 4ms, render: 70ms)
+ GET /scanner 200 in 40ms (compile: 5ms, render: 35ms)
+ GET /strategy 200 in 276ms (compile: 4ms, render: 272ms)
+ GET /replay 200 in 246ms (compile: 9ms, render: 237ms)
+ GET /backtest 200 in 496ms (compile: 43ms, render: 454ms)
+ GET /options-chain 200 in 848ms (compile: 325ms, render: 523ms)
+ GET /strategy 200 in 341ms (compile: 19ms, render: 321ms)
+ GET /replay 200 in 328ms (compile: 14ms, render: 314ms)
+ GET /sentiment 200 in 67ms (compile: 8ms, render: 59ms)
+ GET /strategy 200 in 158ms (compile: 4ms, render: 155ms)
+ GET /pricing 200 in 204ms (compile: 9ms, render: 195ms)
+ GET /portfolio 200 in 115ms (compile: 6ms, render: 109ms)
+ GET /agent 200 in 139ms (compile: 6ms, render: 133ms)
+ GET /replay 200 in 103ms (compile: 6ms, render: 97ms)
+ GET /positions 200 in 163ms (compile: 4ms, render: 159ms)
+ GET /strategy 200 in 146ms (compile: 3ms, render: 143ms)
+ GET /risk-mgmt 200 in 53ms (compile: 4ms, render: 49ms)
+ GET /replay 200 in 72ms (compile: 3ms, render: 69ms)
+ GET /auto-engine 200 in 30ms (compile: 9ms, render: 20ms)
+ GET /replay 200 in 76ms (compile: 3ms, render: 73ms)
+ GET /backtest 200 in 30ms (compile: 4ms, render: 26ms)
+ GET /replay 200 in 69ms (compile: 4ms, render: 65ms)
+ GET /sentiment 200 in 32ms (compile: 9ms, render: 23ms)
+ GET /replay 200 in 54ms (compile: 1865µs, render: 52ms)
+ GET /agent 200 in 33ms (compile: 3ms, render: 30ms)
+ GET /replay 200 in 72ms (compile: 3ms, render: 68ms)
+ GET / 200 in 281ms (compile: 186ms, render: 95ms)
+ GET / 200 in 113ms (compile: 2ms, render: 111ms)
+ GET /scanner 200 in 140ms (compile: 9ms, render: 131ms)
+ GET /options-chain 200 in 311ms (compile: 3ms, render: 308ms)
+ GET / 200 in 218ms (compile: 4ms, render: 214ms)
+ GET / 200 in 139ms (compile: 4ms, render: 135ms)
+ GET / 200 in 129ms (compile: 3ms, render: 126ms)
+ GET / 200 in 443ms (compile: 75ms, render: 368ms)
+ GET / 200 in 818ms (compile: 313ms, render: 504ms)
+ GET /scanner 200 in 455ms (compile: 195ms, render: 260ms)
+ GET / 200 in 861ms (compile: 239ms, render: 622ms)
+ GET /options-chain 200 in 493ms (compile: 10ms, render: 482ms)
+ GET / 200 in 488ms (compile: 230ms, render: 258ms)
+ GET /pricing 200 in 238ms (compile: 1968µs, render: 236ms)
+ GET / 200 in 107ms (compile: 6ms, render: 101ms)
+ GET / 200 in 74ms (compile: 3ms, render: 71ms)
+ GET /pricing 200 in 176ms (compile: 1838µs, render: 174ms)
+ GET / 200 in 85ms (compile: 3ms, render: 82ms)
+ GET /scanner 200 in 48ms (compile: 7ms, render: 41ms)
+ GET /pricing 200 in 200ms (compile: 3ms, render: 197ms)
+ GET /options-chain 200 in 82ms (compile: 4ms, render: 78ms)
+ GET /pricing 200 in 222ms (compile: 3ms, render: 219ms)
+ GET /pricing 200 in 307ms (compile: 45ms, render: 262ms)
+ GET /portfolio 200 in 70ms (compile: 3ms, render: 66ms)
+ GET /pricing 200 in 273ms (compile: 6ms, render: 267ms)
+ GET /positions 200 in 41ms (compile: 4ms, render: 37ms)
+ GET /pricing 200 in 358ms (compile: 16ms, render: 342ms)
+ GET /risk-mgmt 200 in 48ms (compile: 3ms, render: 44ms)
+ GET /pricing 200 in 226ms (compile: 3ms, render: 224ms)
+ GET /auto-engine 200 in 44ms (compile: 3ms, render: 41ms)
+ GET /pricing 200 in 185ms (compile: 4ms, render: 181ms)
+ GET /backtest 200 in 50ms (compile: 5ms, render: 45ms)
+ GET /pricing 200 in 216ms (compile: 7ms, render: 209ms)
+ GET /sentiment 200 in 39ms (compile: 3ms, render: 36ms)
+ GET /pricing 200 in 148ms (compile: 3ms, render: 144ms)
+ GET /agent 200 in 50ms (compile: 4ms, render: 46ms)
+ GET /pricing 200 in 224ms (compile: 4ms, render: 221ms)
+ GET /portfolio 200 in 137ms (compile: 2ms, render: 135ms)
+ GET / 200 in 326ms (compile: 6ms, render: 319ms)
+ GET / 200 in 95ms (compile: 3ms, render: 92ms)
+ GET /portfolio 200 in 182ms (compile: 2ms, render: 179ms)
+ GET / 200 in 101ms (compile: 6ms, render: 95ms)
+ GET /scanner 200 in 42ms (compile: 5ms, render: 37ms)
+ GET /portfolio 200 in 271ms (compile: 8ms, render: 263ms)
+ GET /options-chain 200 in 87ms (compile: 3ms, render: 84ms)
+ GET /pricing 200 in 57ms (compile: 2ms, render: 54ms)
+ GET /portfolio 200 in 159ms (compile: 1828µs, render: 157ms)
+ GET /portfolio 200 in 123ms (compile: 9ms, render: 113ms)
+ GET /positions 200 in 45ms (compile: 5ms, render: 41ms)
+ GET /risk-mgmt 200 in 59ms (compile: 5ms, render: 54ms)
+ GET /portfolio 200 in 348ms (compile: 4ms, render: 345ms)
+ GET /auto-engine 200 in 50ms (compile: 16ms, render: 34ms)
+ GET /portfolio 200 in 188ms (compile: 6ms, render: 182ms)
+ GET /backtest 200 in 52ms (compile: 2ms, render: 49ms)
+ GET /portfolio 200 in 303ms (compile: 6ms, render: 297ms)
+ GET /sentiment 200 in 31ms (compile: 2ms, render: 28ms)
+ GET /portfolio 200 in 219ms (compile: 5ms, render: 214ms)
+ GET /agent 200 in 115ms (compile: 6ms, render: 109ms)
+ GET /portfolio 200 in 295ms (compile: 5ms, render: 289ms)
+ GET /auto-engine 200 in 77ms (compile: 3ms, render: 74ms)
+ GET / 200 in 153ms (compile: 11ms, render: 141ms)
+ GET / 200 in 99ms (compile: 6ms, render: 93ms)
+ GET /auto-engine 200 in 84ms (compile: 4ms, render: 79ms)
+ GET /vol-surface 200 in 117ms (compile: 3ms, render: 114ms)
+ GET / 200 in 107ms (compile: 2ms, render: 105ms)
+ GET / 200 in 115ms (compile: 5ms, render: 110ms)
+ GET /vol-surface 200 in 115ms (compile: 5ms, render: 110ms)
+ GET /sentiment 200 in 136ms (compile: 5ms, render: 131ms)
+ GET / 200 in 93ms (compile: 3ms, render: 89ms)
+ GET / 200 in 145ms (compile: 4ms, render: 141ms)
+ GET /sentiment 200 in 112ms (compile: 3ms, render: 109ms)
+ GET /backtest 200 in 76ms (compile: 2ms, render: 73ms)
+ GET / 200 in 106ms (compile: 5ms, render: 100ms)
+ GET / 200 in 93ms (compile: 2ms, render: 91ms)
+ GET /backtest 200 in 149ms (compile: 3ms, render: 146ms)
+ GET /journal 200 in 110ms (compile: 32ms, render: 79ms)
+ GET / 200 in 89ms (compile: 5ms, render: 84ms)
+ GET / 200 in 85ms (compile: 7ms, render: 78ms)
+ GET /journal 200 in 69ms (compile: 2ms, render: 66ms)
+ GET /execution 200 in 65ms (compile: 3ms, render: 62ms)
+ GET / 200 in 156ms (compile: 5ms, render: 151ms)
+ GET / 200 in 86ms (compile: 3ms, render: 82ms)
+ GET /execution 200 in 76ms (compile: 8ms, render: 68ms)
+ GET /positions 200 in 106ms (compile: 2ms, render: 104ms)
+ GET /agent 200 in 93ms (compile: 3ms, render: 90ms)
+ GET / 200 in 264ms (compile: 15ms, render: 249ms)
+ GET / 200 in 180ms (compile: 3ms, render: 177ms)
+ GET / 200 in 135ms (compile: 5ms, render: 130ms)
+ GET / 200 in 273ms (compile: 5ms, render: 268ms)
+ GET /positions 200 in 222ms (compile: 3ms, render: 218ms)
+ GET /agent 200 in 172ms (compile: 10ms, render: 162ms)
+ GET / 200 in 807ms (compile: 93ms, render: 714ms)
+ GET / 200 in 673ms (compile: 6ms, render: 667ms)
+ GET /risk 200 in 681ms (compile: 54ms, render: 626ms)
+ GET /positions 200 in 479ms (compile: 32ms, render: 447ms)
+ GET /agent 200 in 467ms (compile: 40ms, render: 427ms)
+ GET /scanner 200 in 245ms (compile: 51ms, render: 193ms)
+ GET /scanner 200 in 221ms (compile: 94ms, render: 127ms)
+ GET /agent 200 in 187ms (compile: 76ms, render: 111ms)
+ GET / 200 in 160ms (compile: 5ms, render: 155ms)
+ GET /options-chain 200 in 118ms (compile: 5ms, render: 114ms)
+ GET /positions 200 in 100ms (compile: 5ms, render: 94ms)
+ GET /options-chain 200 in 177ms (compile: 4ms, render: 173ms)
+ GET / 200 in 215ms (compile: 6ms, render: 209ms)
+ GET /pricing 200 in 121ms (compile: 4ms, render: 117ms)
+ GET /risk 200 in 109ms (compile: 3ms, render: 106ms)
+ GET /agent 200 in 185ms (compile: 5ms, render: 180ms)
+ GET /pricing 200 in 247ms (compile: 12ms, render: 234ms)
+ GET /portfolio 200 in 330ms (compile: 12ms, render: 318ms)
+ GET /positions 200 in 167ms (compile: 9ms, render: 158ms)
+ GET /portfolio 200 in 289ms (compile: 33ms, render: 255ms)
+ GET /positions 200 in 56ms (compile: 3ms, render: 52ms)
+ GET /agent 200 in 225ms (compile: 4ms, render: 221ms)
+ GET /positions 200 in 66ms (compile: 21ms, render: 45ms)
+ GET /risk-mgmt 200 in 89ms (compile: 8ms, render: 81ms)
+ GET /risk-mgmt 200 in 35ms (compile: 3ms, render: 32ms)
+ GET /auto-engine 200 in 36ms (compile: 3ms, render: 33ms)
+ GET /agent 200 in 102ms (compile: 4ms, render: 99ms)
+ GET /positions 200 in 205ms (compile: 11ms, render: 194ms)
+ GET /auto-engine 200 in 133ms (compile: 7ms, render: 125ms)
+ GET /backtest 200 in 206ms (compile: 4ms, render: 203ms)
+ GET /agent 200 in 124ms (compile: 9ms, render: 115ms)
+ GET /positions 200 in 377ms (compile: 3ms, render: 374ms)
+ GET /backtest 200 in 512ms (compile: 27ms, render: 485ms)
+ GET /sentiment 200 in 409ms (compile: 25ms, render: 384ms)
+ GET /agent 200 in 233ms (compile: 16ms, render: 217ms)
+ GET /positions 200 in 342ms (compile: 33ms, render: 309ms)
+ GET /sentiment 200 in 165ms (compile: 9ms, render: 156ms)
+ GET /agent 200 in 306ms (compile: 5ms, render: 302ms)
+ GET /agent 200 in 250ms (compile: 12ms, render: 238ms)
+ GET /positions 200 in 140ms (compile: 3ms, render: 137ms)
+ GET /agent 200 in 46ms (compile: 3ms, render: 43ms)
+ GET /risk-mgmt 200 in 180ms (compile: 4ms, render: 176ms)
+ GET /strategy 200 in 106ms (compile: 6ms, render: 101ms)
+ GET / 200 in 205ms (compile: 6ms, render: 199ms)
+ GET / 200 in 125ms (compile: 6ms, render: 119ms)
+ GET / 200 in 159ms (compile: 2ms, render: 157ms)
+ GET / 200 in 96ms (compile: 4ms, render: 91ms)
+ GET /risk-mgmt 200 in 219ms (compile: 4ms, render: 215ms)
+ GET /strategy 200 in 166ms (compile: 10ms, render: 156ms)
+ GET /replay 200 in 117ms (compile: 32ms, render: 84ms)
+ GET / 200 in 100ms (compile: 2ms, render: 97ms)
+ GET / 200 in 82ms (compile: 3ms, render: 78ms)
+ GET /replay 200 in 62ms (compile: 2ms, render: 60ms)
+ GET /scanner 200 in 60ms (compile: 3ms, render: 58ms)
+ GET /options-chain 200 in 44ms (compile: 3ms, render: 41ms)
+ GET /scanner 200 in 20ms (compile: 2ms, render: 18ms)
+ GET /options-chain 200 in 45ms (compile: 1932µs, render: 43ms)
+ GET /options-chain 200 in 98ms (compile: 1924µs, render: 96ms)
+ GET /scanner 200 in 45ms (compile: 7ms, render: 38ms)
+ GET / 200 in 54ms (compile: 1993µs, render: 52ms)
+ GET /stock/PYPL 200 in 106ms (compile: 64ms, render: 42ms)
+ GET /risk-mgmt 200 in 20ms (compile: 2ms, render: 18ms)
+ GET /positions 200 in 26ms (compile: 3ms, render: 23ms)
+ GET /portfolio 200 in 74ms (compile: 12ms, render: 62ms)
+ GET /options-chain 200 in 73ms (compile: 3ms, render: 70ms)
+ GET /scanner 200 in 44ms (compile: 6ms, render: 38ms)
+ GET / 200 in 106ms (compile: 2ms, render: 103ms)
+ GET /options-chain 200 in 137ms (compile: 8ms, render: 129ms)
+ GET / 200 in 59ms (compile: 2ms, render: 57ms)
+ GET /stock/WULF 200 in 102ms (compile: 61ms, render: 41ms)
+ GET /stock/WULF 200 in 107ms (compile: 59ms, render: 48ms)
+ GET /stock/WULF 200 in 368ms (compile: 61ms, render: 307ms)
+ GET /stock/WULF 200 in 4.7s (compile: 4.2s, render: 516ms)
+ GET /stock/WULF 200 in 4.7s (compile: 4.3s, render: 409ms)
+ GET /stock/WULF 200 in 184ms (compile: 4ms, render: 179ms)
+ GET /stock/WULF 200 in 218ms (compile: 30ms, render: 188ms)
+ GET /stock/WULF 200 in 206ms (compile: 65ms, render: 141ms)
+ GET /stock/WULF 200 in 118ms (compile: 4ms, render: 114ms)
+ GET /stock/WULF 200 in 79ms (compile: 5ms, render: 74ms)
+ GET / 200 in 611ms (compile: 225ms, render: 387ms)
+ GET /stock/WULF 200 in 38ms (compile: 3ms, render: 35ms)
+ GET /stock/WULF 200 in 122ms (compile: 3ms, render: 119ms)
+ GET /stock/WULF 200 in 149ms (compile: 3ms, render: 145ms)
+ GET /stock/WULF 200 in 110ms (compile: 4ms, render: 106ms)
+ GET /stock/WULF 200 in 74ms (compile: 5ms, render: 69ms)
+ GET /stock/WULF 200 in 73ms (compile: 35ms, render: 38ms)
+ GET / 200 in 101ms (compile: 2ms, render: 99ms)
+ GET /stock/WULF 200 in 72ms (compile: 3ms, render: 68ms)
+ GET /stock/WULF 200 in 38ms (compile: 3ms, render: 35ms)
+ GET /stock/WULF 200 in 122ms (compile: 62ms, render: 61ms)
+ GET /stock/WULF 200 in 33ms (compile: 3ms, render: 31ms)
+ GET /stock/WULF 200 in 30ms (compile: 3ms, render: 27ms)
+ GET /stock/WULF 200 in 40ms (compile: 2ms, render: 38ms)
+ GET / 200 in 76ms (compile: 2ms, render: 74ms)
+ GET /stock/WULF 200 in 158ms (compile: 66ms, render: 92ms)
+ GET /stock/WULF 200 in 63ms (compile: 3ms, render: 60ms)
+✓ Compiled in 0ms
+ GET /stock/WULF 200 in 3.3s (compile: 3.2s, render: 142ms)
+ GET /stock/WULF 200 in 2.8s (compile: 2.4s, render: 415ms)
+ GET /stock/WULF 200 in 114ms (compile: 4ms, render: 110ms)
+ GET /stock/WULF 200 in 116ms (compile: 31ms, render: 85ms)
+ GET /stock/WULF 200 in 235ms (compile: 20ms, render: 215ms)
+ GET /stock/WULF 200 in 44ms (compile: 6ms, render: 39ms)
+ GET / 200 in 3.3s (compile: 2.8s, render: 473ms)
+ GET /stock/WULF 200 in 27ms (compile: 2ms, render: 25ms)
+ GET /stock/WULF 200 in 105ms (compile: 61ms, render: 44ms)
+ GET / 200 in 87ms (compile: 3ms, render: 84ms)
+ GET /stock/WULF 200 in 40ms (compile: 4ms, render: 36ms)
+ GET /stock/WULF 200 in 63ms (compile: 3ms, render: 60ms)
+ GET /stock/WULF 200 in 33ms (compile: 3ms, render: 31ms)
+ GET /stock/WULF 200 in 91ms (compile: 62ms, render: 30ms)
+ GET / 200 in 174ms (compile: 4ms, render: 170ms)
+ GET /stock/WULF 200 in 28ms (compile: 2ms, render: 26ms)
+ GET /stock/WULF 200 in 42ms (compile: 2ms, render: 39ms)
+ GET /stock/WULF 200 in 173ms (compile: 2ms, render: 171ms)
+ GET /stock/WULF 200 in 103ms (compile: 60ms, render: 43ms)
+ GET / 200 in 239ms (compile: 5ms, render: 235ms)
+ GET /stock/WULF 200 in 87ms (compile: 3ms, render: 84ms)
+ GET /stock/WULF 200 in 80ms (compile: 5ms, render: 74ms)
+ GET /stock/WULF 200 in 43ms (compile: 7ms, render: 37ms)
+ GET /stock/WULF 200 in 134ms (compile: 62ms, render: 72ms)
+ GET /stock/WULF 200 in 39ms (compile: 3ms, render: 36ms)
+ GET / 200 in 202ms (compile: 3ms, render: 199ms)
+ GET /stock/WULF 200 in 40ms (compile: 3ms, render: 37ms)
+ GET /stock/WULF 200 in 54ms (compile: 4ms, render: 50ms)
+ GET /stock/WULF 200 in 29ms (compile: 2ms, render: 26ms)
+ GET /stock/WULF 200 in 31ms (compile: 2ms, render: 29ms)
+ GET / 200 in 70ms (compile: 3ms, render: 67ms)
+ GET /stock/WULF 200 in 100ms (compile: 61ms, render: 39ms)
+ GET /stock/WULF 200 in 25ms (compile: 2ms, render: 23ms)
+ GET /stock/WULF 200 in 30ms (compile: 2ms, render: 27ms)
+ GET /stock/WULF 200 in 37ms (compile: 3ms, render: 34ms)
+ GET /stock/WULF 200 in 172ms (compile: 2ms, render: 169ms)
+ GET /stock/WULF 200 in 98ms (compile: 61ms, render: 36ms)
+ GET /stock/WULF 200 in 39ms (compile: 3ms, render: 36ms)
+ GET / 200 in 229ms (compile: 3ms, render: 225ms)
+ GET /stock/WULF 200 in 32ms (compile: 2ms, render: 29ms)
+ GET / 200 in 72ms (compile: 3ms, render: 69ms)
+ GET /stock/WULF 200 in 162ms (compile: 81ms, render: 81ms)
+ GET /stock/WULF 200 in 41ms (compile: 3ms, render: 38ms)
+ GET /stock/WULF 200 in 215ms (compile: 4ms, render: 212ms)
+ GET /stock/WULF 200 in 216ms (compile: 35ms, render: 181ms)
+ GET /stock/WULF 200 in 69ms (compile: 7ms, render: 62ms)
+ GET / 200 in 222ms (compile: 5ms, render: 217ms)
+ GET /stock/WULF 200 in 58ms (compile: 3ms, render: 55ms)
+ GET /stock/WULF 200 in 36ms (compile: 3ms, render: 33ms)
+ GET /stock/WULF 200 in 104ms (compile: 64ms, render: 40ms)
+ GET / 200 in 219ms (compile: 9ms, render: 210ms)
+ GET /stock/WULF 200 in 31ms (compile: 3ms, render: 28ms)
+ GET /stock/WULF 200 in 32ms (compile: 2ms, render: 29ms)
+ GET / 200 in 64ms (compile: 2ms, render: 61ms)
+ GET /stock/WULF 200 in 161ms (compile: 69ms, render: 92ms)
+ GET /stock/WULF 200 in 62ms (compile: 3ms, render: 59ms)
+ GET /stock/WULF 200 in 35ms (compile: 3ms, render: 31ms)
+ GET /stock/WULF 200 in 128ms (compile: 3ms, render: 125ms)
+ GET /stock/WULF 200 in 81ms (compile: 4ms, render: 77ms)
+ GET /stock/WULF 200 in 45ms (compile: 4ms, render: 42ms)
+ GET /stock/WULF 200 in 42ms (compile: 3ms, render: 39ms)
+ GET /stock/WULF 200 in 42ms (compile: 3ms, render: 39ms)
+ GET /stock/WULF 200 in 81ms (compile: 3ms, render: 78ms)
+ GET / 200 in 69ms (compile: 2ms, render: 67ms)
+ GET /stock/WULF 200 in 47ms (compile: 4ms, render: 43ms)
+ GET /stock/WULF 200 in 135ms (compile: 62ms, render: 73ms)
+ GET /stock/WULF 200 in 135ms (compile: 90ms, render: 46ms)
+ GET / 200 in 214ms (compile: 7ms, render: 206ms)
+ GET /stock/WULF 200 in 43ms (compile: 2ms, render: 40ms)
+ GET /stock/WULF 200 in 40ms (compile: 3ms, render: 37ms)
+ GET /stock/WULF 200 in 111ms (compile: 65ms, render: 45ms)
+ GET / 200 in 181ms (compile: 2ms, render: 179ms)
+ GET /stock/WULF 200 in 29ms (compile: 2ms, render: 27ms)
+ GET /stock/WULF 200 in 83ms (compile: 4ms, render: 79ms)
+ GET /stock/WULF 200 in 55ms (compile: 3ms, render: 52ms)
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+[?25h

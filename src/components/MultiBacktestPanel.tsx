@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
-const API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
+import { PRICING_API_URL } from '@/lib/pricing-api';
 
 const ALL_TICKERS = ['CIFR', 'WULF', 'ONDS', 'HOOD', 'CLSK'];
 const STRATEGY_LABELS: Record<string, string> = {
@@ -77,7 +76,7 @@ export default function MultiBacktestPanel() {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetch(`${API_URL}/api/backtest/compare`, {
+      const resp = await fetch(`${PRICING_API_URL}/api/backtest/compare`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,7 +119,7 @@ export default function MultiBacktestPanel() {
         {/* Ticker checkboxes */}
         <div>
           <label className="text-xs text-gray-400 block mb-1">Tickers</label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {ALL_TICKERS.map(t => (
               <button key={t} onClick={() => toggleTicker(t)}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
@@ -135,7 +134,7 @@ export default function MultiBacktestPanel() {
         </div>
 
         {/* Date range + thresholds */}
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <div>
             <label className="text-xs text-gray-400">Start Date</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
@@ -167,7 +166,7 @@ export default function MultiBacktestPanel() {
         </div>
 
         {/* Strategy-specific params */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div>
             <label className="text-xs text-gray-400">EV Threshold ($/contract)</label>
             <input type="number" step="5" value={evThreshold}

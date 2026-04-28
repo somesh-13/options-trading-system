@@ -59,14 +59,272 @@ def init_db():
             FOREIGN KEY (trade_id) REFERENCES trades(id)
         );
 
+        -- P3: per-agent signal history (one row per ConfluenceEngine.analyze())
+        CREATE TABLE IF NOT EXISTS agent_signals (
+            signal_id TEXT PRIMARY KEY,
+            ticker TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            agent_id TEXT NOT NULL,
+            signal_type TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            iv_hv_ratio REAL,
+            keltner_position TEXT,
+            regime TEXT,
+            recommended_strategy TEXT,
+            strike REAL,
+            expiry TEXT,
+            premium REAL,
+            confluence_score REAL NOT NULL,
+            metadata TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- P5: per-agent memory with quality score (updated from outcomes)
+        CREATE TABLE IF NOT EXISTS agent_memory (
+            memory_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_id TEXT NOT NULL,
+            ticker TEXT NOT NULL,
+            memory_type TEXT NOT NULL CHECK(memory_type IN ('SIGNAL','REGIME','EARNINGS_OUTCOME','IV_PERCENTILE')),
+            content TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            quality_score REAL DEFAULT 0.5,
+            signal_id TEXT REFERENCES agent_signals(signal_id)
+        );
+
+        -- P3: outcome tracker (resolves at 4 PM ET)
+        CREATE TABLE IF NOT EXISTS signal_outcomes (
+            outcome_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            signal_id TEXT NOT NULL REFERENCES agent_signals(signal_id),
+            outcome_timestamp TEXT NOT NULL,
+            entry_price REAL NOT NULL,
+            exit_price REAL,
+            pnl REAL,
+            pnl_pct REAL,
+            outcome TEXT CHECK(outcome IN ('WIN','LOSS','OPEN','EXPIRED')),
+            exit_reason TEXT CHECK(exit_reason IN ('EXPIRY','STOP_LOSS','TAKE_PROFIT','MANUAL'))
+        );
+
         CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades(symbol);
         CREATE INDEX IF NOT EXISTS idx_trades_status ON trades(status);
         CREATE INDEX IF NOT EXISTS idx_trades_signal_source ON trades(signal_source);
         CREATE INDEX IF NOT EXISTS idx_trades_timestamp ON trades(timestamp);
         CREATE INDEX IF NOT EXISTS idx_engine_log_event_type ON engine_log(event_type);
         CREATE INDEX IF NOT EXISTS idx_engine_log_timestamp ON engine_log(timestamp);
+        CREATE INDEX IF NOT EXISTS idx_agent_signals_ticker_ts ON agent_signals(ticker, timestamp DESC);
+        CREATE INDEX IF NOT EXISTS idx_agent_signals_confluence ON agent_signals(confluence_score DESC);
+        CREATE INDEX IF NOT EXISTS idx_outcomes_signal_id ON signal_outcomes(signal_id);
+        CREATE INDEX IF NOT EXISTS idx_outcomes_outcome ON signal_outcomes(outcome);
+        CREATE INDEX IF NOT EXISTS idx_memory_agent_ticker_ts ON agent_memory(agent_id, ticker, timestamp DESC);
+        CREATE INDEX IF NOT EXISTS idx_memory_signal_id ON agent_memory(signal_id);
     """)
     conn.commit()
+
+
+# =============================================
+# P3 — Signal History + Outcome Tracker
+# =============================================
+
+
+def log_agent_signal(
+    *,
+    signal_id: str,
+    ticker: str,
+    timestamp: str,
+    agent_id: str,
+    signal_type: str,
+    confidence: float,
+    confluence_score: float,
+    iv_hv_ratio: Optional[float] = None,
+    keltner_position: Optional[str] = None,
+    regime: Optional[str] = None,
+    recommended_strategy: Optional[str] = None,
+    strike: Optional[float] = None,
+    expiry: Optional[str] = None,
+    premium: Optional[float] = None,
+    metadata: Optional[dict] = None,
+) -> str:
+    """Insert one row of the per-agent signal history. Returns signal_id."""
+    conn = _get_conn()
+    conn.execute(
+        """INSERT OR REPLACE INTO agent_signals
+           (signal_id, ticker, timestamp, agent_id, signal_type, confidence,
+            iv_hv_ratio, keltner_position, regime, recommended_strategy,
+            strike, expiry, premium, confluence_score, metadata)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            signal_id, ticker, timestamp, agent_id, signal_type, float(confidence),
+            iv_hv_ratio, keltner_position, regime, recommended_strategy,
+            strike, expiry, premium, float(confluence_score),
+            json.dumps(metadata) if metadata else None,
+        ),
+    )
+    conn.commit()
+    return signal_id
+
+
+def get_signal_history(
+    ticker: Optional[str] = None,
+    days: int = 30,
+    min_confluence: Optional[float] = None,
+    limit: int = 500,
+) -> list[dict]:
+    """Return signal rows filtered by ticker and date window."""
+    conn = _get_conn()
+    clauses = ["datetime(timestamp) >= datetime('now', ? || ' days')"]
+    params: list = [f"-{int(days)}"]
+    if ticker:
+        clauses.append("ticker = ?")
+        params.append(ticker.upper())
+    if min_confluence is not None:
+        clauses.append("confluence_score >= ?")
+        params.append(float(min_confluence))
+    where = " AND ".join(clauses)
+    params.append(limit)
+    rows = conn.execute(
+        f"""SELECT s.*, o.pnl, o.pnl_pct, o.outcome, o.exit_reason
+            FROM agent_signals s
+            LEFT JOIN signal_outcomes o ON o.signal_id = s.signal_id
+            WHERE {where}
+            ORDER BY s.timestamp DESC
+            LIMIT ?""",
+        params,
+    ).fetchall()
+    return [_row_to_dict(r) for r in rows]
+
+
+def get_open_signals() -> list[dict]:
+    """Return signals without a resolved outcome — candidates for the 4 PM cron."""
+    conn = _get_conn()
+    rows = conn.execute(
+        """SELECT s.* FROM agent_signals s
+           LEFT JOIN signal_outcomes o ON o.signal_id = s.signal_id
+           WHERE o.signal_id IS NULL OR o.outcome = 'OPEN'
+           ORDER BY s.timestamp ASC"""
+    ).fetchall()
+    return [_row_to_dict(r) for r in rows]
+
+
+def log_signal_outcome(
+    *,
+    signal_id: str,
+    entry_price: float,
+    exit_price: Optional[float],
+    pnl: Optional[float],
+    pnl_pct: Optional[float],
+    outcome: str,
+    exit_reason: Optional[str] = None,
+) -> int:
+    """Insert/replace an outcome row for a signal_id."""
+    conn = _get_conn()
+    # Idempotent: delete any prior outcome for this signal before inserting.
+    conn.execute("DELETE FROM signal_outcomes WHERE signal_id = ?", (signal_id,))
+    cur = conn.execute(
+        """INSERT INTO signal_outcomes
+           (signal_id, outcome_timestamp, entry_price, exit_price, pnl, pnl_pct, outcome, exit_reason)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            signal_id,
+            datetime.now(timezone.utc).isoformat(),
+            float(entry_price),
+            float(exit_price) if exit_price is not None else None,
+            float(pnl) if pnl is not None else None,
+            float(pnl_pct) if pnl_pct is not None else None,
+            outcome,
+            exit_reason,
+        ),
+    )
+    conn.commit()
+    return cur.lastrowid
+
+
+def get_win_rate_by_bucket() -> dict:
+    """Return win rate across the three confluence buckets (<0.50, 0.50-0.65, ≥0.65).
+
+    Counts a row as a WIN only when a resolved outcome is WIN; OPEN rows are
+    excluded from the denominator.
+    """
+    conn = _get_conn()
+    rows = conn.execute(
+        """SELECT
+              CASE
+                WHEN confluence_score < 0.50 THEN 'low'
+                WHEN confluence_score < 0.65 THEN 'mid'
+                ELSE 'high'
+              END AS bucket,
+              COUNT(*) AS total,
+              SUM(CASE WHEN o.outcome = 'WIN' THEN 1 ELSE 0 END) AS wins,
+              SUM(CASE WHEN o.outcome IN ('WIN','LOSS','EXPIRED') THEN 1 ELSE 0 END) AS resolved,
+              AVG(o.pnl) AS avg_pnl
+           FROM agent_signals s
+           LEFT JOIN signal_outcomes o ON o.signal_id = s.signal_id
+           GROUP BY bucket"""
+    ).fetchall()
+    out = {"low": {}, "mid": {}, "high": {}}
+    for r in rows:
+        resolved = r["resolved"] or 0
+        wins = r["wins"] or 0
+        out[r["bucket"]] = {
+            "total": r["total"],
+            "resolved": resolved,
+            "wins": wins,
+            "win_rate": round(wins / resolved, 4) if resolved else None,
+            "avg_pnl": round(r["avg_pnl"], 2) if r["avg_pnl"] is not None else None,
+        }
+    return out
+
+
+def get_signal_performance() -> dict:
+    """Aggregate performance: totals, win rate by bucket, Sharpe by strategy."""
+    conn = _get_conn()
+    total = conn.execute("SELECT COUNT(*) AS n FROM agent_signals").fetchone()["n"]
+    strat_rows = conn.execute(
+        """SELECT recommended_strategy,
+                  COUNT(*) AS total,
+                  AVG(o.pnl) AS avg_pnl,
+                  SUM(CASE WHEN o.outcome = 'WIN' THEN 1 ELSE 0 END) AS wins,
+                  SUM(CASE WHEN o.outcome IN ('WIN','LOSS','EXPIRED') THEN 1 ELSE 0 END) AS resolved
+           FROM agent_signals s
+           LEFT JOIN signal_outcomes o ON o.signal_id = s.signal_id
+           WHERE recommended_strategy IS NOT NULL
+           GROUP BY recommended_strategy"""
+    ).fetchall()
+
+    # Simple per-strategy Sharpe using pnl samples (daily-like).
+    strategies = []
+    for r in strat_rows:
+        pnl_rows = conn.execute(
+            """SELECT o.pnl FROM agent_signals s
+               JOIN signal_outcomes o ON o.signal_id = s.signal_id
+               WHERE s.recommended_strategy = ? AND o.pnl IS NOT NULL""",
+            (r["recommended_strategy"],),
+        ).fetchall()
+        pnls = [row["pnl"] for row in pnl_rows]
+        if len(pnls) >= 2:
+            mean = sum(pnls) / len(pnls)
+            var = sum((x - mean) ** 2 for x in pnls) / (len(pnls) - 1)
+            std = var ** 0.5
+            sharpe = round(mean / std, 3) if std else None
+        else:
+            sharpe = None
+        resolved = r["resolved"] or 0
+        wins = r["wins"] or 0
+        strategies.append(
+            {
+                "strategy": r["recommended_strategy"],
+                "total": r["total"],
+                "resolved": resolved,
+                "wins": wins,
+                "win_rate": round(wins / resolved, 4) if resolved else None,
+                "avg_pnl": round(r["avg_pnl"], 2) if r["avg_pnl"] is not None else None,
+                "sharpe": sharpe,
+            }
+        )
+
+    return {
+        "total_signals": total,
+        "buckets": get_win_rate_by_bucket(),
+        "strategies": strategies,
+    }
 
 
 def log_trade(
@@ -326,7 +584,7 @@ def get_engine_logs(
 def _row_to_dict(row: sqlite3.Row) -> dict:
     """Convert a sqlite3.Row to a dict, parsing JSON fields."""
     d = dict(row)
-    for key in ("signal_data", "details"):
+    for key in ("signal_data", "details", "metadata"):
         if key in d and d[key] is not None:
             try:
                 d[key] = json.loads(d[key])

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useVegaEdgeSession } from '@/hooks/useVegaEdgeSession';
 import ConnectionStatus from '@/components/agent/ConnectionStatus';
 import VoiceControlBar from '@/components/agent/VoiceControlBar';
@@ -13,28 +12,23 @@ export default function AgentPage() {
   const session = useVegaEdgeSession();
 
   return (
-    <main className="min-h-screen bg-[#1E1E1E] text-white p-6">
+    <main className="min-h-screen bg-[#1E1E1E] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-              &larr;
-            </Link>
-            <h1 className="text-3xl font-bold">VegaEdge Live Agent</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-2">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <h2 className="rv-h1">VegaEdge Live Agent</h2>
             <ConnectionStatus
               connected={session.connected}
               listening={session.listening}
               error={session.error}
             />
           </div>
-          <p className="text-gray-500 text-sm">
-            Real-time voice + vision options analyst
-          </p>
         </div>
+        <div className="rv-sub">Real-time voice + vision options analyst</div>
 
         {/* Voice Control Bar */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <VoiceControlBar
             connected={session.connected}
             listening={session.listening}
@@ -48,7 +42,7 @@ export default function AgentPage() {
         </div>
 
         {/* Chart + Signals grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
           <div className="lg:col-span-2">
             <LiveChart
               data={session.chartData}
@@ -63,7 +57,7 @@ export default function AgentPage() {
 
         {/* Watchlist (conditional) */}
         {session.watchlistData && (
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <WatchlistTable
               data={session.watchlistData}
               summary={session.watchlistSummary}

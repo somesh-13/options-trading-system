@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PRICING_API_URL as API_URL } from '@/lib/pricing-api';
 
 interface SentimentData {
   ticker: string;
@@ -24,8 +25,6 @@ interface SentimentData {
     breakdown: Record<string, number>;
   };
 }
-
-const API_URL = process.env.NEXT_PUBLIC_PRICING_API_URL || 'http://localhost:8000';
 
 export default function SentimentPanel({ ticker }: { ticker: string }) {
   const [data, setData] = useState<SentimentData | null>(null);

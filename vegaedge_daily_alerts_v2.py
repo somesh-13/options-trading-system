@@ -220,11 +220,67 @@ def check_keltner_signals(ticker, iv_data):
     return signals
 
 
+def check_spx_regime():
+    """Check S&P 500 market regime"""
+    try:
+        spx = yf.Ticker("^GSPC")
+        hist = spx.history(period="3mo")
+        
+        if hist.empty:
+            return None
+        
+        # Calculate indicators
+        hist['returns'] = hist['Close'].pct_change()
+        hist['HV'] = hist['returns'].rolling(window=30).std() * np.sqrt(252)
+        hist['Price_Change_10d'] = hist['Close'].pct_change(periods=10) * 100
+        
+        current = hist.iloc[-1]
+        current_price = current['Close']
+        current_hv = current['HV']
+        price_change_10d = current['Price_Change_10d']
+        
+        # Calculate HV percentile (1-year lookback)
+        hv_1yr = hist['HV'].tail(252)
+        if len(hv_1yr) > 0 and hv_1yr.max() > hv_1yr.min():
+            hv_percentile = (current_hv - hv_1yr.min()) / (hv_1yr.max() - hv_1yr.min()) * 100
+        else:
+            hv_percentile = 50
+        
+        # Determine regime
+        if hv_percentile >= 90:
+            regime = "HIGH VOLATILITY 🔴"
+            regime_emoji = "🔴"
+        elif hv_percentile >= 70:
+            regime = "ELEVATED VOL 🟠"
+            regime_emoji = "🟠"
+        elif hv_percentile <= 30:
+            regime = "LOW VOL (CALM) 🟢"
+            regime_emoji = "🟢"
+        else:
+            regime = "NORMAL 🔵"
+            regime_emoji = "🔵"
+        
+        return {
+            'price': current_price,
+            'hv': current_hv,
+            'hv_percentile': hv_percentile,
+            'regime': regime,
+            'regime_emoji': regime_emoji,
+            'price_change_10d': price_change_10d
+        }
+    except Exception as e:
+        print(f"Error checking SPX: {e}")
+        return None
+
+
 def format_alerts_message(tickers=['HOOD', 'CIFR', 'WULF', 'PYPL', 'GRAB']):
     """Generate full alert message for all tickers"""
     
     all_results = []
     all_keltner_signals = []
+    
+    # Check SPX regime first
+    spx_regime = check_spx_regime()
     
     for ticker in tickers:
         result = check_ticker_alerts(ticker)
@@ -243,6 +299,17 @@ def format_alerts_message(tickers=['HOOD', 'CIFR', 'WULF', 'PYPL', 'GRAB']):
     msg = []
     msg.append(f"🚨 VEGAEDGE ALERT - {datetime.now().strftime('%Y-%m-%d')}")
     msg.append("")
+    
+    # SPX Market Regime (always show)
+    if spx_regime:
+        msg.append(f"📈 **SPX MARKET REGIME: {spx_regime['regime']}**")
+        msg.append(f"SPX: ${spx_regime['price']:.2f} | HV: {spx_regime['hv']*100:.1f}% ({spx_regime['hv_percentile']:.0f}th percentile)")
+        if not np.isnan(spx_regime['price_change_10d']):
+            change_emoji = "📉" if spx_regime['price_change_10d'] < -3 else "📈" if spx_regime['price_change_10d'] > 3 else "➡️"
+            msg.append(f"{change_emoji} 10-day: {spx_regime['price_change_10d']:+.1f}%")
+        msg.append("")
+        msg.append("=" * 40)
+        msg.append("")
     
     if total_warnings > 0:
         msg.append(f"**{total_warnings} Warning(s) Detected!**")

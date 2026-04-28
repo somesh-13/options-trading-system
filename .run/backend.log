@@ -1,0 +1,582 @@
+INFO:     Will watch for changes in these directories: ['/home/jarvis/tst/trading-dashboard-app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [30662] using StatReload
+INFO:     Started server process [30664]
+INFO:     Waiting for application startup.
+{"ts": "2026-04-27T16:50:32.735Z", "level": "WARNING", "logger": "src.api.routes", "message": "Scheduler failed to start: No module named 'apscheduler'", "taskName": "Task-2"}
+INFO:     Application startup complete.
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-27T16:50:58.845Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-4", "cid": "a6417277eb654965", "method": "GET", "path": "/api/regime/CLSK", "status": 200, "duration_ms": 4196.19}
+INFO:     127.0.0.1:46232 - "GET /api/regime/CLSK HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-27T16:51:15.448Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-13", "cid": "db4b4b74b3ff49ab", "method": "GET", "path": "/api/regime/CLSK", "status": 200, "duration_ms": 12626.75}
+INFO:     146.70.142.66:0 - "GET /api/regime/CLSK HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-27T16:51:32.293Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-22", "cid": "204c14b94ddb4976", "method": "GET", "path": "/api/regime/CLSK", "status": 200, "duration_ms": 4181.25}
+INFO:     146.70.142.66:0 - "GET /api/regime/CLSK HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-27T16:54:35.984Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-31", "cid": "9af19ff6d3da4812", "method": "GET", "path": "/api/regime/CLSK", "status": 200, "duration_ms": 2732.39}
+INFO:     2001:ac8:2:4::2:0 - "GET /api/regime/CLSK HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-27T17:18:04.968Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-40", "cid": "9c18c72dc31d4371", "method": "GET", "path": "/api/regime/CLSK", "status": 200, "duration_ms": 5452.13}
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-27T17:18:15.150Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-49", "cid": "1559d158926f40ad", "method": "GET", "path": "/api/regime/CLSK", "status": 200, "duration_ms": 4574.37}
+{"ts": "2026-04-27T17:20:37.934Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-58", "cid": "f9e0606139ea446b", "method": "POST", "path": "/api/regime/CLSK", "status": 405, "duration_ms": 0.3}
+INFO:     146.70.142.66:0 - "POST /api/regime/CLSK HTTP/1.1" 405 Method Not Allowed
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+{"ts": "2026-04-27T17:20:43.185Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent volatility failed for 1ABC", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/volatility.py\", line 27, in analyze\n    data = await asyncio.to_thread(detect_mispricing, ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 142, in detect_mispricing\n    spot = get_ticker_price(ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 26, in get_ticker_price\n    data = stock.history(period=\"1d\")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/utils.py\", line 102, in wrapper\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/base.py\", line 92, in history\n    return self._lazy_load_price_history().history(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/base.py\", line 98, in _lazy_load_price_history\n    self._price_history = PriceHistory(self._data, self.ticker, self._get_ticker_tz(timeout=10))\n                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/base.py\", line 123, in _get_ticker_tz\n    if k in self.info:\n            ^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/ticker.py\", line 159, in info\n    return self.get_info()\n           ^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/base.py\", line 289, in get_info\n    data = self._quote.info\n           ^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py\", line 511, in info\n    self._fetch_info()\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py\", line 612, in _fetch_info\n    result = self._fetch(modules=modules)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py\", line 590, in _fetch\n    result = self._data.get_raw_json(_QUOTE_SUMMARY_URL_ + f\"/{self._symbol}\", user_agent_headers=self._data.user_agent_headers, params=params_dict)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/data.py\", line 405, in get_raw_json\n    response.raise_for_status()\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/curl_cffi/requests/models.py\", line 193, in raise_for_status\n    raise HTTPError(f\"HTTP Error {self.status_code}: {self.reason}\", 0, self)\ncurl_cffi.requests.exceptions.HTTPError: HTTP Error 404: ", "taskName": "Task-63"}
+{"ts": "2026-04-27T17:20:43.215Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent technical failed for 1ABC", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/technical.py\", line 30, in analyze\n    payload = await asyncio.to_thread(self._compute, ticker)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/technical.py\", line 61, in _compute\n    hist = yf.Ticker(ticker).history(period=\"6mo\")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/utils.py\", line 102, in wrapper\n    result = func(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/base.py\", line 92, in history\n    return self._lazy_load_price_history().history(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/base.py\", line 98, in _lazy_load_price_history\n    self._price_history = PriceHistory(self._data, self.ticker, self._get_ticker_tz(timeout=10))\n                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/base.py\", line 123, in _get_ticker_tz\n    if k in self.info:\n            ^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/ticker.py\", line 159, in info\n    return self.get_info()\n           ^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/base.py\", line 289, in get_info\n    data = self._quote.info\n           ^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py\", line 511, in info\n    self._fetch_info()\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py\", line 612, in _fetch_info\n    result = self._fetch(modules=modules)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py\", line 590, in _fetch\n    result = self._data.get_raw_json(_QUOTE_SUMMARY_URL_ + f\"/{self._symbol}\", user_agent_headers=self._data.user_agent_headers, params=params_dict)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/data.py\", line 405, in get_raw_json\n    response.raise_for_status()\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/curl_cffi/requests/models.py\", line 193, in raise_for_status\n    raise HTTPError(f\"HTTP Error {self.status_code}: {self.reason}\", 0, self)\ncurl_cffi.requests.exceptions.HTTPError: HTTP Error 404: ", "taskName": "Task-64"}
+{"ts": "2026-04-27T17:20:44.479Z", "level": "ERROR", "logger": "yfinance", "message": "$1ABC: possibly delisted; no price data found  (period=1d) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:20:44.480Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent earnings failed for 1ABC", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/earnings.py\", line 31, in analyze\n    payload = await asyncio.to_thread(self._compute, ticker)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/earnings.py\", line 69, in _compute\n    mis = detect_mispricing(ticker)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 142, in detect_mispricing\n    spot = get_ticker_price(ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 29, in get_ticker_price\n    raise ValueError(f\"Unable to fetch price for {ticker}\")\nValueError: Unable to fetch price for 1ABC", "taskName": "Task-66"}
+{"ts": "2026-04-27T17:20:44.549Z", "level": "ERROR", "logger": "yfinance", "message": "$1ABC: possibly delisted; no price data found  (period=130d) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:20:44.550Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent regime failed for 1ABC", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/regime.py\", line 25, in analyze\n    payload = await asyncio.to_thread(fit_regime_model, ticker, 3, 120)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/hmm_regime.py\", line 49, in fit_regime_model\n    raise ValueError(f\"Insufficient data for {ticker}\")\nValueError: Insufficient data for 1ABC", "taskName": "Task-67"}
+{"ts": "2026-04-27T17:20:44.551Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-61", "cid": "0f53af31bac14e35", "method": "GET", "path": "/api/regime/1ABC", "status": 500, "duration_ms": 5086.29}
+INFO:     146.70.142.66:0 - "GET /api/regime/1ABC HTTP/1.1" 500 Internal Server Error
+{"ts": "2026-04-27T17:21:01.939Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-70", "cid": "30f13ad33de84549", "method": "POST", "path": "/api/regime/CLSK", "status": 405, "duration_ms": 0.49}
+INFO:     146.70.142.66:0 - "POST /api/regime/CLSK HTTP/1.1" 405 Method Not Allowed
+{"ts": "2026-04-27T17:21:04.245Z", "level": "ERROR", "logger": "yfinance", "message": "$1ABC: possibly delisted; no price data found  (period=6mo) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:21:04.245Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent technical failed for 1ABC", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/technical.py\", line 30, in analyze\n    payload = await asyncio.to_thread(self._compute, ticker)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/technical.py\", line 63, in _compute\n    raise ValueError(f\"Insufficient data for {ticker}\")\nValueError: Insufficient data for 1ABC", "taskName": "Task-76"}
+{"ts": "2026-04-27T17:21:05.471Z", "level": "ERROR", "logger": "yfinance", "message": "$1ABC: possibly delisted; no price data found  (period=1d) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:21:05.472Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent volatility failed for 1ABC", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/volatility.py\", line 27, in analyze\n    data = await asyncio.to_thread(detect_mispricing, ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 142, in detect_mispricing\n    spot = get_ticker_price(ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 29, in get_ticker_price\n    raise ValueError(f\"Unable to fetch price for {ticker}\")\nValueError: Unable to fetch price for 1ABC", "taskName": "Task-75"}
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+{"ts": "2026-04-27T17:21:06.602Z", "level": "ERROR", "logger": "yfinance", "message": "$1ABC: possibly delisted; no price data found  (period=130d) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:21:06.603Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent regime failed for 1ABC", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/regime.py\", line 25, in analyze\n    payload = await asyncio.to_thread(fit_regime_model, ticker, 3, 120)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/hmm_regime.py\", line 49, in fit_regime_model\n    raise ValueError(f\"Insufficient data for {ticker}\")\nValueError: Insufficient data for 1ABC", "taskName": "Task-79"}
+{"ts": "2026-04-27T17:21:08.138Z", "level": "ERROR", "logger": "yfinance", "message": "$1ABC: possibly delisted; no price data found  (period=1d) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:21:08.140Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent earnings failed for 1ABC", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/earnings.py\", line 31, in analyze\n    payload = await asyncio.to_thread(self._compute, ticker)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/earnings.py\", line 69, in _compute\n    mis = detect_mispricing(ticker)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 142, in detect_mispricing\n    spot = get_ticker_price(ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 29, in get_ticker_price\n    raise ValueError(f\"Unable to fetch price for {ticker}\")\nValueError: Unable to fetch price for 1ABC", "taskName": "Task-78"}
+{"ts": "2026-04-27T17:21:08.223Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-73", "cid": "6c27e40f7cdb4cad", "method": "GET", "path": "/api/regime/1ABC", "status": 500, "duration_ms": 4690.71}
+INFO:     146.70.142.66:0 - "GET /api/regime/1ABC HTTP/1.1" 500 Internal Server Error
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+{"ts": "2026-04-27T17:21:12.600Z", "level": "ERROR", "logger": "yfinance", "message": "$ZZZZZZ: possibly delisted; no price data found  (period=6mo) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:21:12.600Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent technical failed for ZZZZZZ", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/technical.py\", line 30, in analyze\n    payload = await asyncio.to_thread(self._compute, ticker)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/technical.py\", line 63, in _compute\n    raise ValueError(f\"Insufficient data for {ticker}\")\nValueError: Insufficient data for ZZZZZZ", "taskName": "Task-85"}
+{"ts": "2026-04-27T17:21:12.653Z", "level": "ERROR", "logger": "yfinance", "message": "$ZZZZZZ: possibly delisted; no price data found  (period=1d) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:21:12.653Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent volatility failed for ZZZZZZ", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/volatility.py\", line 27, in analyze\n    data = await asyncio.to_thread(detect_mispricing, ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 142, in detect_mispricing\n    spot = get_ticker_price(ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 29, in get_ticker_price\n    raise ValueError(f\"Unable to fetch price for {ticker}\")\nValueError: Unable to fetch price for ZZZZZZ", "taskName": "Task-84"}
+{"ts": "2026-04-27T17:21:13.513Z", "level": "ERROR", "logger": "yfinance", "message": "$ZZZZZZ: possibly delisted; no price data found  (period=130d) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:21:13.514Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent regime failed for ZZZZZZ", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/regime.py\", line 25, in analyze\n    payload = await asyncio.to_thread(fit_regime_model, ticker, 3, 120)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/hmm_regime.py\", line 49, in fit_regime_model\n    raise ValueError(f\"Insufficient data for {ticker}\")\nValueError: Insufficient data for ZZZZZZ", "taskName": "Task-88"}
+{"ts": "2026-04-27T17:21:14.388Z", "level": "ERROR", "logger": "yfinance", "message": "$ZZZZZZ: possibly delisted; no price data found  (period=1d) (Yahoo error = \"No data found, symbol may be delisted\")", "taskName": null}
+{"ts": "2026-04-27T17:21:14.388Z", "level": "ERROR", "logger": "agents.confluence", "message": "Agent earnings failed for ZZZZZZ", "exc": "Traceback (most recent call last):\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/confluence.py\", line 103, in _safe_run\n    return await agent.analyze(ticker, context)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/earnings.py\", line 31, in analyze\n    payload = await asyncio.to_thread(self._compute, ticker)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/threads.py\", line 25, in to_thread\n    return await loop.run_in_executor(None, func_call)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/concurrent/futures/thread.py\", line 58, in run\n    result = self.fn(*self.args, **self.kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/agents/earnings.py\", line 69, in _compute\n    mis = detect_mispricing(ticker)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 142, in detect_mispricing\n    spot = get_ticker_price(ticker)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/jarvis/tst/trading-dashboard-app/backend/src/data/market_data.py\", line 29, in get_ticker_price\n    raise ValueError(f\"Unable to fetch price for {ticker}\")\nValueError: Unable to fetch price for ZZZZZZ", "taskName": "Task-87"}
+{"ts": "2026-04-27T17:21:14.389Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-82", "cid": "b191316007a54c03", "method": "GET", "path": "/api/regime/ZZZZZZ", "status": 500, "duration_ms": 3709.72}
+INFO:     2001:ac8:2:4::2:0 - "GET /api/regime/ZZZZZZ HTTP/1.1" 500 Internal Server Error
+/home/jarvis/tst/trading-dashboard-app/backend/src/data/ir_scraper.py:54: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(resp.text, "html.parser")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-27T17:21:18.917Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-91", "cid": "6357e31d6f5c4821", "method": "GET", "path": "/api/regime/clsk", "status": 200, "duration_ms": 2718.49}
+INFO:     2001:ac8:2:4::2:0 - "GET /api/regime/clsk HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:44.037Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-103", "cid": "4d62869fa85c42a6", "method": "GET", "path": "/api/market/PYPL/price-history", "status": 200, "duration_ms": 686.23}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/price-history?period=5Y HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:44.091Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-107", "cid": "2b339df2e47e4718", "method": "GET", "path": "/api/market/PYPL/price-history", "status": 200, "duration_ms": 635.25}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/price-history?period=5Y HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-28T14:47:44.671Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-101", "cid": "174c6f9abe7949df", "method": "GET", "path": "/api/market/PYPL/detail", "status": 200, "duration_ms": 1321.28}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:44.835Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-109", "cid": "8c17e14eca904bd7", "method": "GET", "path": "/api/market/PYPL/detail", "status": 200, "duration_ms": 1377.97}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:45.520Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-112", "cid": "668ec4380be74cee", "method": "GET", "path": "/api/market/PYPL/mispricing", "status": 200, "duration_ms": 691.17}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:45.917Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-121", "cid": "4fc76036218b4031", "method": "GET", "path": "/api/market/PYPL/hv-confidence", "status": 200, "duration_ms": 251.73}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:45.937Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-118", "cid": "5da3cb6a138a49af", "method": "GET", "path": "/api/market/PYPL/regime", "status": 200, "duration_ms": 307.88}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:45.965Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-115", "cid": "43851b2c3daf4cc5", "method": "GET", "path": "/api/market/PYPL/mispricing", "status": 200, "duration_ms": 344.39}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:46.251Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-127", "cid": "9c4c427d6af541c4", "method": "GET", "path": "/api/market/PYPL/regime", "status": 200, "duration_ms": 206.86}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:46.386Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-124", "cid": "3cab7058077c47e0", "method": "GET", "path": "/api/market/PYPL/hv-confidence", "status": 200, "duration_ms": 367.5}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/hv-confidence?window=30 HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-28T14:47:53.313Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-130", "cid": "6eaddafe594248df", "method": "GET", "path": "/api/market/PYPL/fundamentals", "status": 200, "duration_ms": 1777.9}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/fundamentals HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:47:53.366Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-133", "cid": "4a8327f4684e4e30", "method": "GET", "path": "/api/market/PYPL/fundamentals", "status": 200, "duration_ms": 1788.25}
+INFO:     199.44.15.4:0 - "GET /api/market/PYPL/fundamentals HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:35.676Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-143", "cid": "cba26605ae62447e", "method": "GET", "path": "/api/market/HOOD/price-history", "status": 200, "duration_ms": 995.26}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/price-history?period=5Y HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:35.736Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-145", "cid": "a1f8809a488b42d6", "method": "GET", "path": "/api/market/HOOD/price-history", "status": 200, "duration_ms": 1050.04}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/price-history?period=5Y HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-28T14:59:36.060Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-137", "cid": "5b0206fe947f4cc0", "method": "GET", "path": "/api/market/HOOD/detail", "status": 200, "duration_ms": 1403.34}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:36.118Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-139", "cid": "3a14032e808d4238", "method": "GET", "path": "/api/market/HOOD/detail", "status": 200, "duration_ms": 1459.09}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:37.027Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-148", "cid": "b5cc0f36a33b450f", "method": "GET", "path": "/api/market/HOOD/mispricing", "status": 200, "duration_ms": 717.13}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:37.550Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-151", "cid": "46354ea87b694f3d", "method": "GET", "path": "/api/market/HOOD/mispricing", "status": 200, "duration_ms": 380.62}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:38.128Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-154", "cid": "5b5c06be06174724", "method": "GET", "path": "/api/market/HOOD/regime", "status": 200, "duration_ms": 453.3}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:38.269Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-157", "cid": "f2fef0c4b6f64b30", "method": "GET", "path": "/api/market/HOOD/hv-confidence", "status": 200, "duration_ms": 552.39}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:38.533Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-160", "cid": "9c7ef7f0834647c9", "method": "GET", "path": "/api/market/HOOD/regime", "status": 200, "duration_ms": 276.11}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T14:59:38.664Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-163", "cid": "88f7bd3396c3487d", "method": "GET", "path": "/api/market/HOOD/hv-confidence", "status": 200, "duration_ms": 224.81}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:04:38.658Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-166", "cid": "59b9a447689444ee", "method": "GET", "path": "/api/market/HOOD/mispricing", "status": 200, "duration_ms": 1438.82}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:09:38.840Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-169", "cid": "33c602fa55674b38", "method": "GET", "path": "/api/market/HOOD/mispricing", "status": 200, "duration_ms": 1579.45}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:14:39.268Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-172", "cid": "2a3f162b964b40eb", "method": "GET", "path": "/api/market/HOOD/mispricing", "status": 200, "duration_ms": 2061.51}
+INFO:     199.44.15.4:0 - "GET /api/market/HOOD/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:16:21.322Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-175", "cid": "f2364664553143e1", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 725.86}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:16:22.517Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-181", "cid": "58edfa4f8a2a45ae", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 1087.13}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:16:22.596Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-178", "cid": "a0a0d0999ad54623", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 1174.29}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:16:22.854Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-184", "cid": "20ed9b811f23457c", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 158.64}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:16:58.232Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-187", "cid": "5189657be4bc411e", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 825.06}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:16:58.620Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-193", "cid": "322c9748a39d44e7", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 286.17}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:16:58.724Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-190", "cid": "8aa0a0fdad164a1b", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 393.02}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:16:58.966Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-196", "cid": "3be4501d78fb4e9a", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 140.24}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:17:05.874Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-199", "cid": "5709711b55f241c4", "method": "GET", "path": "/api/backtest/wheel", "status": 200, "duration_ms": 2.63}
+INFO:     199.44.15.4:0 - "GET /api/backtest/wheel HTTP/1.1" 200 OK
+{"ts": "2026-04-28T15:17:05.982Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-202", "cid": "74c59c6464c24685", "method": "GET", "path": "/api/backtest/wheel", "status": 200, "duration_ms": 2.22}
+INFO:     199.44.15.4:0 - "GET /api/backtest/wheel HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:16:22.627Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-205", "cid": "5a10a831e9884341", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 1035.99}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:16:23.091Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-211", "cid": "292801fb75f8498d", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 340.91}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:16:23.266Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-208", "cid": "b274ad751c5d4656", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 532.35}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:16:23.497Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-214", "cid": "d69243a6a2f8401c", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 132.93}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:29.356Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-220", "cid": "8488d1ef7f5b46ca", "method": "GET", "path": "/api/market/SMPL/price-history", "status": 200, "duration_ms": 950.59}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/price-history?period=5Y HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:29.513Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-226", "cid": "e0f2f5f16769438c", "method": "GET", "path": "/api/market/SMPL/price-history", "status": 200, "duration_ms": 1084.78}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/price-history?period=5Y HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-28T18:19:29.972Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-218", "cid": "edd8149fa8ab44ad", "method": "GET", "path": "/api/market/SMPL/detail", "status": 200, "duration_ms": 1580.74}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:29.994Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-223", "cid": "dc0abd5c950d4e77", "method": "GET", "path": "/api/market/SMPL/detail", "status": 200, "duration_ms": 1577.36}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:30.844Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-229", "cid": "03992dd491864437", "method": "GET", "path": "/api/market/SMPL/mispricing", "status": 200, "duration_ms": 702.47}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:31.367Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-238", "cid": "c3b7522064bb4760", "method": "GET", "path": "/api/market/SMPL/hv-confidence", "status": 200, "duration_ms": 378.67}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:31.496Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-232", "cid": "ed6ed5732e214cba", "method": "GET", "path": "/api/market/SMPL/mispricing", "status": 200, "duration_ms": 553.23}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:31.505Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-235", "cid": "53add32662d04cd7", "method": "GET", "path": "/api/market/SMPL/regime", "status": 200, "duration_ms": 544.24}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:31.659Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-241", "cid": "e9df41ced8894a06", "method": "GET", "path": "/api/market/SMPL/hv-confidence", "status": 200, "duration_ms": 182.3}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:19:31.856Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-244", "cid": "eaaaaddc2760406e", "method": "GET", "path": "/api/market/SMPL/regime", "status": 200, "duration_ms": 222.08}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/regime HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/fundamentals.py:131: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-28T18:22:18.365Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-248", "cid": "5d7cdbf7d3f54977", "method": "GET", "path": "/api/market/SMPL/fundamentals", "status": 200, "duration_ms": 1961.27}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/fundamentals HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:22:18.469Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-250", "cid": "3ae8691e671f41c8", "method": "GET", "path": "/api/market/SMPL/fundamentals", "status": 200, "duration_ms": 2064.92}
+INFO:     199.44.15.4:0 - "GET /api/market/SMPL/fundamentals HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:55.354Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-256", "cid": "bd123df67fa74d04", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 721.11}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=5Y HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:55.741Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-262", "cid": "e387d08734f247df", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 1088.3}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=5Y HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-28T18:23:55.884Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-253", "cid": "a86a95cb4d3a4f5a", "method": "GET", "path": "/api/market/CIFR/detail", "status": 200, "duration_ms": 1261.09}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:55.938Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-259", "cid": "8b84b49ab3d3426c", "method": "GET", "path": "/api/market/CIFR/detail", "status": 200, "duration_ms": 1304.17}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:56.622Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-265", "cid": "92fc9e1dc23a4aec", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 606.81}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:56.947Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-274", "cid": "fac780ba938941d0", "method": "GET", "path": "/api/market/CIFR/hv-confidence", "status": 200, "duration_ms": 174.53}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:57.330Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-268", "cid": "34d6092bc4a54fae", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 611.62}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:57.437Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-277", "cid": "19bea8a3ebda419f", "method": "GET", "path": "/api/market/CIFR/hv-confidence", "status": 200, "duration_ms": 381.86}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:57.677Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-271", "cid": "231e2f41295640e8", "method": "GET", "path": "/api/market/CIFR/regime", "status": 200, "duration_ms": 906.2}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:23:58.109Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-280", "cid": "1cb9635a455b4c24", "method": "GET", "path": "/api/market/CIFR/regime", "status": 200, "duration_ms": 331.61}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:16.884Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-287", "cid": "0152cea2a1334f38", "method": "GET", "path": "/api/market/GRAB/price-history", "status": 200, "duration_ms": 671.07}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/price-history?period=5Y HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:17.068Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-292", "cid": "9e6f50f8f2a34012", "method": "GET", "path": "/api/market/GRAB/price-history", "status": 200, "duration_ms": 839.49}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/price-history?period=5Y HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-28T18:27:17.530Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-283", "cid": "820b08d21b654d2a", "method": "GET", "path": "/api/market/GRAB/detail", "status": 200, "duration_ms": 1342.48}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:17.578Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-288", "cid": "be3222cb5df04079", "method": "GET", "path": "/api/market/GRAB/detail", "status": 200, "duration_ms": 1364.85}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:18.258Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-295", "cid": "0b61b0cb21824272", "method": "GET", "path": "/api/market/GRAB/mispricing", "status": 200, "duration_ms": 594.02}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:18.836Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-302", "cid": "74463b59ef8246ce", "method": "GET", "path": "/api/market/GRAB/regime", "status": 200, "duration_ms": 431.66}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:18.855Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-303", "cid": "dd45b5eaf3844422", "method": "GET", "path": "/api/market/GRAB/hv-confidence", "status": 200, "duration_ms": 450.44}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:18.928Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-298", "cid": "ca3f5dc47d0f4609", "method": "GET", "path": "/api/market/GRAB/mispricing", "status": 200, "duration_ms": 563.45}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:19.172Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-310", "cid": "097e4274806b4f0d", "method": "GET", "path": "/api/market/GRAB/hv-confidence", "status": 200, "duration_ms": 219.73}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:27:19.285Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-307", "cid": "18b8250c77e94539", "method": "GET", "path": "/api/market/GRAB/regime", "status": 200, "duration_ms": 348.37}
+INFO:     199.44.15.4:0 - "GET /api/market/GRAB/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:31:02.290Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-313", "cid": "210f3c37afe8407f", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 1267.0}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:31:02.929Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-319", "cid": "92d9b21a2efa4333", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 515.36}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:31:03.035Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-316", "cid": "148a4078c83f42da", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 627.6}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:31:03.306Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-325", "cid": "faf81527cb0d45ca", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 154.14}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:31:03.583Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-322", "cid": "6ed21b6dc9f04a64", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 435.38}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:31:03.833Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-331", "cid": "6a681e9d6a6b4674", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 137.11}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:31:04.137Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-328", "cid": "f351489de27646c7", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 449.09}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:31:04.446Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-334", "cid": "a85c9be026124adb", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 206.95}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:33:42.589Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-337", "cid": "a76d1bac675e459a", "method": "GET", "path": "/api/backtest/wheel", "status": 200, "duration_ms": 3.33}
+INFO:     199.44.15.4:0 - "GET /api/backtest/wheel HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:33:42.709Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-340", "cid": "514e935ac442473e", "method": "GET", "path": "/api/backtest/wheel", "status": 200, "duration_ms": 2.95}
+INFO:     199.44.15.4:0 - "GET /api/backtest/wheel HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:33:56.689Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-343", "cid": "894dfc9c1fb74b55", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 779.76}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:34:15.636Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-348", "cid": "7c4be7bfc32a4a27", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 59.74}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:34:19.626Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-353", "cid": "c566b5aab00e4f8c", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 53.25}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:34:23.420Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-358", "cid": "1138774f20b14eb6", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 61.04}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:34:29.358Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-363", "cid": "ca4980f895a94eef", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 60.02}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:34:32.739Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-368", "cid": "c0aad41850be44f9", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 60.62}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:34:36.629Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-373", "cid": "f2803813923f45b5", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 60.74}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:34:41.030Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-378", "cid": "7dbc2551d28b407d", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 59.07}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:34:46.767Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-383", "cid": "c775162efd994820", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 61.03}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:35:09.711Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-388", "cid": "5a9a2516eb234390", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 57.06}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/history.py:173: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  dt_now = pd.Timestamp.utcnow()
+{"ts": "2026-04-28T18:35:55.096Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-393", "cid": "f1a3377b441c4d18", "method": "POST", "path": "/api/backtest/run", "status": 200, "duration_ms": 1417.03}
+INFO:     199.44.15.4:0 - "POST /api/backtest/run HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:56:57.922Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-398", "cid": "e86686c9bbcb4952", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 363.94}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:56:58.094Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-407", "cid": "5693197399aa4180", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 68.02}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:56:58.616Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-402", "cid": "17c5e398620d4470", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 1046.32}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:56:59.064Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-410", "cid": "c56103854ee04f9d", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 314.98}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:56:59.694Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-404", "cid": "6f2dfe5f7f9f43d1", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 2123.9}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:00.938Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-413", "cid": "3f328db5d7bf4ff0", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1143.06}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:02.270Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-416", "cid": "4519d72ac14f4986", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 3.1}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:06.858Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-421", "cid": "b52257f02e8d4594", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 91.66}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:07.047Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-430", "cid": "207cf9ab4d8d4744", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 78.58}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:07.526Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-427", "cid": "1cbe02f0a9e14b86", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 732.33}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:07.922Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-433", "cid": "93a5a3063fca4cb3", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 288.83}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:08.656Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-425", "cid": "518d6db497074f24", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1865.34}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:10.501Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-436", "cid": "0e469e92963a41cc", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1727.46}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T18:57:11.253Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-439", "cid": "d2d0285146004fca", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 2.97}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:11:47.329Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-445", "cid": "993d168e34b14fa1", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 407.88}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:11:47.957Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-448", "cid": "f3148f3253694a73", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 1035.51}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:11:48.814Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-450", "cid": "7aa2b652a94d4e30", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1891.34}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:11:49.737Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-453", "cid": "f3d93563829f4502", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 2.96}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:11:51.568Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-458", "cid": "cbd28bfdf7e4478a", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 2.87}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:19:14.560Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-463", "cid": "11975d9047cb4f86", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 3.16}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:33:40.961Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-468", "cid": "1770747171b54054", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 453.18}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:33:41.186Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-477", "cid": "d729b69215a848f8", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 124.78}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:33:41.432Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-471", "cid": "a63f42b785c84da2", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 916.36}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:33:42.069Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-480", "cid": "5191bdae183841d5", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 468.21}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:33:42.693Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-474", "cid": "519b2e52573f4c26", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 2144.47}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:33:44.471Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-483", "cid": "1921cb73804e4515", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1663.08}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:33:45.071Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-486", "cid": "effb70da6d714749", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 5.25}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:34:09.346Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-491", "cid": "1a801eacc8d64c68", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 516.09}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:34:09.807Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-494", "cid": "5883b260d9ec49d3", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 359.24}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:34:09.836Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-497", "cid": "50ba96c4d3134219", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 380.4}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:34:10.015Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-500", "cid": "671bbec35d3246e9", "method": "GET", "path": "/api/market/CIFR/price-history", "status": 200, "duration_ms": 81.08}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price-history?period=1M HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:48.432Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-503", "cid": "35e7bbb6e5eb433e", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 358.65}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:48.617Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-512", "cid": "1610911045de4a0b", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 81.85}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:49.316Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-508", "cid": "38debc811d174b0b", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 1231.42}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:49.663Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-507", "cid": "289fce2a637a4a96", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1578.72}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:49.841Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-515", "cid": "22a8267ed1f94148", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 427.02}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:50.855Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-518", "cid": "41e3e7c089dd40de", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1093.46}
+{"ts": "2026-04-28T19:37:51.688Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-524", "cid": "5b724976ee204095", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 97.03}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:52.224Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-527", "cid": "1e6674488bf94633", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 601.0}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:52.950Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-521", "cid": "ab388da8060841e9", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1361.78}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:37:53.977Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-530", "cid": "b81b447a207e4628", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 8.34}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:38:03.664Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-538", "cid": "8ef3c3d0191c4638", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 384.68}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:38:04.075Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-536", "cid": "1ff7df039ca6454c", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 796.46}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:38:05.095Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-541", "cid": "5ddf25ce98ed4c3a", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1813.12}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:38:06.162Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-544", "cid": "cc0fcc9f75c34cff", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 7.88}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:38:59.642Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-549", "cid": "2cb89e2bcfe1433d", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 4.02}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:39:01.491Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-554", "cid": "d6d04ff194b24895", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 6.33}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:00.153Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-559", "cid": "48b802fc767047f1", "method": "GET", "path": "/api/market/WULF/price-history", "status": 200, "duration_ms": 301.0}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/price-history?period=5Y HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:01.309Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-568", "cid": "b35196b55d80422c", "method": "GET", "path": "/api/market/WULF/price-history", "status": 200, "duration_ms": 1401.09}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/price-history?period=5Y HTTP/1.1" 200 OK
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:702: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  start = pd.Timestamp.utcnow().floor("D") - datetime.timedelta(days=365 // 2)
+/home/jarvis/tst/trading-dashboard-app/backend/venv/lib/python3.12/site-packages/yfinance/scrapers/quote.py:704: Pandas4Warning: Timestamp.utcnow is deprecated and will be removed in a future version. Use Timestamp.now('UTC') instead.
+  end = pd.Timestamp.utcnow().ceil("D")
+{"ts": "2026-04-28T19:40:01.621Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-565", "cid": "56f19f2a8a2b4cb7", "method": "GET", "path": "/api/market/WULF/detail", "status": 200, "duration_ms": 1715.82}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:01.669Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-563", "cid": "bb5c5b6771e8438f", "method": "GET", "path": "/api/market/WULF/detail", "status": 200, "duration_ms": 1767.17}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/detail HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:02.485Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-571", "cid": "15758dde70524dfc", "method": "GET", "path": "/api/market/WULF/mispricing", "status": 200, "duration_ms": 694.59}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:03.178Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-580", "cid": "02d4371a23394223", "method": "GET", "path": "/api/market/WULF/hv-confidence", "status": 200, "duration_ms": 552.24}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:03.220Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-577", "cid": "fd7e3b44662c4a44", "method": "GET", "path": "/api/market/WULF/regime", "status": 200, "duration_ms": 600.34}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:03.352Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-574", "cid": "8ea3c8ddccd04092", "method": "GET", "path": "/api/market/WULF/mispricing", "status": 200, "duration_ms": 762.59}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:03.492Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-583", "cid": "d936a6dbe79a4907", "method": "GET", "path": "/api/market/WULF/hv-confidence", "status": 200, "duration_ms": 214.61}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/hv-confidence?window=30 HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:03.750Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-586", "cid": "ed17635975e849ad", "method": "GET", "path": "/api/market/WULF/regime", "status": 200, "duration_ms": 431.9}
+INFO:     199.44.15.4:0 - "GET /api/market/WULF/regime HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:10.945Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-589", "cid": "12ebd0dbdb444f6d", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 339.54}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:11.180Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-598", "cid": "c2c7ea84619f42bd", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 128.29}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:11.273Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-592", "cid": "690619baa1694746", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 666.7}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:11.800Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-601", "cid": "1e283d3384a7403f", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 422.25}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:12.189Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-595", "cid": "895648ece1c64da0", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1543.68}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:13.517Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-604", "cid": "cfe008984aba46c4", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1229.31}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:14.051Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-607", "cid": "f9489e712b5c4971", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 2.4}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:40:37.426Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-612", "cid": "1f58ba99e34441d5", "method": "POST", "path": "/api/pricing/implied-vol", "status": 400, "duration_ms": 2.27}
+INFO:     199.44.15.4:0 - "POST /api/pricing/implied-vol HTTP/1.1" 400 Bad Request
+{"ts": "2026-04-28T19:42:27.640Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-617", "cid": "8099a0cf0cde45b0", "method": "GET", "path": "/api/market/CIFR/price", "status": 200, "duration_ms": 433.63}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/price HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:42:28.184Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-620", "cid": "00ba840550574205", "method": "GET", "path": "/api/market/CIFR/mispricing", "status": 200, "duration_ms": 970.26}
+INFO:     199.44.15.4:0 - "GET /api/market/CIFR/mispricing HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:42:29.162Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-623", "cid": "375c58708cd442b5", "method": "GET", "path": "/api/pricing/vol-surface/CIFR", "status": 200, "duration_ms": 1939.92}
+INFO:     199.44.15.4:0 - "GET /api/pricing/vol-surface/CIFR HTTP/1.1" 200 OK
+{"ts": "2026-04-28T19:42:30.330Z", "level": "INFO", "logger": "http", "message": "request", "taskName": "Task-626", "cid": "eb98bddfdae74387", "method": "POST", "path": "/api/pricing/greeks", "status": 200, "duration_ms": 2.0}
+INFO:     199.44.15.4:0 - "POST /api/pricing/greeks HTTP/1.1" 200 OK

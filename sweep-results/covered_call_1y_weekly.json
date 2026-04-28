@@ -1,0 +1,71 @@
+{
+  "asof": "2026-04-26",
+  "timeframe": "weekly",
+  "config": {
+    "years": 1,
+    "decay_pct": 0.6,
+    "dte_target": 28,
+    "delta_target": 0.3,
+    "iv_hv_gate": 1.3,
+    "r": 0.04,
+    "seed": 42,
+    "hv_window_bars": 8,
+    "bars_per_year": 52,
+    "iv_model": "synthetic (rolling HV * (1 + |N(0.10, 0.15)|))",
+    "premium_model": "Black-Scholes daily MTM with rolling synthetic IV",
+    "exit_rules": "DECAY (mid <= (1-decay_pct)*entry); EXPIRY -> EXERCISED if ITM (premium kept) or EXPIRED_OTM"
+  },
+  "results": {
+    "RDW": {
+      "ticker": "RDW",
+      "bar_count": 52,
+      "keltner_top_bars": 0,
+      "gate_fires": 0,
+      "fired_no_position": 0,
+      "trade_count": 0,
+      "wins": 0,
+      "losses": 0,
+      "exercised_count": 0,
+      "total_pnl_usd": 0,
+      "avg_pnl_per_trade": 0.0,
+      "avg_holding_days": 0.0,
+      "win_rate": 0.0,
+      "total_opp_cost_usd": 0,
+      "trades": []
+    },
+    "WULF": {
+      "ticker": "WULF",
+      "bar_count": 52,
+      "keltner_top_bars": 13,
+      "gate_fires": 0,
+      "fired_no_position": 0,
+      "trade_count": 0,
+      "wins": 0,
+      "losses": 0,
+      "exercised_count": 0,
+      "total_pnl_usd": 0,
+      "avg_pnl_per_trade": 0.0,
+      "avg_holding_days": 0.0,
+      "win_rate": 0.0,
+      "total_opp_cost_usd": 0,
+      "trades": []
+    },
+    "CIFR": {
+      "ticker": "CIFR",
+      "bar_count": 52,
+      "keltner_top_bars": 13,
+      "gate_fires": 0,
+      "fired_no_position": 0,
+      "trade_count": 0,
+      "wins": 0,
+      "losses": 0,
+      "exercised_count": 0,
+      "total_pnl_usd": 0,
+      "avg_pnl_per_trade": 0.0,
+      "avg_holding_days": 0.0,
+      "win_rate": 0.0,
+      "total_opp_cost_usd": 0,
+      "trades": []
+    }
+  }
+}

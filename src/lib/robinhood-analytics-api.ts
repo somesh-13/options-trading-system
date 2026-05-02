@@ -373,3 +373,41 @@ export interface WheelBacktestResult {
 export function getWheelBacktest(): Promise<WheelBacktestResult> {
   return getJson('/api/backtest/wheel');
 }
+
+// ---- Analytics report run API --------------------------------------------
+
+export interface AnalyticsRunCreateRequest {
+  account?: string;
+  ticker_count?: number;
+  payload: unknown;
+  notes?: string;
+}
+
+export interface AnalyticsRunCreateResponse {
+  run_id: number;
+  created_at: string;
+}
+
+export interface AnalyticsRunMeta {
+  run_id: number;
+  created_at: string;
+  account?: string | null;
+  ticker_count?: number | null;
+  notes?: string | null;
+}
+
+export interface AnalyticsRunFull extends AnalyticsRunMeta {
+  payload: unknown;
+}
+
+export function saveAnalyticsRun(req: AnalyticsRunCreateRequest): Promise<AnalyticsRunCreateResponse> {
+  return postJson('/api/analytics/runs', req);
+}
+
+export function getAnalyticsRuns(limit = 50): Promise<AnalyticsRunMeta[]> {
+  return getJson(`/api/analytics/runs?limit=${limit}`);
+}
+
+export function getAnalyticsRun(id: number): Promise<AnalyticsRunFull> {
+  return getJson(`/api/analytics/runs/${id}`);
+}

@@ -67,6 +67,10 @@ from api.models import (
     CryptoOrderRequest,
     CryptoOrderResponse,
     CRYPTO_ORDER_NOTIONAL_CAP_USD,
+    AnalyticsRunCreateRequest,
+    AnalyticsRunCreateResponse,
+    AnalyticsRunMeta,
+    AnalyticsRunFull,
 )
 
 # Robinhood activity ingestion + portfolio derivation.
@@ -2182,6 +2186,77 @@ def webhook_config():
         "watchlist": cfg.watchlist,
         "only_actionable": cfg.only_actionable,
     }
+
+
+# ---- Analytics report run endpoints ----------------------------------------
+
+import json as _json
+from datetime import timezone as _tz
+
+
+@app.post("/api/analytics/runs", response_model=AnalyticsRunCreateResponse)
+def create_analytics_run(req: AnalyticsRunCreateRequest):
+    """Persist a completed 'Run all' analytics snapshot."""
+    conn = rh_db.get_conn()
+    created_at = datetime.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    payload_json = _json.dumps(req.payload, default=str)
+    cur = conn.execute(
+        """
+        INSERT INTO analytics_report_run (created_at, account, ticker_count, payload_json, notes)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (created_at, req.account, req.ticker_count, payload_json, req.notes),
+    )
+    conn.commit()
+    return AnalyticsRunCreateResponse(run_id=int(cur.lastrowid or 0), created_at=created_at)
+
+
+@app.get("/api/analytics/runs", response_model=list[AnalyticsRunMeta])
+def list_analytics_runs(limit: int = 50):
+    """Return metadata for the most recent analytics runs (no payload)."""
+    conn = rh_db.get_conn()
+    rows = conn.execute(
+        """
+        SELECT run_id, created_at, account, ticker_count, notes
+        FROM analytics_report_run
+        ORDER BY created_at DESC
+        LIMIT ?
+        """,
+        (limit,),
+    ).fetchall()
+    return [
+        AnalyticsRunMeta(
+            run_id=row["run_id"],
+            created_at=row["created_at"],
+            account=row["account"],
+            ticker_count=row["ticker_count"],
+            notes=row["notes"],
+        )
+        for row in rows
+    ]
+
+
+@app.get("/api/analytics/runs/{run_id}", response_model=AnalyticsRunFull)
+def get_analytics_run(run_id: int):
+    """Return the full analytics run row, with payload parsed back to JSON."""
+    conn = rh_db.get_conn()
+    row = conn.execute(
+        "SELECT * FROM analytics_report_run WHERE run_id = ?", (run_id,)
+    ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+    try:
+        payload = _json.loads(row["payload_json"])
+    except Exception:
+        payload = row["payload_json"]
+    return AnalyticsRunFull(
+        run_id=row["run_id"],
+        created_at=row["created_at"],
+        account=row["account"],
+        ticker_count=row["ticker_count"],
+        payload=payload,
+        notes=row["notes"],
+    )
 
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@ interface Action {
   category: Category;
   title: string;
   detail?: string;
+  ticker?: string;           // when set, the ticker symbol in the title is rendered as a Link
   link?: { label: string; href: string };
 }
 
@@ -37,6 +38,10 @@ export interface RecommendedActionsCardProps {
 }
 
 // ---- helpers ----------------------------------------------------------------
+
+function stockHref(symbol: string): string {
+  return `/stock/${encodeURIComponent(symbol)}?from=robinhood`;
+}
 
 function fmtMoney(n: number | null | undefined): string {
   if (n == null) return '—';
@@ -135,6 +140,7 @@ export function RecommendedActionsCard({
       result.push({
         severity: 'warn',
         category: 'opportunity',
+        ticker: t,
         title: `${t}: ${strategy}`,
         detail: `${strikes!.length} strike candidate${strikes!.length === 1 ? '' : 's'}`,
         link: { label: 'Open chain', href: `/options-chain?ticker=${t}` },
@@ -160,6 +166,7 @@ export function RecommendedActionsCard({
       result.push({
         severity: 'info',
         category: 'opportunity',
+        ticker: t,
         title: `${t}: high IV (${(ratio!).toFixed(2)}x) — no contracts in standard DTE window`,
         detail: 'Manually expand DTE filter to find premium-selling candidates',
         link: { label: 'Open chain', href: `/options-chain?ticker=${t}` },
@@ -178,6 +185,7 @@ export function RecommendedActionsCard({
         result.push({
           severity,
           category: 'concentration',
+          ticker: h.symbol,
           title: `${h.symbol} is ${pct.toFixed(1)}% of NAV — consider trimming`,
         });
       }
@@ -249,7 +257,31 @@ export function RecommendedActionsCard({
                     wordBreak: 'break-word',
                   }}
                 >
-                  {action.title}
+                  {action.ticker
+                    ? (() => {
+                        // Replace the leading "TICKER" or "TICKER:" with a link.
+                        const prefix = action.ticker + ':';
+                        if (action.title.startsWith(prefix)) {
+                          return (
+                            <>
+                              <Link
+                                href={stockHref(action.ticker)}
+                                style={{
+                                  color: 'var(--gold, #FFD700)',
+                                  textDecoration: 'underline',
+                                  textDecorationColor: 'var(--gold-dim, #cdaa3d)',
+                                }}
+                              >
+                                {action.ticker}
+                              </Link>
+                              {action.title.slice(action.ticker.length)}
+                            </>
+                          );
+                        }
+                        // Fallback: just show title as-is if format doesn't match
+                        return action.title;
+                      })()
+                    : action.title}
                 </span>
                 {action.detail && (
                   <span

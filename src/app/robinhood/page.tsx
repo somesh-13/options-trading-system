@@ -8,6 +8,7 @@ import { ActivityTimeline } from '@/components/robinhood/ActivityTimeline';
 import { AnalyticsPanel } from '@/components/robinhood/AnalyticsPanel';
 import { CryptoTable } from '@/components/robinhood/CryptoTable';
 import { CryptoTradePanel } from '@/components/robinhood/CryptoTradePanel';
+import { ReportsBrowser } from '@/components/robinhood/ReportsBrowser';
 import {
   getRobinhoodAccounts,
   getRobinhoodHoldings,
@@ -33,11 +34,12 @@ const ACCOUNT_LABEL: Record<RobinhoodAccount, string> = {
 
 const TAB_ORDER: RobinhoodAccount[] = ['all', 'brokerage', 'roth_ira', 'sofi'];
 
-type View = 'portfolio' | 'analytics' | 'crypto';
+type View = 'portfolio' | 'analytics' | 'crypto' | 'reports';
 const VIEW_TABS: Array<{ key: View; label: string }> = [
   { key: 'portfolio', label: 'Portfolio' },
   { key: 'analytics', label: 'Analytics' },
   { key: 'crypto', label: 'Crypto' },
+  { key: 'reports', label: 'Reports' },
 ];
 
 // Polling cadences (ms)
@@ -571,6 +573,12 @@ export default function RobinhoodPage() {
             <CryptoTradePanel holdings={cryptoHoldings} />
           </div>
         </>
+      )}
+
+      {view === 'reports' && (
+        <div style={{ marginBottom: 12 }}>
+          <ReportsBrowser />
+        </div>
       )}
     </>
   );

@@ -86,6 +86,24 @@ def ensure_schema() -> None:
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_rh_snap_account ON robinhood_live_snapshot(account)"
     )
+
+    # Analytics report runs: each "Run all" snapshot from the AnalyticsPanel is
+    # persisted here so the user can browse and reload historical runs.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS analytics_report_run (
+            run_id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at   TEXT NOT NULL,
+            account      TEXT,
+            ticker_count INTEGER,
+            payload_json TEXT NOT NULL,
+            notes        TEXT
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_analytics_run_created ON analytics_report_run(created_at DESC)"
+    )
     conn.commit()
 
 

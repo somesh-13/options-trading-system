@@ -15,7 +15,7 @@
  * hammering the backend.
  */
 
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import type { RobinhoodAccount, RobinhoodHolding } from '@/lib/robinhood-api';
 import { InfoIcon } from '@/components/ui/InfoIcon';
 import { RecommendedActionsCard } from './RecommendedActionsCard';
@@ -35,6 +35,7 @@ import {
   getTradeRecommendation,
   runBacktest,
   getWheelBacktest,
+  saveAnalyticsRun,
   type PortfolioGreeksResult,
   type HedgeRatioResult,
   type RebalanceCheckResult,
@@ -511,6 +512,11 @@ export function AnalyticsPanel({
   const [stress, setStress] = useState<AsyncState<StressTestResult>>(idle);
   const [drawdown, setDrawdown] = useState<AsyncState<DrawdownResult>>(idle);
   const [wheel, setWheel] = useState<AsyncState<WheelBacktestResult>>(idle);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
+  // Ref to hold the latest ticker results — updated synchronously inside
+  // setTickerResult so the save snapshot sees settled data even before React re-renders.
+  const tickerResultsRef = useRef<Record<string, AsyncState<unknown>>>({});
 
   // Per-ticker results, keyed by `${ticker}:${test}`
   const [tickerResults, setTickerResults] = useState<
@@ -525,7 +531,11 @@ export function AnalyticsPanel({
 
   const setTickerResult = useCallback(
     (ticker: string, test: TickerTestKey, state: AsyncState<unknown>) => {
-      setTickerResults((prev) => ({ ...prev, [`${ticker}:${test}`]: state }));
+      setTickerResults((prev) => {
+        const next = { ...prev, [`${ticker}:${test}`]: state };
+        tickerResultsRef.current = next;
+        return next;
+      });
     },
     [],
   );
@@ -665,14 +675,115 @@ export function AnalyticsPanel({
       `Trade rec, VaR) that hit external APIs and may take several minutes.`,
     );
     if (!ok) return;
-    PORTFOLIO_TESTS.forEach((k) => runPortfolio[k]());
-    tickers.forEach((t) => {
-      PER_TICKER_TESTS.forEach((test) => runTickerTest(t, test.key));
+
+    setSaveToast(null);
+
+    // Collect promises from every runner so we can save after all settle.
+    // We also write final states eagerly to a local map so the snapshot is
+    // correct even if React hasn't flushed re-renders yet.
+    const portfolioResultMap: Partial<Record<typeof PORTFOLIO_TESTS[number], AsyncState<unknown>>> = {};
+
+    const portfolioPromises = PORTFOLIO_TESTS.map((k) => {
+      return new Promise<void>((resolve) => {
+        const origSetter = {
+          greeks: setGreeks,
+          hedge: setHedge,
+          rebalance: setRebalance,
+          limits: setLimits,
+          stress: setStress,
+          drawdown: setDrawdown,
+        }[k] as (s: AsyncState<unknown>) => void;
+        const wrappedSetter = (s: AsyncState<unknown>) => {
+          origSetter(s);
+          portfolioResultMap[k] = s;
+          if (s.status === 'ok' || s.status === 'err') resolve();
+        };
+        run(wrappedSetter, () => {
+          const fn = {
+            greeks: () => getPortfolioGreeks(account),
+            hedge: () => getHedgeRatio(account),
+            rebalance: () => getRebalanceCheck(account),
+            limits: () => getLimitsCheck(account),
+            stress: () => getStressTest(account),
+            drawdown: () => getDrawdown(account),
+          }[k] as () => Promise<unknown>;
+          return fn();
+        });
+      });
     });
-  }, [runPortfolio, runTickerTest, tickers]);
+
+    const tickerPromises: Promise<void>[] = [];
+    tickers.forEach((t) => {
+      PER_TICKER_TESTS.forEach((test) => {
+        tickerPromises.push(
+          new Promise<void>((resolve) => {
+            const wrappedSetter = (s: AsyncState<unknown>) => {
+              setTickerResult(t, test.key, s);
+              if (s.status === 'ok' || s.status === 'err') resolve();
+            };
+            run(wrappedSetter, () => TICKER_RUNNERS[test.key](t));
+          }),
+        );
+      });
+    });
+
+    const allPromises = [...portfolioPromises, ...tickerPromises];
+    Promise.allSettled(allPromises).then(() => {
+      // Only save if at least some portfolio tests succeeded (not a 100%-failed run).
+      const portfolioOk = PORTFOLIO_TESTS.some((k) => portfolioResultMap[k]?.status === 'ok');
+      if (!portfolioOk) return;
+
+      const getPortData = (k: typeof PORTFOLIO_TESTS[number]) => {
+        const s = portfolioResultMap[k];
+        return s?.status === 'ok' ? (s as { status: 'ok'; data: unknown }).data : null;
+      };
+
+      const snapshot = {
+        portfolio: {
+          greeks: getPortData('greeks'),
+          hedge: getPortData('hedge'),
+          rebalance: getPortData('rebalance'),
+          limits: getPortData('limits'),
+          stress: getPortData('stress'),
+          drawdown: getPortData('drawdown'),
+        },
+        perTicker: tickerResultsRef.current,
+        tickers,
+        timestamp: new Date().toISOString(),
+      };
+
+      saveAnalyticsRun({
+        account: String(account),
+        ticker_count: tickers.length,
+        payload: snapshot,
+      }).then((res) => {
+        setSaveToast(`Run saved as report #${res.run_id}`);
+        setTimeout(() => setSaveToast(null), 6000);
+      }).catch(() => {
+        // swallow — don't surface a save error over the analytics results
+      });
+    });
+  }, [tickers, account, setTickerResult]);
 
   return (
     <div className="rv-card">
+      {saveToast && (
+        <div
+          role="status"
+          style={{
+            marginBottom: 8,
+            padding: '6px 12px',
+            borderRadius: 4,
+            background: 'rgba(0,200,5,0.10)',
+            border: '1px solid var(--green, #00C805)',
+            color: 'var(--green, #00C805)',
+            fontSize: 11,
+            fontFamily: "'JetBrains Mono', monospace",
+          }}
+        >
+          ✓ {saveToast}
+        </div>
+      )}
       <div
         className="rv-card-head"
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}

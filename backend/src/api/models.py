@@ -522,3 +522,38 @@ class CryptoOrderResponse(BaseModel):
     dry_run: bool
     status: str
     message: Optional[str] = None
+
+
+# === Analytics Report Run Models ===
+
+class AnalyticsRunCreateRequest(BaseModel):
+    """Request to persist a completed analytics run snapshot."""
+    account: Optional[str] = None
+    ticker_count: Optional[int] = None
+    payload: Any = Field(..., description="Arbitrary JSON snapshot of the analytics state")
+    notes: Optional[str] = None
+
+
+class AnalyticsRunCreateResponse(BaseModel):
+    """Minimal response after inserting a run."""
+    run_id: int
+    created_at: str
+
+
+class AnalyticsRunMeta(BaseModel):
+    """Metadata row returned by GET /api/analytics/runs (no payload)."""
+    run_id: int
+    created_at: str
+    account: Optional[str] = None
+    ticker_count: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class AnalyticsRunFull(BaseModel):
+    """Full row returned by GET /api/analytics/runs/{run_id}, including payload."""
+    run_id: int
+    created_at: str
+    account: Optional[str] = None
+    ticker_count: Optional[int] = None
+    payload: Any
+    notes: Optional[str] = None

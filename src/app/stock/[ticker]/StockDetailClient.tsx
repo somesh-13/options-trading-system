@@ -5,6 +5,7 @@ import Link from 'next/link';
 import StockPriceChart from '@/components/charts/StockPriceChart';
 import MispricingDetector from '@/components/MispricingDetector';
 import DCFValuation from '@/components/DCFValuation';
+import { StockPositionCard } from '@/components/robinhood/StockPositionCard';
 import type { HistoricalDataPoint, TimeRange } from '@/lib/types/historicalPrice';
 
 const Icon = {
@@ -211,6 +212,9 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
           </button>
         ))}
       </div>
+
+      {/* Position card — always shown, handles "no position" empty state gracefully */}
+      <StockPositionCard ticker={ticker} />
 
       {activeTab === 'overview' && (
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, alignItems: 'start' }}>

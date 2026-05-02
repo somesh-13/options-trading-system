@@ -5,7 +5,7 @@
 
 import { PRICING_API_URL } from './pricing-api';
 
-export type RobinhoodAccount = 'brokerage' | 'roth_ira' | 'sofi' | 'all';
+export type RobinhoodAccount = 'brokerage' | 'roth_ira' | 'crypto' | 'sofi' | 'all';
 
 export interface RobinhoodHolding {
   symbol: string;

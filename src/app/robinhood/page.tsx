@@ -29,16 +29,16 @@ const ACCOUNT_LABEL: Record<RobinhoodAccount, string> = {
   all: 'All accounts',
   brokerage: 'Brokerage',
   roth_ira: 'Roth IRA',
+  crypto: 'Crypto',
   sofi: 'SoFi',
 };
 
-const TAB_ORDER: RobinhoodAccount[] = ['all', 'brokerage', 'roth_ira', 'sofi'];
+const TAB_ORDER: RobinhoodAccount[] = ['all', 'brokerage', 'roth_ira', 'crypto', 'sofi'];
 
-type View = 'portfolio' | 'analytics' | 'crypto' | 'reports';
+type View = 'portfolio' | 'analytics' | 'reports';
 const VIEW_TABS: Array<{ key: View; label: string }> = [
   { key: 'portfolio', label: 'Portfolio' },
   { key: 'analytics', label: 'Analytics' },
-  { key: 'crypto', label: 'Crypto' },
   { key: 'reports', label: 'Reports' },
 ];
 
@@ -284,7 +284,13 @@ export default function RobinhoodPage() {
   const optionCount = holdings?.options.length ?? 0;
   const cryptoCount = cryptoHoldings.length;
   const visibleTabs = TAB_ORDER.filter(
-    (t) => t === 'all' || availableAccounts.includes(t),
+    // Crypto isn't surfaced by /api/robinhood/accounts (that endpoint reads
+    // from the activity log, which doesn't include crypto). Always show the
+    // Crypto tab if there's a crypto snapshot, otherwise hide it.
+    (t) =>
+      t === 'all' ||
+      availableAccounts.includes(t) ||
+      (t === 'crypto' && cryptoHoldings.length > 0),
   );
 
   const fetchedMinutesAgo = minutesAgo(syncStatus?.fetched_at);
@@ -529,7 +535,18 @@ export default function RobinhoodPage() {
         </div>
       )}
 
-      {view === 'portfolio' && (
+      {view === 'portfolio' && account === 'crypto' && (
+        <>
+          <div style={{ marginBottom: 12 }}>
+            <CryptoTable holdings={cryptoHoldings} />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <CryptoTradePanel holdings={cryptoHoldings} />
+          </div>
+        </>
+      )}
+
+      {view === 'portfolio' && account !== 'crypto' && (
         <>
           <div style={{ marginBottom: 12 }}>
             <AccountSummaryCard
@@ -553,7 +570,15 @@ export default function RobinhoodPage() {
         </>
       )}
 
-      {view === 'analytics' && (
+      {view === 'analytics' && account === 'crypto' && (
+        <div className="rv-card" style={{ padding: 16, color: 'var(--ink-mute)', fontSize: 12 }}>
+          Analytics aren&apos;t available for the crypto account — switch to an
+          equity account (Brokerage / Roth IRA / All) to see Greeks, hedge
+          ratio, VaR, and other analyses.
+        </div>
+      )}
+
+      {view === 'analytics' && account !== 'crypto' && (
         <div style={{ marginBottom: 12 }}>
           <AnalyticsPanel
             account={account}
@@ -562,17 +587,6 @@ export default function RobinhoodPage() {
             totalNAV={summary?.nav ?? summary?.total_market_value ?? undefined}
           />
         </div>
-      )}
-
-      {view === 'crypto' && (
-        <>
-          <div style={{ marginBottom: 12 }}>
-            <CryptoTable holdings={cryptoHoldings} />
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <CryptoTradePanel holdings={cryptoHoldings} />
-          </div>
-        </>
       )}
 
       {view === 'reports' && (

@@ -5,21 +5,28 @@ Shares the journal's trades.db so we have a single database file per-app.
 
 import os
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Optional
 
 DB_PATH = os.path.join(Path(__file__).parent.parent.parent, "trades.db")
 
-_conn: Optional[sqlite3.Connection] = None
+# Thread-local connections: uvicorn runs sync routes in a threadpool, and a
+# single shared sqlite3 connection causes Row buffers to be invalidated when
+# another thread runs a query mid-access (manifests as `row["col"]` returning
+# None for fields that are not NULL in the DB). Each worker thread gets its
+# own connection; WAL mode lets them all read/write concurrently.
+_local = threading.local()
 
 
 def get_conn() -> sqlite3.Connection:
-    global _conn
-    if _conn is None:
-        _conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        _conn.row_factory = sqlite3.Row
-        _conn.execute("PRAGMA journal_mode=WAL")
-    return _conn
+    conn: Optional[sqlite3.Connection] = getattr(_local, "conn", None)
+    if conn is None:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        _local.conn = conn
+    return conn
 
 
 def ensure_schema() -> None:

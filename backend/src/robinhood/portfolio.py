@@ -544,9 +544,27 @@ def compute_summary(
 
 # --- live snapshot views (Robinhood API source) ---------------------------
 
+def _safe_load_payload(row) -> dict:
+    """Tolerant deserialise: returns {} if the row or payload is missing/empty.
+
+    A snapshot row can be transiently None or missing payload_json during a
+    concurrent sync write; rather than 500-ing the request, we treat it as
+    'no positions' and let the caller continue.
+    """
+    if row is None:
+        return {}
+    raw = row["payload_json"] if "payload_json" in row.keys() else None
+    if not raw:
+        return {}
+    try:
+        return json.loads(raw)
+    except (TypeError, ValueError):
+        return {}
+
+
 def _equities_from_snapshot_row(row) -> List[EquityHolding]:
     """Deserialise EquityHolding objects from one snapshot DB row."""
-    payload = json.loads(row["payload_json"])
+    payload = _safe_load_payload(row)
     out: List[EquityHolding] = []
     for h in payload.get("equities", []):
         try:
@@ -560,7 +578,7 @@ def _options_from_snapshot_row(row) -> List[OptionHolding]:
     """Deserialise OptionHolding objects from one snapshot DB row."""
     import dataclasses as _dc
     known = {f.name for f in _dc.fields(OptionHolding)}
-    payload = json.loads(row["payload_json"])
+    payload = _safe_load_payload(row)
     out: List[OptionHolding] = []
     for o in payload.get("options", []):
         try:
@@ -648,15 +666,14 @@ def compute_live_summary(
         # Sum cash across all accounts so /summary?account=all reflects every
         # account's cash position (brokerage debit + IRA cash, etc.)
         for r in latest_live_snapshots_all():
-            payload = json.loads(r["payload_json"])
+            payload = _safe_load_payload(r)
             acct = payload.get("account_summary") or {}
             cash_balance += float(acct.get("cash") or 0.0)
     else:
         row = latest_live_snapshot(account)
-        if row is not None:
-            payload = json.loads(row["payload_json"])
-            acct = payload.get("account_summary") or {}
-            cash_balance = float(acct.get("cash") or 0.0)
+        payload = _safe_load_payload(row)
+        acct = payload.get("account_summary") or {}
+        cash_balance = float(acct.get("cash") or 0.0)
 
     equity_market_value = sum((h.market_value or 0.0) for h in equities)
     equity_unrealized = sum((h.unrealized_pnl or 0.0) for h in equities)

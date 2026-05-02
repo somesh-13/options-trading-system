@@ -4,18 +4,103 @@ import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   getPortfolioSummary,
-  getPositionsWithGreeks,
   getPriceHistory,
   getMispricing,
   PriceHistoryPoint,
   PositionWithGreeks,
   PortfolioGreeks,
 } from '@/lib/pricing-api';
+import {
+  getRobinhoodHoldings,
+  type RobinhoodHolding,
+  type RobinhoodOption,
+} from '@/lib/robinhood-api';
 import TickerHeader from '@/components/positions/TickerHeader';
 import PriceChart from '@/components/positions/PriceChart';
 import MarketValueCards from '@/components/positions/MarketValueCards';
 import OptionPositionsList from '@/components/positions/OptionPositionsList';
 import TradeSidebar from '@/components/positions/TradeSidebar';
+
+// Build an OCC-format symbol (e.g. "AMKR251115C00050000") from Robinhood's split fields.
+function buildOccSymbol(o: RobinhoodOption): string {
+  const yymmdd = o.expiry.replace(/-/g, '').slice(2); // 2028-01-21 → 280121
+  const cp = o.side === 'Call' ? 'C' : 'P';
+  const strike8 = String(Math.round(o.strike * 1000)).padStart(8, '0');
+  return `${o.underlying.toUpperCase()}${yymmdd}${cp}${strike8}`;
+}
+
+// Adapt Robinhood holdings (real broker positions) to the PositionWithGreeks shape
+// the existing positions UI components expect. Greeks aren't returned by the
+// Robinhood holdings endpoint, so they default to 0 — the per-ticker UI still
+// renders correctly, and the Portfolio Greeks card on this page is driven
+// separately by the Alpaca summary fetch below.
+function robinhoodToPositions(
+  ticker: string,
+  equities: RobinhoodHolding[],
+  options: RobinhoodOption[],
+): PositionWithGreeks[] {
+  const T = ticker.toUpperCase();
+  const out: PositionWithGreeks[] = [];
+
+  // Aggregate equity rows across accounts for this ticker.
+  const eqRows = equities.filter((e) => e.symbol.toUpperCase() === T);
+  if (eqRows.length > 0) {
+    const totalQty = eqRows.reduce((s, r) => s + r.quantity, 0);
+    const totalCost = eqRows.reduce((s, r) => s + r.cost_basis, 0);
+    const hasMV = eqRows.some((r) => r.market_value != null);
+    const totalMV = hasMV ? eqRows.reduce((s, r) => s + (r.market_value ?? 0), 0) : 0;
+    const hasUn = eqRows.some((r) => r.unrealized_pnl != null);
+    const totalUn = hasUn ? eqRows.reduce((s, r) => s + (r.unrealized_pnl ?? 0), 0) : 0;
+    const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+    const currentPrice = totalQty > 0 && totalMV > 0 ? totalMV / totalQty : 0;
+    const plPct = totalCost > 0 ? totalUn / totalCost : 0;
+    out.push({
+      symbol: T,
+      qty: String(totalQty),
+      market_value: String(totalMV),
+      unrealized_pl: String(totalUn),
+      unrealized_plpc: String(plPct),
+      current_price: String(currentPrice),
+      avg_entry_price: String(avgCost),
+      asset_class: 'us_equity',
+      parsed_symbol: T,
+      position_type: 'stock',
+      greeks: { delta: 0, gamma: 0, vega: 0, theta: 0, rho: 0 },
+      bs_price: null,
+      bs_params: null,
+    });
+  }
+
+  // Each option leg becomes its own row.
+  options
+    .filter((o) => o.underlying.toUpperCase() === T)
+    .forEach((o) => {
+      const signedQty = o.position === 'short' ? -o.quantity : o.quantity;
+      const mv = o.market_value ?? 0;
+      const un = o.unrealized_pnl ?? 0;
+      const cost = Math.abs(o.cost_basis);
+      const plPct = cost > 0 ? un / cost : 0;
+      const perContractEntry = o.quantity > 0 ? Math.abs(o.avg_cost) / o.quantity : 0;
+      const perContractCurrent = o.quantity > 0 ? Math.abs(mv) / o.quantity : 0;
+      out.push({
+        symbol: buildOccSymbol(o),
+        qty: String(signedQty),
+        market_value: String(mv),
+        unrealized_pl: String(un),
+        unrealized_plpc: String(plPct),
+        current_price: String(perContractCurrent),
+        avg_entry_price: String(perContractEntry),
+        asset_class: 'us_option',
+        parsed_symbol: buildOccSymbol(o),
+        position_type: 'option',
+        greeks: { delta: 0, gamma: 0, vega: 0, theta: 0, rho: 0 },
+        bs_price: null,
+        bs_params: null,
+      });
+    });
+
+  return out;
+}
 
 export default function PositionsPage() {
   return (
@@ -80,9 +165,9 @@ function PositionsInner() {
     setLoading(true);
     setError('');
     try {
-      const [summaryResp, positionsResp, mispricingResp] = await Promise.allSettled([
+      const [summaryResp, holdingsResp, mispricingResp] = await Promise.allSettled([
         getPortfolioSummary(),
-        getPositionsWithGreeks(),
+        getRobinhoodHoldings(true, 'all', 'live'),
         getMispricing(t),
       ]);
 
@@ -94,8 +179,11 @@ function PositionsInner() {
         setPortfolioGreeks(summary.portfolio_greeks);
       }
 
-      if (positionsResp.status === 'fulfilled') {
-        setPositions(positionsResp.value.positions);
+      if (holdingsResp.status === 'fulfilled') {
+        const { equities, options } = holdingsResp.value;
+        setPositions(robinhoodToPositions(t, equities, options));
+      } else {
+        setPositions([]);
       }
 
       if (mispricingResp.status === 'fulfilled') {
@@ -182,7 +270,7 @@ function PositionsInner() {
                 portfolioValue={portfolioValue}
               />
 
-              <OptionPositionsList positions={positions} />
+              <OptionPositionsList positions={tickerPositions} />
 
               {/* Portfolio Greeks Summary */}
               {portfolioGreeks && (

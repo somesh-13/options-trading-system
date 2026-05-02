@@ -1,16 +1,15 @@
 import { ScannerShell } from '@/components/scanner/ScannerShell';
 
 /**
- * Scanner page — natural-language LLM scanner bar + condition tabs + opportunity table.
- *
- * TODO: wire POST /api/strategy/ev/scan ({ tickers: watchlist }) for live rows.
+ * Scanner page — portfolio-driven universe fetched live from Robinhood holdings.
+ * Falls back to SCANNER_ROWS demo data if the backend is unreachable.
  */
 export default function ScannerPage() {
   return (
     <>
       <h2 className="rv-h1">Scanner</h2>
       <div className="rv-sub">
-        Live scan · 8 watchlist tickers · next auto-scan in 2m 14s
+        Live scan · scanning all portfolio tickers · refreshes every 60s
       </div>
 
       <ScannerShell />

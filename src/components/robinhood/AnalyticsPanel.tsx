@@ -759,31 +759,35 @@ export function AnalyticsPanel({
       }).then((res) => {
         setSaveToast(`Run saved as report #${res.run_id}`);
         setTimeout(() => setSaveToast(null), 6000);
-      }).catch(() => {
-        // swallow — don't surface a save error over the analytics results
+      }).catch((e: Error) => {
+        setSaveToast(`Save failed: ${e.message}`);
+        setTimeout(() => setSaveToast(null), 8000);
       });
     });
   }, [tickers, account, setTickerResult]);
 
   return (
     <div className="rv-card">
-      {saveToast && (
-        <div
-          role="status"
-          style={{
-            marginBottom: 8,
-            padding: '6px 12px',
-            borderRadius: 4,
-            background: 'rgba(0,200,5,0.10)',
-            border: '1px solid var(--green, #00C805)',
-            color: 'var(--green, #00C805)',
-            fontSize: 11,
-            fontFamily: "'JetBrains Mono', monospace",
-          }}
-        >
-          ✓ {saveToast}
-        </div>
-      )}
+      {saveToast && (() => {
+        const isErr = saveToast.startsWith('Save failed');
+        return (
+          <div
+            role="status"
+            style={{
+              marginBottom: 8,
+              padding: '6px 12px',
+              borderRadius: 4,
+              background: isErr ? 'rgba(255,0,110,0.10)' : 'rgba(0,200,5,0.10)',
+              border: `1px solid var(${isErr ? '--pink, #FF006E' : '--green, #00C805'})`,
+              color: `var(${isErr ? '--pink, #FF006E' : '--green, #00C805'})`,
+              fontSize: 11,
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {isErr ? '✗' : '✓'} {saveToast}
+          </div>
+        );
+      })()}
       <div
         className="rv-card-head"
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}

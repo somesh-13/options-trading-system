@@ -17,6 +17,7 @@ import type { NextConfig } from "next";
 //   - strategy             — EV scan / hedging mutators
 const BACKEND_PROXY_PREFIXES = [
   "agents",
+  "analytics",
   "backtest",
   "market",
   "mispricing",

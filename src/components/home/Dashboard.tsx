@@ -171,6 +171,7 @@ export function Dashboard() {
             </button>
           </div>
         </div>
+        <div className="rv-table-wrap">
         <table className="rv-table">
           <thead>
             <tr>
@@ -227,6 +228,7 @@ export function Dashboard() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="rv-grid-2" style={{ marginTop: 14 }}>
@@ -254,7 +256,7 @@ export function Dashboard() {
           </div>
           {greeksMode === 'aggregate' ? (
             <>
-              <div className="rv-greeks" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              <div className="rv-greeks cols-4">
                 <div className="rv-greek">
                   <div className="sym">Δ<span className="ord">1</span></div>
                   <div className="val">+284.4</div>

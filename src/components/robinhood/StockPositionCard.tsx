@@ -33,6 +33,46 @@ const cls = (n: number | null | undefined) => (n == null ? '' : n > 0 ? 'rv-up' 
 
 // ---- helpers ----------------------------------------------------------------
 
+// Detects the option strategy implied by the user's combined equity + option legs.
+// Conservative: returns null when the shape doesn't fit a clean named strategy.
+function detectStrategy(
+  shares: number,
+  legs: RobinhoodOption[],
+): { label: string; tone: 'good' | 'neutral' | 'warn' } | null {
+  if (legs.length === 0) return null;
+  const longCalls  = legs.filter((l) => l.side === 'Call' && l.position === 'long');
+  const shortCalls = legs.filter((l) => l.side === 'Call' && l.position === 'short');
+  const longPuts   = legs.filter((l) => l.side === 'Put'  && l.position === 'long');
+  const shortPuts  = legs.filter((l) => l.side === 'Put'  && l.position === 'short');
+  const totalShortCallContracts = shortCalls.reduce((s, l) => s + l.quantity, 0);
+  const totalLongCallContracts  = longCalls.reduce((s, l) => s + l.quantity, 0);
+
+  // Covered call: long shares cover every short call (100 shares per contract).
+  if (shortCalls.length > 0 && longCalls.length === 0 && longPuts.length === 0 && shortPuts.length === 0) {
+    return shares >= totalShortCallContracts * 100
+      ? { label: 'Covered call', tone: 'good' }
+      : { label: 'Naked call', tone: 'warn' };
+  }
+  // Cash-secured put (no shares needed for this label, just signals the structure).
+  if (shortPuts.length > 0 && longPuts.length === 0 && longCalls.length === 0 && shortCalls.length === 0) {
+    return { label: 'Short put', tone: 'neutral' };
+  }
+  // Protective put alongside a long share position.
+  if (longPuts.length > 0 && shares > 0 && shortPuts.length === 0 && longCalls.length === 0 && shortCalls.length === 0) {
+    return { label: 'Protective put', tone: 'good' };
+  }
+  // Vertical call spread: equal long and short call contracts, no other legs.
+  if (longCalls.length > 0 && shortCalls.length > 0 && longPuts.length === 0 && shortPuts.length === 0
+      && totalLongCallContracts === totalShortCallContracts) {
+    return { label: 'Call spread', tone: 'neutral' };
+  }
+  // Mixed call book on top of shares (e.g. covered call + diagonal/leap) → flag as combo.
+  if (shares > 0 && (longCalls.length > 0 || shortCalls.length > 0)) {
+    return { label: 'Stock + options combo', tone: 'neutral' };
+  }
+  return { label: `${legs.length} option leg${legs.length === 1 ? '' : 's'}`, tone: 'neutral' };
+}
+
 interface AggEquity {
   symbol: string;
   totalQty: number;
@@ -94,6 +134,14 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
 
   const hasEquity = equity != null;
   const hasOptions = options.length > 0;
+  const strategy = !loading && !err
+    ? detectStrategy(equity?.totalQty ?? 0, options)
+    : null;
+  const toneColor = strategy?.tone === 'good'
+    ? 'var(--green, #00C805)'
+    : strategy?.tone === 'warn'
+      ? 'var(--pink, #FF006E)'
+      : 'var(--gold, #FFD700)';
 
   return (
     <div className="rv-card" style={{ marginBottom: 14 }}>
@@ -101,6 +149,24 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
         <h3 style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
           Your position · {ticker.toUpperCase()}
         </h3>
+        {strategy && (
+          <span
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 10,
+              padding: '2px 8px',
+              borderRadius: 999,
+              border: `1px solid ${toneColor}`,
+              color: toneColor,
+              background: 'transparent',
+              letterSpacing: '.04em',
+              textTransform: 'uppercase',
+            }}
+            title="Detected from your equity + option legs"
+          >
+            {strategy.label}
+          </span>
+        )}
       </div>
 
       {loading && (
@@ -122,17 +188,7 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
       {!loading && !err && hasEquity && equity && (
         <div style={{ marginBottom: hasOptions ? 12 : 0 }}>
           {/* Equity summary row */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, auto)',
-              gap: '4px 16px',
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 12,
-              alignItems: 'baseline',
-              marginBottom: 4,
-            }}
-          >
+          <div className="rv-position-equity">
             <div>
               <span style={{ color: 'var(--ink)', fontWeight: 700 }}>{fmt(equity.totalQty, 2)}</span>
               <span className="rv-sub" style={{ marginLeft: 4 }}>shares</span>
@@ -175,7 +231,7 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
           <div className="rv-sub" style={{ fontSize: 11, marginBottom: 4 }}>
             Option leg{options.length === 1 ? '' : 's'} ({options.length})
           </div>
-          <div style={{ overflowX: 'auto' }}>
+          <div className="rv-table-wrap">
             <table
               className="rv-table"
               style={{ width: '100%', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}

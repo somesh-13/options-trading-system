@@ -116,6 +116,7 @@ function AccordionSection({ title, accent, isOpen, onToggle, children }: Accordi
         onClick={onToggle}
         style={{
           width: '100%',
+          minHeight: 44,
           background: 'transparent',
           border: 0,
           color: 'var(--ink)',
@@ -467,50 +468,56 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const styles = getComputedStyle(document.documentElement);
-    const green = styles.getPropertyValue('--green').trim() || '#00C805';
-    const line = styles.getPropertyValue('--line').trim() || '#26272d';
-    const mute = styles.getPropertyValue('--ink-mute').trim() || '#a3a3a8';
+    const draw = () => {
+      const styles = getComputedStyle(document.documentElement);
+      const green = styles.getPropertyValue('--green').trim() || '#00C805';
+      const line = styles.getPropertyValue('--line').trim() || '#26272d';
+      const mute = styles.getPropertyValue('--ink-mute').trim() || '#a3a3a8';
 
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, rect.width, rect.height);
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, rect.width, rect.height);
 
-    const peak = Math.max(...results.revenues.map(Math.abs), 1) * 1.15;
-    const padding = 40;
-    const chartHeight = rect.height - padding * 2;
-    const chartWidth = rect.width - padding * 2;
-    const spacing = chartWidth / YEARS.length;
-    const barWidth = spacing * 0.4;
-    const zeroY = padding + chartHeight; // x-axis position
+      const peak = Math.max(...results.revenues.map(Math.abs), 1) * 1.15;
+      const padding = 40;
+      const chartHeight = rect.height - padding * 2;
+      const chartWidth = rect.width - padding * 2;
+      const spacing = chartWidth / YEARS.length;
+      const barWidth = spacing * 0.4;
+      const zeroY = padding + chartHeight;
 
-    YEARS.forEach((year, i) => {
-      const x = padding + i * spacing + spacing / 2;
-      const revH = Math.max(0, (Math.max(0, results.revenues[i]) / peak) * chartHeight);
-      const fcfVal = results.fcf[i];
-      const fcfH = (Math.abs(fcfVal) / peak) * chartHeight;
+      YEARS.forEach((year, i) => {
+        const x = padding + i * spacing + spacing / 2;
+        const revH = Math.max(0, (Math.max(0, results.revenues[i]) / peak) * chartHeight);
+        const fcfVal = results.fcf[i];
+        const fcfH = (Math.abs(fcfVal) / peak) * chartHeight;
 
-      // Revenue bar (positive only)
-      ctx.fillStyle = line;
-      ctx.beginPath();
-      ctx.roundRect(x - barWidth, zeroY - revH, barWidth * 2, revH, 4);
-      ctx.fill();
+        ctx.fillStyle = line;
+        ctx.beginPath();
+        ctx.roundRect(x - barWidth, zeroY - revH, barWidth * 2, revH, 4);
+        ctx.fill();
 
-      // FCF bar (green up, pink down for negatives)
-      ctx.fillStyle = fcfVal >= 0 ? green : '#ff006e';
-      ctx.beginPath();
-      const fcfY = fcfVal >= 0 ? zeroY - fcfH : zeroY;
-      ctx.roundRect(x - barWidth + 4, fcfY, barWidth * 2 - 8, fcfH, 4);
-      ctx.fill();
+        ctx.fillStyle = fcfVal >= 0 ? green : '#ff006e';
+        ctx.beginPath();
+        const fcfY = fcfVal >= 0 ? zeroY - fcfH : zeroY;
+        ctx.roundRect(x - barWidth + 4, fcfY, barWidth * 2 - 8, fcfH, 4);
+        ctx.fill();
 
-      ctx.fillStyle = mute;
-      ctx.font = '11px JetBrains Mono, monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(year.toString(), x, rect.height - 10);
-    });
+        ctx.fillStyle = mute;
+        ctx.font = '11px JetBrains Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(year.toString(), x, rect.height - 10);
+      });
+    };
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(canvas);
+    return () => ro.disconnect();
   }, [results]);
 
   const isPositive = results.deltaPercent >= 0;
@@ -715,14 +722,7 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
         </div>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(280px, 5fr) minmax(320px, 7fr)',
-          gap: 18,
-          alignItems: 'start',
-        }}
-      >
+      <div className="rv-dcf-grid">
         {/* Left — controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <AccordionSection
@@ -977,16 +977,17 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
             <div className="text-section" style={{ marginBottom: 4 }}>
               ESTIMATED FAIR SHARE PRICE
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
               <span style={{ fontSize: 22, color: 'var(--green)', fontWeight: 700 }}>$</span>
               <span
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 72,
+                  fontSize: 'clamp(40px, 14vw, 72px)',
                   fontWeight: 700,
                   color: 'var(--ink)',
                   letterSpacing: '-0.02em',
                   lineHeight: 1,
+                  wordBreak: 'break-word',
                 }}
               >
                 {results.fairPrice.toFixed(2)}
@@ -1003,6 +1004,10 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
                 background: deltaBg,
                 color: deltaColor,
                 fontWeight: 600,
+                display: 'inline-flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                textAlign: 'center',
               }}
             >
               {isPositive ? '▲' : '▼'} {Math.abs(results.deltaPercent).toFixed(1)}% vs market (${currentPrice.toFixed(2)})
@@ -1039,6 +1044,7 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
 
           {/* Breakdown table */}
           <div className="rv-card" style={{ marginTop: 0 }}>
+            <div className="rv-table-wrap">
             <table className="rv-table">
               <thead>
                 <tr>
@@ -1069,6 +1075,7 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
                 </tr>
               </tbody>
             </table>
+            </div>
             <div
               style={{
                 marginTop: 10,

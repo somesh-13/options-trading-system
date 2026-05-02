@@ -217,7 +217,7 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
       <StockPositionCard ticker={ticker} />
 
       {activeTab === 'overview' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, alignItems: 'start' }}>
+        <div className="rv-stock-overview">
           {/* Main column */}
           <div>
             {/* Price overview */}

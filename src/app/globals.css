@@ -452,10 +452,37 @@ body {
   display: none; /* desktop: never shown */
 }
 
+/* Horizontal-scroll wrapper for wide tables on narrow viewports */
+.rv-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Stock-detail two-column layout — collapses to single column on phone */
+.rv-stock-overview { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; align-items: start; }
+
+/* Equity summary row in StockPositionCard — collapses to 2-col on phone */
+.rv-position-equity {
+  display: grid; grid-template-columns: repeat(4, auto); gap: 4px 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  align-items: baseline; margin-bottom: 4px;
+}
+
+/* Aggregate Greeks 4-col modifier (used in Dashboard.tsx) */
+.rv-greeks.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* DCF tab — controls/results 2-col layout (used in DCFValuation.tsx) */
+.rv-dcf-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 5fr) minmax(320px, 7fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .rv-dcf-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
 /* ===========================================================================
-   Responsive layout — collapse rail to hidden drawer below 768 px
+   Responsive layout — collapse rail to hidden drawer below 1024 px
    =========================================================================== */
-@media (max-width: 767px) {
+@media (max-width: 1024px) {
   /* Switch grid to single-column so content fills the full width */
   .rv-body {
     grid-template-columns: 1fr;
@@ -527,6 +554,30 @@ body {
 }
 
 /* ===========================================================================
+   Phone-specific overrides — stack grids, shrink pills, scroll-wrap tables
+   =========================================================================== */
+@media (max-width: 640px) {
+  .rv-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .rv-grid-3 { grid-template-columns: 1fr; }
+  .rv-grid-2 { grid-template-columns: 1fr; }
+
+  .rv-greeks,
+  .rv-greeks.cols-4 { grid-template-columns: repeat(2, 1fr); }
+
+  .rv-stock-overview { grid-template-columns: 1fr; }
+
+  .rv-position-equity { grid-template-columns: repeat(2, 1fr); }
+
+  .rv-card { padding: 12px; }
+  .rv-card-head { flex-wrap: wrap; gap: 6px; row-gap: 8px; }
+  .rv-card-head .tools { flex-wrap: wrap; }
+
+  .rv-pills { gap: 4px; }
+  .rv-pill { font-size: 10px; padding: 2px 6px; }
+  .rv-pills .rv-pill.var { display: none; }
+}
+
+/* ===========================================================================
    P2 — Tap-target sizing on touch/coarse-pointer devices
    =========================================================================== */
 @media (pointer: coarse) {
@@ -558,6 +609,11 @@ body {
     height: 44px;
     min-height: 44px;
   }
+
+  /* DCF slider thumbs: bump from 16px → 28px and widen the vertical hit area */
+  .rv-dcf-slider { height: 8px; padding: 12px 0; touch-action: manipulation; }
+  .rv-dcf-slider::-webkit-slider-thumb { width: 28px; height: 28px; }
+  .rv-dcf-slider::-moz-range-thumb     { width: 28px; height: 28px; }
 }
 
 /* InfoIcon touch target — expand hit area without growing the visible ⓘ glyph */

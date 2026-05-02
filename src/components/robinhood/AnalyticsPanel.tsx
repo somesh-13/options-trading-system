@@ -17,6 +17,7 @@
 
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import type { RobinhoodAccount } from '@/lib/robinhood-api';
+import { InfoIcon } from '@/components/ui/InfoIcon';
 import {
   getPortfolioGreeks,
   getHedgeRatio,
@@ -93,7 +94,7 @@ function CardShell({
   onRun,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   state: AsyncState<unknown>;
   onRun: () => void;
   children?: React.ReactNode;
@@ -159,11 +160,11 @@ function GreeksCard({
       ) : state.status === 'ok' ? (
         <>
           <div style={monoGrid}>
-            <div>Δ delta</div><div className={sign(state.data.total_delta)}>{fmtNum(state.data.total_delta)}</div>
-            <div>Γ gamma</div><div>{fmtNum(state.data.total_gamma)}</div>
-            <div>𝜈 vega</div><div>{fmtNum(state.data.total_vega)}</div>
-            <div>Θ theta</div><div className={sign(state.data.total_theta)}>{fmtNum(state.data.total_theta)}</div>
-            <div>ρ rho</div><div>{fmtNum(state.data.total_rho)}</div>
+            <div>Δ delta<InfoIcon term="delta" /></div><div className={sign(state.data.total_delta)}>{fmtNum(state.data.total_delta)}</div>
+            <div>Γ gamma<InfoIcon term="gamma" /></div><div>{fmtNum(state.data.total_gamma)}</div>
+            <div>𝜈 vega<InfoIcon term="vega" /></div><div>{fmtNum(state.data.total_vega)}</div>
+            <div>Θ theta<InfoIcon term="theta" /></div><div className={sign(state.data.total_theta)}>{fmtNum(state.data.total_theta)}</div>
+            <div>ρ rho<InfoIcon term="rho" /></div><div>{fmtNum(state.data.total_rho)}</div>
             <div>legs</div><div>{state.data.position_count}</div>
           </div>
           {state.data.skipped && state.data.skipped.length > 0 && (
@@ -185,7 +186,7 @@ function HedgeRatioCard({
   onRun: () => void;
 }) {
   return (
-    <CardShell title="Hedge ratio (Δ-neutral)" state={state} onRun={onRun}>
+    <CardShell title={<>Hedge ratio (Δ-neutral)<InfoIcon term="hedge-ratio" /></>} state={state} onRun={onRun}>
       {state.status === 'ok' && !state.data.error && (
         <div style={monoGrid}>
           <div>current Δ</div><div className={sign(state.data.current_delta)}>{fmtNum(state.data.current_delta)}</div>
@@ -212,7 +213,7 @@ function RebalanceCard({
   onRun: () => void;
 }) {
   return (
-    <CardShell title="Rebalance triggers" state={state} onRun={onRun}>
+    <CardShell title={<>Rebalance triggers<InfoIcon term="rebalance" /></>} state={state} onRun={onRun}>
       {state.status === 'ok' && !state.data.error && (
         <>
           <div style={{ marginBottom: 6 }}>
@@ -252,7 +253,7 @@ function LimitsCard({
   onRun: () => void;
 }) {
   return (
-    <CardShell title="Position limits" state={state} onRun={onRun}>
+    <CardShell title={<>Position limits<InfoIcon term="position-limits" /></>} state={state} onRun={onRun}>
       {state.status === 'ok' && !state.data.error && (
         <>
           <div style={{ marginBottom: 6 }}>
@@ -290,7 +291,7 @@ function StressCard({
   onRun: () => void;
 }) {
   return (
-    <CardShell title="Stress test (±10% spot, ±20% vol)" state={state} onRun={onRun}>
+    <CardShell title={<>Stress test (±10% spot, ±20% vol)<InfoIcon term="stress-test" /></>} state={state} onRun={onRun}>
       {state.status === 'ok' && !state.data.error && (
         <div style={monoGrid}>
           <div>spot shock</div><div>{fmtPct((state.data.spot_shock_pct ?? 0) * 100)}</div>
@@ -321,7 +322,7 @@ function DrawdownCard({
   onRun: () => void;
 }) {
   return (
-    <CardShell title="Drawdown (snapshot)" state={state} onRun={onRun}>
+    <CardShell title={<>Drawdown (snapshot)<InfoIcon term="drawdown" /></>} state={state} onRun={onRun}>
       {state.status === 'ok' && state.data.error && (
         <div className="rv-sub" style={{ fontSize: 11, color: 'var(--pink)' }}>
           {state.data.message}
@@ -396,15 +397,15 @@ type TickerTestKey =
   | 'rec'
   | 'backtest';
 
-const PER_TICKER_TESTS: Array<{ key: TickerTestKey; label: string; heavy?: boolean }> = [
-  { key: 'mispricing', label: 'IV/HV' },
-  { key: 'regime', label: 'Regime' },
-  { key: 'hv', label: 'HV CI' },
-  { key: 'var', label: 'VaR' },
-  { key: 'sentiment', label: 'Sentiment', heavy: true },
-  { key: 'confluence', label: 'Confluence', heavy: true },
-  { key: 'rec', label: 'Trade rec', heavy: true },
-  { key: 'backtest', label: 'Backtest 1y', heavy: true },
+const PER_TICKER_TESTS: Array<{ key: TickerTestKey; label: string; heavy?: boolean; infoSlug?: string }> = [
+  { key: 'mispricing', label: 'IV/HV',       infoSlug: 'iv-hv' },
+  { key: 'regime',     label: 'Regime',       infoSlug: 'regime' },
+  { key: 'hv',         label: 'HV CI',        infoSlug: 'hv-confidence' },
+  { key: 'var',        label: 'VaR',          infoSlug: 'var' },
+  { key: 'sentiment',  label: 'Sentiment',    infoSlug: 'sentiment',   heavy: true },
+  { key: 'confluence', label: 'Confluence',   infoSlug: 'confluence',  heavy: true },
+  { key: 'rec',        label: 'Trade rec',                             heavy: true },
+  { key: 'backtest',   label: 'Backtest 1y',                          heavy: true },
 ];
 
 const TICKER_RUNNERS: Record<TickerTestKey, (t: string) => Promise<unknown>> = {
@@ -659,10 +660,16 @@ export function AnalyticsPanel({
                       marginLeft: 66,
                       fontSize: 10,
                       color: state.status === 'err' ? 'var(--pink)' : 'var(--ink-dim)',
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 2,
                     }}
                   >
-                    <span style={{ color: 'var(--ink-mute)' }}>{test.label}: </span>
-                    {state.status === 'err' ? state.error : summarizeTickerResult(test.key, state.data)}
+                    <span style={{ color: 'var(--ink-mute)' }}>{test.label}:</span>
+                    {test.infoSlug && <InfoIcon term={test.infoSlug} />}
+                    <span style={{ marginLeft: 2 }}>
+                      {state.status === 'err' ? state.error : summarizeTickerResult(test.key, state.data)}
+                    </span>
                   </div>
                 );
               })}
@@ -675,7 +682,7 @@ export function AnalyticsPanel({
         Wheel backtest · cached aggregate over the watchlist
       </div>
       <CardShell
-        title="Wheel 1y"
+        title={<>Wheel 1y<InfoIcon term="wheel" /></>}
         state={wheel}
         onRun={() => run(setWheel, getWheelBacktest)}
       >

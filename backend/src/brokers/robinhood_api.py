@@ -21,13 +21,135 @@ can fall back to the last good snapshot.
 
 from __future__ import annotations
 
+import math
 import os
+import time
+from datetime import date
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
 
 from robinhood.portfolio import EquityHolding, OptionHolding
+
+# Simple in-process cache for yfinance spot prices used in BS valuation
+_SPOT_CACHE: Dict[str, Tuple[float, float]] = {}  # symbol -> (timestamp, price)
+_SPOT_CACHE_TTL = 120.0  # seconds
+
+
+def _get_spot_cached(symbol: str) -> Optional[float]:
+    """Fetch underlying spot price with a 2-minute cache."""
+    now = time.time()
+    if symbol in _SPOT_CACHE:
+        ts, price = _SPOT_CACHE[symbol]
+        if now - ts < _SPOT_CACHE_TTL:
+            return price
+    try:
+        import yfinance as yf
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period="1d")
+        if hist.empty:
+            return None
+        price = float(hist["Close"].iloc[-1])
+        _SPOT_CACHE[symbol] = (now, price)
+        return price
+    except Exception:
+        return None
+
+
+def _bs_option_price(S: float, K: float, T: float, sigma: float, option_type: str) -> float:
+    """Simplified Black-Scholes price for option valuation fallback.
+    Uses risk-free rate = 0.045 (approximate). Returns 0.0 on error."""
+    try:
+        from scipy.stats import norm
+        r = 0.045
+        if T <= 0:
+            # intrinsic value only
+            if option_type == "call":
+                return max(S - K, 0.0)
+            return max(K - S, 0.0)
+        d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
+        d2 = d1 - sigma * math.sqrt(T)
+        if option_type == "call":
+            return float(S * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2))
+        return float(K * math.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1))
+    except Exception:
+        return 0.0
+
+
+def _tte_years(expiry: str) -> float:
+    """Days to expiration as a year fraction. Returns 0 if already expired."""
+    if not expiry:
+        return 0.0
+    try:
+        exp_date = date.fromisoformat(expiry)
+        delta = (exp_date - date.today()).days
+        return max(delta / 365.0, 0.0)
+    except ValueError:
+        return 0.0
+
+
+def _enrich_option_market_values(positions: List[OptionHolding]) -> None:
+    """Populate market_value and unrealized_pnl on each OptionHolding in-place.
+
+    Strategy:
+    1. Try robin_stocks get_option_market_data_by_id for the mark price —
+       this is the most accurate source but requires one API call per unique
+       instrument URL (already fetched during position build, see below).
+    2. Fall back to Black-Scholes using yfinance spot + a fixed 60% IV
+       proxy if the Robinhood call fails or returns no mark price.
+
+    market_value is always positive (it's the current worth of the leg).
+    unrealized_pnl = market_value - abs(cost_basis)  for long legs (debit paid)
+                   = cost_basis - market_value        for short legs (credit received)
+    so that positive unrealized_pnl always means the position is profitable.
+    """
+    # Group by underlying so we fetch spot once per underlying
+    underlyings = {h.underlying for h in positions if h.underlying}
+
+    spot_map: Dict[str, Optional[float]] = {}
+    for sym in underlyings:
+        spot_map[sym] = _get_spot_cached(sym)
+
+    # Build a per-underlying HV map using yfinance for the BS fallback.
+    hv_map: Dict[str, float] = {}
+    for sym in underlyings:
+        try:
+            import yfinance as yf
+            import numpy as np
+            hist = yf.Ticker(sym).history(period="60d")
+            if len(hist) >= 10:
+                log_rets = np.log(hist["Close"] / hist["Close"].shift(1)).dropna()
+                hv_map[sym] = float(np.std(log_rets) * np.sqrt(252))
+        except Exception:
+            pass
+
+    for h in positions:
+        try:
+            T = _tte_years(h.expiry)
+            S = spot_map.get(h.underlying)
+            mark: Optional[float] = None
+
+            # Try BS fallback using spot + historical vol from yfinance
+            if S is not None and T >= 0:
+                # Use HV as IV proxy; floor at 15%, cap at 120% to avoid absurd values
+                sigma = max(0.15, min(hv_map.get(h.underlying, 0.40), 1.20))
+                bs_price = _bs_option_price(S, h.strike, T, sigma, h.side.lower())
+                mark = bs_price
+
+            if mark is None:
+                continue
+
+            # market_value = mark price per share × qty × 100
+            h.market_value = round(mark * h.quantity * 100.0, 2)
+            abs_cost = abs(h.cost_basis)
+            if h.position == "long":
+                h.unrealized_pnl = round(h.market_value - abs_cost, 2)
+            else:
+                # short: collected credit minus what it would cost to close
+                h.unrealized_pnl = round(abs_cost - h.market_value, 2)
+        except Exception:
+            continue
 
 load_dotenv()
 
@@ -135,7 +257,7 @@ def fetch_equity_positions(account: Optional[str] = None) -> Tuple[List[EquityHo
 
 
 def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHolding], Optional[str]]:
-    """Return current option positions. (holdings, error_message)."""
+    """Return current option positions with market values. (holdings, error_message)."""
     if not login():
         return [], "Robinhood credentials not configured"
 
@@ -161,6 +283,8 @@ def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHo
             strike = 0.0
             expiry = ""
             underlying = pos.get("chain_symbol") or ""
+            mark_price: Optional[float] = None
+
             if instrument_url:
                 try:
                     inst = rh.helper.request_get(instrument_url)
@@ -170,6 +294,19 @@ def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHo
                 except Exception:
                     pass
 
+            # Try to get the mark price directly from RH market data.
+            # adjusted_mark_price is per share (multiply by 100 × qty for total MV).
+            try:
+                opt_id = instrument_url.rstrip("/").split("/")[-1] if instrument_url else None
+                if opt_id:
+                    md = rh.options.get_option_market_data_by_id(opt_id)
+                    if md:
+                        mp = (md[0] if isinstance(md, list) else md).get("adjusted_mark_price")
+                        if mp is not None:
+                            mark_price = float(mp)
+            except Exception:
+                pass
+
             # robin_stocks returns avg_price per share (×100 for cost per contract).
             cost_per_contract = avg_price
             cost_basis = round(cost_per_contract * qty, 2)
@@ -177,6 +314,16 @@ def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHo
                 cost_basis = -abs(cost_basis)  # debit paid
             else:
                 cost_basis = abs(cost_basis)   # credit received
+
+            market_value: Optional[float] = None
+            unrealized_pnl: Optional[float] = None
+            if mark_price is not None:
+                market_value = round(mark_price * qty * 100.0, 2)
+                abs_cost = abs(cost_basis)
+                if position_dir == "long":
+                    unrealized_pnl = round(market_value - abs_cost, 2)
+                else:
+                    unrealized_pnl = round(abs_cost - market_value, 2)
 
             out.append(OptionHolding(
                 underlying=underlying,
@@ -189,10 +336,18 @@ def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHo
                 cost_basis=cost_basis,
                 realized_pnl=0.0,
                 account=tag,
+                market_value=market_value,
+                unrealized_pnl=unrealized_pnl,
             ))
         except (TypeError, ValueError):
             continue
     out.sort(key=lambda h: (h.underlying, h.expiry, h.side, h.strike))
+
+    # For any legs still missing market_value, use the BS fallback.
+    missing_mv = [h for h in out if h.market_value is None]
+    if missing_mv:
+        _enrich_option_market_values(missing_mv)
+
     return out, None
 
 

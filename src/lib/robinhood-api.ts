@@ -31,6 +31,8 @@ export interface RobinhoodOption {
   cost_basis: number;
   realized_pnl: number;
   account: string;
+  market_value?: number | null;
+  unrealized_pnl?: number | null;
 }
 
 export interface RobinhoodHoldingsResponse {
@@ -39,15 +41,19 @@ export interface RobinhoodHoldingsResponse {
 }
 
 export interface RobinhoodSummary {
-  cash_net_transfers: number;
+  cash_net_transfers: number;     // ACH net (CSV only; 0 in live mode)
   dividends_ytd: number;
   interest_ytd: number;
   fees_ytd: number;
   realized_pnl: number;
-  unrealized_pnl: number;
-  total_market_value: number;
-  total_invested: number;
+  unrealized_pnl: number;         // equity + option combined
+  total_market_value: number;     // equity market value only
+  total_invested: number;         // equity cost basis only
   unknown_basis_proceeds: number;
+  cash_balance: number;           // current cash in account (live mode)
+  option_market_value: number;    // sum of option leg market values
+  option_cost_basis: number;      // gross option cost basis
+  nav: number;                    // equity_mv + option_mv + cash_balance
 }
 
 export interface RobinhoodActivityRow {

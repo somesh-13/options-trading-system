@@ -76,19 +76,25 @@ class OptionHolding:
     cost_basis: float  # total; negative for long (debit paid), positive for short (credit received)
     realized_pnl: float
     account: str = "all"
+    market_value: Optional[float] = None    # current mark × qty × 100 (positive for both long/short)
+    unrealized_pnl: Optional[float] = None  # mark-to-market gain/loss vs cost_basis
 
 
 @dataclass
 class CashSummary:
-    cash_net_transfers: float   # ACH in minus ACH out
+    cash_net_transfers: float   # ACH in minus ACH out (CSV mode only; 0 in live mode)
     dividends_ytd: float
     interest_ytd: float
     fees_ytd: float
     realized_pnl: float
-    unrealized_pnl: float
-    total_market_value: float
+    unrealized_pnl: float       # equity + option unrealized P&L combined
+    total_market_value: float   # equity market value only
     total_invested: float       # absolute cost basis of currently-open equity positions
     unknown_basis_proceeds: float = 0.0  # cash received from sells of pre-CSV holdings (cost basis unknown)
+    cash_balance: float = 0.0   # current cash in the account (live mode: from broker; CSV: 0)
+    option_market_value: float = 0.0    # sum of option leg market values
+    option_cost_basis: float = 0.0      # net option cost basis (separate from equity total_invested)
+    nav: float = 0.0            # total_market_value + option_market_value + cash_balance
 
 
 @dataclass
@@ -501,11 +507,23 @@ def compute_summary(
             equity_unrealized += h.unrealized_pnl
 
     option_realized = sum(o.realized_pnl for o in options)
+    # Per-leg market_value is gross (always positive); for NAV we need the
+    # signed contribution: long legs are assets (+mv), short legs are
+    # liabilities to close (-mv).
+    option_market_value = sum(
+        ((o.market_value or 0.0) if o.position == "long" else -(o.market_value or 0.0))
+        for o in options
+    )
+    option_unrealized = sum((o.unrealized_pnl or 0.0) for o in options)
+    # Gross premium flowed across all legs (informational; not used in NAV).
+    option_cost_basis = sum(abs(o.cost_basis) for o in options)
     unknown_basis = 0.0
     if _last_ledger is not None:
         unknown_basis += sum(_last_ledger.unknown_basis_proceeds.values())
     if _last_option_ledger is not None:
         unknown_basis += abs(_last_option_ledger.unknown_basis_proceeds)
+
+    nav = round(equity_market_value + option_market_value, 2)  # CSV mode: cash_balance is 0
 
     return CashSummary(
         cash_net_transfers=round(transfers, 2),
@@ -513,10 +531,14 @@ def compute_summary(
         interest_ytd=round(interest, 2),
         fees_ytd=round(fees, 2),
         realized_pnl=round(equity_realized + option_realized, 2),
-        unrealized_pnl=round(equity_unrealized, 2),
+        unrealized_pnl=round(equity_unrealized + option_unrealized, 2),
         total_market_value=round(equity_market_value, 2),
         total_invested=round(total_invested, 2),
         unknown_basis_proceeds=round(unknown_basis, 2),
+        cash_balance=0.0,
+        option_market_value=round(option_market_value, 2),
+        option_cost_basis=round(option_cost_basis, 2),
+        nav=nav,
     )
 
 
@@ -544,7 +566,12 @@ def compute_live_holdings(account: Optional[str] = None) -> List[EquityHolding]:
 
 
 def compute_live_options(account: Optional[str] = None) -> List[OptionHolding]:
-    """Return option holdings from the latest live snapshot."""
+    """Return option holdings from the latest live snapshot.
+
+    If the stored snapshot pre-dates the market_value field (i.e. legs
+    have market_value=None), we apply a Black-Scholes fallback using
+    yfinance spot prices so that option MV is always present.
+    """
     row = latest_live_snapshot(account)
     if row is None:
         return []
@@ -552,9 +579,24 @@ def compute_live_options(account: Optional[str] = None) -> List[OptionHolding]:
     out: List[OptionHolding] = []
     for o in payload.get("options", []):
         try:
-            out.append(OptionHolding(**o))
+            # Drop unknown keys so OptionHolding(**o) doesn't blow up on
+            # future schema additions we haven't handled yet.
+            import dataclasses as _dc
+            known = {f.name for f in _dc.fields(OptionHolding)}
+            filtered = {k: v for k, v in o.items() if k in known}
+            out.append(OptionHolding(**filtered))
         except TypeError:
             continue
+
+    # Enrich any legs still missing market_value with the BS fallback.
+    missing = [h for h in out if h.market_value is None]
+    if missing:
+        try:
+            from brokers.robinhood_api import _enrich_option_market_values
+            _enrich_option_market_values(missing)
+        except Exception:
+            pass
+
     return out
 
 
@@ -568,26 +610,41 @@ def compute_live_summary(
     CSV does, so those fields are zero in live mode — callers that need
     them should fall back to the CSV-derived summary."""
     row = latest_live_snapshot(account)
-    cash_total = 0.0
+    cash_balance = 0.0
     if row is not None:
         payload = json.loads(row["payload_json"])
         acct = payload.get("account_summary") or {}
-        cash_total = float(acct.get("cash") or 0.0)
+        cash_balance = float(acct.get("cash") or 0.0)
 
-    market_value = sum((h.market_value or 0.0) for h in equities)
-    unrealized = sum((h.unrealized_pnl or 0.0) for h in equities)
+    equity_market_value = sum((h.market_value or 0.0) for h in equities)
+    equity_unrealized = sum((h.unrealized_pnl or 0.0) for h in equities)
     invested = sum(h.cost_basis for h in equities)
 
+    # Per-leg market_value is gross (always positive); sign-correct for NAV:
+    # long legs are assets (+mv), short legs are liabilities to close (-mv).
+    option_market_value = sum(
+        ((o.market_value or 0.0) if o.position == "long" else -(o.market_value or 0.0))
+        for o in options
+    )
+    option_unrealized = sum((o.unrealized_pnl or 0.0) for o in options)
+    option_cost_basis = sum(abs(o.cost_basis) for o in options)
+
+    nav = round(equity_market_value + option_market_value + cash_balance, 2)
+
     return CashSummary(
-        cash_net_transfers=round(cash_total, 2),
+        cash_net_transfers=0.0,  # not meaningful from live API; use cash_balance instead
         dividends_ytd=0.0,
         interest_ytd=0.0,
         fees_ytd=0.0,
         realized_pnl=0.0,  # not surfaced by live API
-        unrealized_pnl=round(unrealized, 2),
-        total_market_value=round(market_value, 2),
+        unrealized_pnl=round(equity_unrealized + option_unrealized, 2),
+        total_market_value=round(equity_market_value, 2),
         total_invested=round(invested, 2),
         unknown_basis_proceeds=0.0,
+        cash_balance=round(cash_balance, 2),
+        option_market_value=round(option_market_value, 2),
+        option_cost_basis=round(option_cost_basis, 2),
+        nav=nav,
     )
 
 

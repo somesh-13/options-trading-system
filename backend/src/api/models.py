@@ -399,6 +399,8 @@ class RobinhoodOption(BaseModel):
     cost_basis: float
     realized_pnl: float
     account: str = "all"
+    market_value: Optional[float] = None
+    unrealized_pnl: Optional[float] = None
 
 
 class RobinhoodHoldingsResponse(BaseModel):
@@ -407,15 +409,19 @@ class RobinhoodHoldingsResponse(BaseModel):
 
 
 class RobinhoodSummary(BaseModel):
-    cash_net_transfers: float
+    cash_net_transfers: float           # ACH net (CSV only; 0 in live mode)
     dividends_ytd: float
     interest_ytd: float
     fees_ytd: float
     realized_pnl: float
-    unrealized_pnl: float
-    total_market_value: float
-    total_invested: float
+    unrealized_pnl: float               # equity + option combined
+    total_market_value: float           # equity market value only
+    total_invested: float               # equity cost basis only
     unknown_basis_proceeds: float = 0.0
+    cash_balance: float = 0.0          # current cash in account (live mode)
+    option_market_value: float = 0.0   # sum of option leg market values
+    option_cost_basis: float = 0.0     # gross option cost basis (always positive)
+    nav: float = 0.0                   # equity_mv + option_mv + cash_balance
 
 
 class RobinhoodActivityRow(BaseModel):

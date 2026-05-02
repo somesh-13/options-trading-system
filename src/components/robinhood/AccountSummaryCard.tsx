@@ -1,6 +1,7 @@
 'use client';
 
 import type { RobinhoodSummary } from '@/lib/robinhood-api';
+import { InfoIcon } from '@/components/ui/InfoIcon';
 
 const fmt = (n: number | null | undefined, opts: Intl.NumberFormatOptions = {}) =>
   n == null
@@ -24,15 +25,10 @@ export function AccountSummaryCard({
 }) {
   const cls = (n: number | null | undefined) => (n == null ? '' : n > 0 ? 'rv-up' : n < 0 ? 'rv-dn' : '');
 
-  const nav =
-    summary == null
-      ? null
-      : summary.total_market_value + summary.cash_net_transfers - summary.total_invested;
-
   return (
     <div className="rv-card">
       <div className="rv-card-head">
-        <h3>NAV · {summary ? fmt(summary.total_market_value) : '—'}</h3>
+        <h3>NAV<InfoIcon term="nav" /> · {summary ? fmt(summary.nav || summary.total_market_value) : '—'}</h3>
         <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <span className="rv-chip">{accountLabel}</span>
           <span
@@ -57,35 +53,59 @@ export function AccountSummaryCard({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           gap: 10,
           marginTop: 4,
           fontFamily: "'JetBrains Mono', monospace",
         }}
       >
+        {/* Row 1 */}
         <div>
-          <div className="rv-sub" style={{ margin: 0 }}>Invested</div>
+          <div className="rv-sub" style={{ margin: 0 }}>
+            NAV<InfoIcon term="nav" />
+          </div>
+          <div className={cls(summary?.nav)}>
+            <b>{fmt(summary?.nav)}</b>
+          </div>
+          <div className="rv-sub" style={{ margin: 0 }}>equity + options + cash</div>
+        </div>
+        <div>
+          <div className="rv-sub" style={{ margin: 0 }}>
+            Equity MV<InfoIcon term="market-value" />
+          </div>
+          <div><b>{fmt(summary?.total_market_value)}</b></div>
+          <div className="rv-sub" style={{ margin: 0 }}>equity market value</div>
+        </div>
+        <div>
+          <div className="rv-sub" style={{ margin: 0 }}>
+            Option MV<InfoIcon term="market-value" />
+          </div>
+          <div><b>{fmt(summary?.option_market_value)}</b></div>
+          <div className="rv-sub" style={{ margin: 0 }}>option legs mark</div>
+        </div>
+        {/* Row 2 */}
+        <div>
+          <div className="rv-sub" style={{ margin: 0 }}>
+            Cash<InfoIcon term="cash-balance" />
+          </div>
+          <div><b>{fmt(summary?.cash_balance)}</b></div>
+          <div className="rv-sub" style={{ margin: 0 }}>account cash</div>
+        </div>
+        <div>
+          <div className="rv-sub" style={{ margin: 0 }}>
+            Invested<InfoIcon term="cost-basis" />
+          </div>
           <div><b>{fmt(summary?.total_invested)}</b></div>
           <div className="rv-sub" style={{ margin: 0 }}>equity cost basis</div>
         </div>
         <div>
-          <div className="rv-sub" style={{ margin: 0 }}>Unrealized</div>
+          <div className="rv-sub" style={{ margin: 0 }}>
+            Unrealized<InfoIcon term="unrealized-pnl" />
+          </div>
           <div className={cls(summary?.unrealized_pnl)}>
             <b>{fmtSigned(summary?.unrealized_pnl)}</b>
           </div>
-          <div className="rv-sub" style={{ margin: 0 }}>mark-to-market</div>
-        </div>
-        <div>
-          <div className="rv-sub" style={{ margin: 0 }}>Transfers</div>
-          <div><b>{fmtSigned(summary?.cash_net_transfers)}</b></div>
-          <div className="rv-sub" style={{ margin: 0 }}>ACH net</div>
-        </div>
-        <div>
-          <div className="rv-sub" style={{ margin: 0 }}>NAV est.</div>
-          <div className={cls(nav)}>
-            <b>{fmtSigned(nav)}</b>
-          </div>
-          <div className="rv-sub" style={{ margin: 0 }}>market + transfers − cost</div>
+          <div className="rv-sub" style={{ margin: 0 }}>equity + options</div>
         </div>
       </div>
     </div>

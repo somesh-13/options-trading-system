@@ -20,6 +20,8 @@ const ITEMS: RailItem[] = [
   { icon: '⊿', label: 'Backtest',   tooltip: 'Walk-forward backtesting',              href: '/backtest' },
   { icon: '∿', label: 'NLP',        tooltip: 'NLP sentiment from filings + news',     href: '/sentiment' },
   { icon: '◉', label: 'Agent',      tooltip: 'VegaEdge live agent (LLM)',             href: '/agent' },
+  { sep: true },
+  { icon: '?', label: 'Glossary',   tooltip: 'Glossary — plain-English definitions of every term', href: '/glossary' },
 ];
 
 export function LeftRail() {

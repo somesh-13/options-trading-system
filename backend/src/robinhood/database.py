@@ -133,7 +133,7 @@ def latest_live_snapshots_all() -> list:
     # Canonical tags we recognise; raw RH type names are excluded.
     # This prevents double-counting when the DB contains both old-style rows
     # (tagged 'margin'/'cash') and new-style rows (tagged 'brokerage'/'roth_ira').
-    _canonical = ("brokerage", "roth_ira", "traditional_ira")
+    _canonical = ("brokerage", "roth_ira", "traditional_ira", "crypto")
     placeholders = ",".join("?" * len(_canonical))
     cur = conn.execute(
         f"""

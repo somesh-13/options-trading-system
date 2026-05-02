@@ -6,6 +6,8 @@ import { HoldingsTable } from '@/components/robinhood/HoldingsTable';
 import { OptionsTable } from '@/components/robinhood/OptionsTable';
 import { ActivityTimeline } from '@/components/robinhood/ActivityTimeline';
 import { AnalyticsPanel } from '@/components/robinhood/AnalyticsPanel';
+import { CryptoTable } from '@/components/robinhood/CryptoTable';
+import { CryptoTradePanel } from '@/components/robinhood/CryptoTradePanel';
 import {
   getRobinhoodAccounts,
   getRobinhoodHoldings,
@@ -13,11 +15,13 @@ import {
   getRobinhoodActivity,
   getRobinhoodSyncStatus,
   triggerRobinhoodSync,
+  getCryptoPositions,
   type RobinhoodAccount,
   type RobinhoodHoldingsResponse,
   type RobinhoodSummary,
   type RobinhoodSyncStatus,
   type RobinhoodActivityRow,
+  type CryptoHolding,
 } from '@/lib/robinhood-api';
 
 const ACCOUNT_LABEL: Record<RobinhoodAccount, string> = {
@@ -29,10 +33,11 @@ const ACCOUNT_LABEL: Record<RobinhoodAccount, string> = {
 
 const TAB_ORDER: RobinhoodAccount[] = ['all', 'brokerage', 'roth_ira', 'sofi'];
 
-type View = 'portfolio' | 'analytics';
+type View = 'portfolio' | 'analytics' | 'crypto';
 const VIEW_TABS: Array<{ key: View; label: string }> = [
   { key: 'portfolio', label: 'Portfolio' },
   { key: 'analytics', label: 'Analytics' },
+  { key: 'crypto', label: 'Crypto' },
 ];
 
 // Polling cadences (ms)
@@ -77,6 +82,7 @@ export default function RobinhoodPage() {
   const [summary, setSummary] = useState<RobinhoodSummary | null>(null);
   const [activity, setActivity] = useState<RobinhoodActivityRow[]>([]);
   const [syncStatus, setSyncStatus] = useState<RobinhoodSyncStatus | null>(null);
+  const [cryptoHoldings, setCryptoHoldings] = useState<CryptoHolding[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -107,6 +113,16 @@ export default function RobinhoodPage() {
     },
     [],
   );
+
+  // Separate loader for crypto (not account-scoped).
+  const loadCrypto = useCallback(async () => {
+    try {
+      const c = await getCryptoPositions();
+      setCryptoHoldings(c);
+    } catch {
+      /* swallow — crypto tab shows empty state */
+    }
+  }, []);
 
   // Lighter refresh: only holdings + summary, no activity (which doesn't change often).
   const refreshLive = useCallback(
@@ -195,6 +211,11 @@ export default function RobinhoodPage() {
     load(account);
   }, [load, account]);
 
+  // Load crypto once on mount (not account-scoped).
+  useEffect(() => {
+    loadCrypto();
+  }, [loadCrypto]);
+
   // Polling: sync-status every 60s, holdings/summary every 30s.
   // Pause when tab is hidden, fire one immediate refresh on refocus.
   useEffect(() => {
@@ -259,6 +280,7 @@ export default function RobinhoodPage() {
 
   const equityCount = holdings?.equities.length ?? 0;
   const optionCount = holdings?.options.length ?? 0;
+  const cryptoCount = cryptoHoldings.length;
   const visibleTabs = TAB_ORDER.filter(
     (t) => t === 'all' || availableAccounts.includes(t),
   );
@@ -280,7 +302,7 @@ export default function RobinhoodPage() {
       >
         <h2 className="rv-h1" style={{ margin: 0 }}>Robinhood</h2>
         <span className="rv-sub" style={{ margin: 0 }}>
-          {equityCount} equities · {optionCount} option legs · {activity.length} recent events
+          {equityCount} equities · {optionCount} option legs · {cryptoCount} crypto · {activity.length} recent events
         </span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           <span
@@ -505,7 +527,7 @@ export default function RobinhoodPage() {
         </div>
       )}
 
-      {view === 'portfolio' ? (
+      {view === 'portfolio' && (
         <>
           <div style={{ marginBottom: 12 }}>
             <AccountSummaryCard
@@ -527,13 +549,26 @@ export default function RobinhoodPage() {
             <ActivityTimeline rows={activity} />
           </div>
         </>
-      ) : (
+      )}
+
+      {view === 'analytics' && (
         <div style={{ marginBottom: 12 }}>
           <AnalyticsPanel
             account={account}
             tickers={(holdings?.equities ?? []).map((e) => e.symbol)}
           />
         </div>
+      )}
+
+      {view === 'crypto' && (
+        <>
+          <div style={{ marginBottom: 12 }}>
+            <CryptoTable holdings={cryptoHoldings} />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <CryptoTradePanel holdings={cryptoHoldings} />
+          </div>
+        </>
       )}
     </>
   );

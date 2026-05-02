@@ -30,11 +30,36 @@ from typing import Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
 
-from robinhood.portfolio import EquityHolding, OptionHolding
+from robinhood.portfolio import CryptoHolding, EquityHolding, OptionHolding
 
 # Simple in-process cache for yfinance spot prices used in BS valuation
 _SPOT_CACHE: Dict[str, Tuple[float, float]] = {}  # symbol -> (timestamp, price)
 _SPOT_CACHE_TTL = 120.0  # seconds
+
+# Cache for crypto quotes (60s TTL — crypto trades 24/7 so a shorter TTL is fine)
+_CRYPTO_QUOTE_CACHE: Dict[str, Tuple[float, float]] = {}  # symbol -> (timestamp, price)
+CRYPTO_CACHE_TTL = 60.0  # seconds
+
+
+def _get_crypto_quote_cached(symbol: str) -> Optional[float]:
+    """Fetch crypto mark price with a 60-second in-process cache."""
+    now = time.time()
+    if symbol in _CRYPTO_QUOTE_CACHE:
+        ts, price = _CRYPTO_QUOTE_CACHE[symbol]
+        if now - ts < CRYPTO_CACHE_TTL:
+            return price
+    try:
+        import robin_stocks.robinhood as rh
+        data = rh.crypto.get_crypto_quote(symbol)
+        if data:
+            mark = data.get("mark_price") or data.get("last_trade_price")
+            if mark is not None:
+                price = float(mark)
+                _CRYPTO_QUOTE_CACHE[symbol] = (now, price)
+                return price
+    except Exception:
+        pass
+    return None
 
 
 def _get_spot_cached(symbol: str) -> Optional[float]:
@@ -454,6 +479,89 @@ def _fetch_option_positions_for_account(
     if missing_mv:
         _enrich_option_market_values(missing_mv)
 
+    return out, None
+
+
+def fetch_crypto_positions() -> Tuple[List[CryptoHolding], Optional[str]]:
+    """Fetch all open crypto positions from Robinhood.
+
+    Uses r.crypto.get_crypto_positions() to enumerate held coins.
+    For each position with quantity > 0 the current mark price is fetched
+    via _get_crypto_quote_cached (60-second TTL).
+
+    Returns (holdings, error_message). Error is None on success.
+    """
+    if not login():
+        return [], "Robinhood credentials not configured"
+
+    import robin_stocks.robinhood as rh
+
+    try:
+        raw = rh.crypto.get_crypto_positions() or []
+    except Exception as exc:  # noqa: BLE001
+        return [], f"get_crypto_positions failed: {exc}"
+
+    out: List[CryptoHolding] = []
+    for pos in raw:
+        if not pos:
+            continue
+        try:
+            # Quantity: robin_stocks exposes 'quantity' and 'quantity_available'.
+            # Use 'quantity' (total owned) since we want full holdings.
+            qty = float(pos.get("quantity") or pos.get("quantity_available") or 0.0)
+            if qty <= 1e-10:
+                continue
+
+            # Symbol: nested under currency.code
+            currency = pos.get("currency") or {}
+            code = currency.get("code") or pos.get("code") or ""
+            if not code:
+                continue
+
+            # Cost basis: Robinhood returns cost_bases as a list of dicts.
+            # The actual cost field is 'direct_cost_basis' (total USD paid for
+            # the lot); there is also 'intraday_cost_basis' and 'marked_cost_basis'
+            # but direct_cost_basis is the settled, confirmed cost.
+            cost_basis_total = 0.0
+            cost_bases = pos.get("cost_bases") or []
+            for lot in cost_bases:
+                # Try the real field names first, then fall back to legacy names.
+                v = (
+                    lot.get("direct_cost_basis")
+                    or lot.get("cost_basis")
+                    or lot.get("cost_basis_collected")
+                    or 0.0
+                )
+                try:
+                    cost_basis_total += float(v)
+                except (TypeError, ValueError):
+                    pass
+
+            avg_cost = cost_basis_total / qty if qty else 0.0
+
+            # Current mark price
+            current_price = _get_crypto_quote_cached(code)
+            market_value = round(current_price * qty, 2) if current_price is not None else None
+            unrealized_pnl = (
+                round(market_value - cost_basis_total, 2)
+                if market_value is not None
+                else None
+            )
+
+            out.append(CryptoHolding(
+                symbol=code,
+                quantity=round(qty, 8),
+                avg_cost=round(avg_cost, 4),
+                cost_basis=round(cost_basis_total, 2),
+                current_price=round(current_price, 4) if current_price is not None else None,
+                market_value=market_value,
+                unrealized_pnl=unrealized_pnl,
+                account="crypto",
+            ))
+        except (TypeError, ValueError):
+            continue
+
+    out.sort(key=lambda h: -(h.market_value or 0.0))
     return out, None
 
 

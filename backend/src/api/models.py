@@ -470,3 +470,55 @@ class RobinhoodSyncStatus(BaseModel):
     stale: bool = False
     error: Optional[str] = None
     configured: bool = False  # are RH credentials present in the env
+
+
+# === Crypto Models ===
+
+class CryptoHoldingResponse(BaseModel):
+    """A single crypto position."""
+    symbol: str
+    quantity: float
+    avg_cost: float
+    cost_basis: float
+    current_price: Optional[float] = None
+    market_value: Optional[float] = None
+    unrealized_pnl: Optional[float] = None
+    account: str = "crypto"
+
+
+class CryptoQuoteResponse(BaseModel):
+    """Mark price for a crypto symbol."""
+    symbol: str
+    mark_price: Optional[float] = None
+    error: Optional[str] = None
+
+
+# Hard cap: no single test order may exceed this notional in USD.
+CRYPTO_ORDER_NOTIONAL_CAP_USD: float = 50.0
+
+
+class CryptoOrderRequest(BaseModel):
+    """Request to place (or simulate) a crypto order via Robinhood.
+
+    SAFETY:
+      - dry_run MUST default to True.  When True the order is simulated only.
+      - Live orders (dry_run=False) require confirm=True AND notional_usd <= $50.
+    """
+    symbol: str = Field(..., description="Crypto ticker, e.g. 'BTC'")
+    side: Literal["buy", "sell"] = Field(..., description="buy or sell")
+    notional_usd: float = Field(..., gt=0, description="Dollar amount to buy/sell")
+    dry_run: bool = Field(True, description="When True, simulate only — do NOT touch real orders")
+    confirm: bool = Field(False, description="Must be True for live orders (belt-and-braces)")
+
+
+class CryptoOrderResponse(BaseModel):
+    """Response from a crypto order attempt."""
+    order_id: str
+    symbol: str
+    side: str
+    notional_usd: float
+    quantity: Optional[float] = None
+    mark_price: Optional[float] = None
+    dry_run: bool
+    status: str
+    message: Optional[str] = None

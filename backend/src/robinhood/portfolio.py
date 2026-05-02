@@ -98,6 +98,18 @@ class CashSummary:
 
 
 @dataclass
+class CryptoHolding:
+    symbol: str
+    quantity: float
+    avg_cost: float
+    cost_basis: float
+    current_price: Optional[float] = None
+    market_value: Optional[float] = None
+    unrealized_pnl: Optional[float] = None
+    account: str = "crypto"
+
+
+@dataclass
 class ActivityRowDTO:
     activity_date: str
     process_date: Optional[str]
@@ -711,13 +723,40 @@ def serialize_live_snapshot(
     equities: List[EquityHolding],
     options: List[OptionHolding],
     account_summary: Optional[dict] = None,
+    crypto: Optional[List["CryptoHolding"]] = None,
 ) -> str:
     """Serialize live data to JSON for storage in robinhood_live_snapshot.payload_json."""
-    return json.dumps({
+    payload: dict = {
         "equities": [asdict(h) for h in equities],
         "options": [asdict(h) for h in options],
         "account_summary": account_summary or {},
-    })
+    }
+    if crypto is not None:
+        payload["crypto"] = [asdict(h) for h in crypto]
+    return json.dumps(payload)
+
+
+def _crypto_from_snapshot_row(row) -> "List[CryptoHolding]":
+    """Deserialise CryptoHolding objects from one snapshot DB row."""
+    payload = _safe_load_payload(row)
+    out: List[CryptoHolding] = []
+    for h in payload.get("crypto", []):
+        try:
+            out.append(CryptoHolding(**h))
+        except TypeError:
+            continue
+    return out
+
+
+def compute_live_crypto(account: Optional[str] = "crypto") -> "List[CryptoHolding]":
+    """Return crypto holdings from the latest live snapshot tagged 'crypto'.
+
+    Returns an empty list if no crypto snapshot exists yet.
+    """
+    row = latest_live_snapshot(account or "crypto")
+    if row is None:
+        return []
+    return _crypto_from_snapshot_row(row)
 
 
 # --- activity timeline ----------------------------------------------------

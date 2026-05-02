@@ -172,3 +172,72 @@ export function getRobinhoodSyncStatus(account: RobinhoodAccount = 'all'): Promi
   if (account !== 'all') q.set('account', account);
   return getJson(`/api/robinhood/sync/status${q.toString() ? `?${q}` : ''}`);
 }
+
+// ============================
+// Crypto interfaces + client
+// ============================
+
+export interface CryptoHolding {
+  symbol: string;
+  quantity: number;
+  avg_cost: number;
+  cost_basis: number;
+  current_price?: number | null;
+  market_value?: number | null;
+  unrealized_pnl?: number | null;
+  account: string;
+}
+
+export interface CryptoQuote {
+  symbol: string;
+  mark_price?: number | null;
+  error?: string | null;
+}
+
+export interface CryptoOrderRequest {
+  symbol: string;
+  side: 'buy' | 'sell';
+  notional_usd: number;
+  dry_run: boolean;
+  confirm: boolean;
+}
+
+export interface CryptoOrderResponse {
+  order_id: string;
+  symbol: string;
+  side: string;
+  notional_usd: number;
+  quantity?: number | null;
+  mark_price?: number | null;
+  dry_run: boolean;
+  status: string;
+  message?: string | null;
+}
+
+export function getCryptoPositions(account = 'crypto'): Promise<CryptoHolding[]> {
+  return getJson(`/api/robinhood/crypto/positions?account=${encodeURIComponent(account)}`);
+}
+
+export function getCryptoQuote(symbol: string): Promise<CryptoQuote> {
+  return getJson(`/api/robinhood/crypto/quote/${encodeURIComponent(symbol.toUpperCase())}`);
+}
+
+export async function placeCryptoOrder(req: CryptoOrderRequest): Promise<CryptoOrderResponse> {
+  const res = await fetch(`${PRICING_API_URL}/api/robinhood/crypto/order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = body.detail;
+    } catch {
+      /* non-JSON body */
+    }
+    throw new Error(detail);
+  }
+  return res.json() as Promise<CryptoOrderResponse>;
+}

@@ -62,6 +62,11 @@ from api.models import (
     RobinhoodAccountsResponse,
     RobinhoodSyncResponse,
     RobinhoodSyncStatus,
+    CryptoHoldingResponse,
+    CryptoQuoteResponse,
+    CryptoOrderRequest,
+    CryptoOrderResponse,
+    CRYPTO_ORDER_NOTIONAL_CAP_USD,
 )
 
 # Robinhood activity ingestion + portfolio derivation.
@@ -1621,6 +1626,25 @@ def robinhood_sync(account: Optional[str] = None):
             total_eq += len(eq_list)
             total_opt += len(opt_list)
 
+        # Also sync crypto positions into a separate snapshot row tagged "crypto".
+        try:
+            crypto_holdings, crypto_err = rh_api.fetch_crypto_positions()
+            if crypto_err and first_error is None:
+                first_error = crypto_err
+            crypto_payload = rh_portfolio.serialize_live_snapshot([], [], {}, crypto=crypto_holdings)
+            crypto_snap_id = rh_db.write_live_snapshot(
+                fetched_at=fetched_at,
+                account="crypto",
+                payload_json=crypto_payload,
+                stale=False,
+                error=crypto_err,
+            )
+            last_snapshot_id = crypto_snap_id
+        except Exception as _crypto_exc:  # noqa: BLE001
+            import logging as _log
+            _log.getLogger(__name__).warning("Crypto sync failed: %s", _crypto_exc)
+            crypto_holdings = []
+
         return RobinhoodSyncResponse(
             ok=first_error is None,
             fetched_at=fetched_at,
@@ -1822,6 +1846,174 @@ def robinhood_drawdown(account: str = "all", limit: float = 0.10):
         return rh_analytics.drawdown_for_account(account, limit=limit)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"Drawdown check failed: {exc}")
+
+
+# =============================================
+# Robinhood Crypto endpoints
+# =============================================
+
+@app.get("/api/robinhood/crypto/positions", response_model=List[CryptoHoldingResponse])
+def robinhood_crypto_positions(account: str = "crypto"):
+    """Return crypto holdings from the latest robinhood_live_snapshot tagged 'crypto'.
+
+    Returns an empty list if no crypto sync has been run yet.
+    Trigger a sync first via POST /api/robinhood/sync.
+    """
+    holdings = rh_portfolio.compute_live_crypto(account)
+    return [CryptoHoldingResponse(**h.__dict__) for h in holdings]
+
+
+@app.get("/api/robinhood/crypto/quote/{symbol}", response_model=CryptoQuoteResponse)
+def robinhood_crypto_quote(symbol: str):
+    """Fetch live mark price for a crypto symbol via Robinhood."""
+    from brokers import robinhood_api as rh_api
+    sym = symbol.upper().strip()
+    if not rh_api._is_configured():
+        return CryptoQuoteResponse(symbol=sym, error="Robinhood credentials not configured")
+    if not rh_api.login():
+        return CryptoQuoteResponse(symbol=sym, error="Robinhood login failed")
+    try:
+        import robin_stocks.robinhood as rh
+        data = rh.crypto.get_crypto_quote(sym) or {}
+        mark = data.get("mark_price") or data.get("last_trade_price")
+        price = float(mark) if mark is not None else None
+        # Invalidate cache so this fresh fetch is stored.
+        import time as _time
+        rh_api._CRYPTO_QUOTE_CACHE[sym] = (_time.time(), price) if price is not None else rh_api._CRYPTO_QUOTE_CACHE.get(sym, (0, None))
+        return CryptoQuoteResponse(symbol=sym, mark_price=price)
+    except Exception as exc:  # noqa: BLE001
+        return CryptoQuoteResponse(symbol=sym, error=str(exc))
+
+
+@app.post("/api/robinhood/crypto/order", response_model=CryptoOrderResponse)
+def robinhood_crypto_order(req: CryptoOrderRequest):
+    """Place or simulate a crypto order.
+
+    SAFETY CONSTRAINTS (enforced in order):
+      1. dry_run=True (default) → returns a simulated order, NEVER calls robin_stocks
+         order functions.
+      2. Live orders (dry_run=False) MUST have confirm=True.
+      3. Live orders MUST have notional_usd ≤ CRYPTO_ORDER_NOTIONAL_CAP_USD ($50).
+
+    Every attempt (dry-run AND live) is logged to the backend logger with full params.
+    """
+    import logging as _logging
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from brokers import robinhood_api as rh_api
+
+    logger = _logging.getLogger("crypto_order")
+
+    sym = req.symbol.upper().strip()
+    attempt_ts = datetime.now(timezone.utc).isoformat()
+
+    # --- Validate notional cap (applies to ALL requests, including dry-run, as
+    #     an extra sanity guard; required for live orders specifically) ---
+    if req.notional_usd > CRYPTO_ORDER_NOTIONAL_CAP_USD:
+        logger.warning(
+            "crypto_order REJECTED notional_cap",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "notional_usd": req.notional_usd, "dry_run": req.dry_run,
+                "reason": f"notional {req.notional_usd} > cap {CRYPTO_ORDER_NOTIONAL_CAP_USD}",
+            },
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"notional_usd {req.notional_usd} exceeds per-order cap of ${CRYPTO_ORDER_NOTIONAL_CAP_USD}",
+        )
+
+    # --- Dry-run path: simulate only ---
+    if req.dry_run:
+        mark_price: Optional[float] = None
+        qty: Optional[float] = None
+        if rh_api._is_configured() and rh_api.login():
+            mark_price = rh_api._get_crypto_quote_cached(sym)
+        if mark_price and mark_price > 0:
+            qty = round(req.notional_usd / mark_price, 8)
+        stub_id = f"DRY-RUN-{str(_uuid.uuid4()).upper()[:16]}"
+        logger.info(
+            "crypto_order DRY_RUN",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "notional_usd": req.notional_usd, "dry_run": True,
+                "mark_price": mark_price, "quantity": qty, "order_id": stub_id,
+            },
+        )
+        return CryptoOrderResponse(
+            order_id=stub_id,
+            symbol=sym,
+            side=req.side,
+            notional_usd=req.notional_usd,
+            quantity=qty,
+            mark_price=mark_price,
+            dry_run=True,
+            status="simulated",
+            message=f"DRY RUN — no real order was placed. Mark price: {mark_price}",
+        )
+
+    # --- Live order path ---
+    # Require explicit confirmation flag.
+    if not req.confirm:
+        logger.warning(
+            "crypto_order REJECTED no_confirm",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "notional_usd": req.notional_usd, "dry_run": False,
+            },
+        )
+        raise HTTPException(status_code=400, detail="confirm flag required for live orders")
+
+    if not rh_api._is_configured():
+        raise HTTPException(status_code=503, detail="Robinhood credentials not configured")
+    if not rh_api.login():
+        raise HTTPException(status_code=503, detail="Robinhood login failed")
+
+    import robin_stocks.robinhood as rh
+
+    try:
+        if req.side == "buy":
+            result = rh.orders.order_buy_crypto_by_price(sym, req.notional_usd)
+        else:
+            result = rh.orders.order_sell_crypto_by_price(sym, req.notional_usd)
+    except Exception as exc:  # noqa: BLE001
+        logger.error(
+            "crypto_order LIVE_ERROR",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "notional_usd": req.notional_usd, "dry_run": False,
+                "error": str(exc),
+            },
+        )
+        raise HTTPException(status_code=500, detail=f"Order placement failed: {exc}")
+
+    order_id = (result or {}).get("id") or str(_uuid.uuid4())
+    status = (result or {}).get("state") or "submitted"
+
+    # Fetch current mark for the response
+    mark_price = rh_api._get_crypto_quote_cached(sym)
+    qty = round(req.notional_usd / mark_price, 8) if mark_price and mark_price > 0 else None
+
+    logger.info(
+        "crypto_order LIVE_PLACED",
+        extra={
+            "ts": attempt_ts, "symbol": sym, "side": req.side,
+            "notional_usd": req.notional_usd, "dry_run": False, "confirm": req.confirm,
+            "order_id": order_id, "status": status, "mark_price": mark_price,
+        },
+    )
+
+    return CryptoOrderResponse(
+        order_id=str(order_id),
+        symbol=sym,
+        side=req.side,
+        notional_usd=req.notional_usd,
+        quantity=qty,
+        mark_price=mark_price,
+        dry_run=False,
+        status=status,
+        message=f"Order {order_id} submitted. Check the Robinhood app for status.",
+    )
 
 
 # =============================================

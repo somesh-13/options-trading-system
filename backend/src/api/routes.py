@@ -1991,12 +1991,53 @@ def robinhood_crypto_order(req: CryptoOrderRequest):
         )
         raise HTTPException(status_code=500, detail=f"Order placement failed: {exc}")
 
-    order_id = (result or {}).get("id") or str(_uuid.uuid4())
-    status = (result or {}).get("state") or "submitted"
+    # IMPORTANT: robin_stocks returns the raw broker response. On success the
+    # dict has {"id": "<uuid>", "state": "...", ...}. On REJECTION it returns
+    # the broker's error envelope instead — typically containing one or more
+    # of: non_field_errors, detail, reject_reason, buying_power, account, etc.
+    # Detect those and surface the failure honestly. The earlier version of
+    # this code fabricated a UUID + "submitted" status when `id` was missing,
+    # which silently masked rejected orders.
+    if not isinstance(result, dict) or not result.get("id"):
+        # Try to extract a useful error message from common RH error shapes.
+        error_msg = "Order rejected by Robinhood (no order id returned)"
+        if isinstance(result, dict):
+            if result.get("non_field_errors"):
+                error_msg = "; ".join(str(e) for e in result["non_field_errors"])
+            elif result.get("detail"):
+                error_msg = str(result["detail"])
+            elif result.get("reject_reason"):
+                error_msg = f"reject_reason: {result['reject_reason']}"
+            else:
+                # Surface whatever fields the broker did return so the user can debug
+                error_msg = f"Unexpected response: {result}"
+        elif result is None:
+            error_msg = "Robinhood returned no response (rate-limited or timeout)"
+
+        logger.error(
+            "crypto_order LIVE_REJECTED",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "notional_usd": req.notional_usd, "dry_run": False,
+                "raw_response": result, "error": error_msg,
+            },
+        )
+        raise HTTPException(
+            status_code=422,
+            detail=f"Order rejected: {error_msg}",
+        )
+
+    order_id = str(result["id"])
+    status = result.get("state") or "submitted"
+    filled_quantity = result.get("quantity")
 
     # Fetch current mark for the response
     mark_price = rh_api._get_crypto_quote_cached(sym)
-    qty = round(req.notional_usd / mark_price, 8) if mark_price and mark_price > 0 else None
+    qty = (
+        float(filled_quantity)
+        if filled_quantity is not None
+        else (round(req.notional_usd / mark_price, 8) if mark_price and mark_price > 0 else None)
+    )
 
     logger.info(
         "crypto_order LIVE_PLACED",
@@ -2004,6 +2045,7 @@ def robinhood_crypto_order(req: CryptoOrderRequest):
             "ts": attempt_ts, "symbol": sym, "side": req.side,
             "notional_usd": req.notional_usd, "dry_run": False, "confirm": req.confirm,
             "order_id": order_id, "status": status, "mark_price": mark_price,
+            "raw_response": result,
         },
     )
 

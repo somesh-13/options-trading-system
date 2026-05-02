@@ -84,7 +84,12 @@ def ensure_schema() -> None:
 
 def latest_live_snapshot(account: Optional[str] = None) -> Optional[sqlite3.Row]:
     """Return the most recent successful live snapshot row for `account`
-    (or any account if None). Returns None if there are no snapshots."""
+    (or any account if None). Returns None if there are no snapshots.
+
+    When account is None or 'all', returns the single most-recent row across
+    all accounts (legacy behaviour, kept for callers that still want one row).
+    Use latest_live_snapshots_all() to get one row per account tag.
+    """
     conn = get_conn()
     if account and account != "all":
         cur = conn.execute(
@@ -104,6 +109,44 @@ def latest_live_snapshot(account: Optional[str] = None) -> Optional[sqlite3.Row]
             """
         )
     return cur.fetchone()
+
+
+def latest_live_snapshots_all() -> list:
+    """Return the most recent successful snapshot row for *each* distinct
+    canonical account tag that has been synced. Used to build the merged 'all' view.
+
+    Only returns rows whose account tag is one of the canonical internal names
+    (brokerage, roth_ira, traditional_ira, etc.) — raw Robinhood type strings
+    like 'margin', 'cash', 'individual' are excluded so stale pre-migration rows
+    don't pollute the merge.
+
+    Returns a list of sqlite3.Row objects (one per canonical account tag).
+    """
+    conn = get_conn()
+    # Canonical tags we recognise; raw RH type names are excluded.
+    # This prevents double-counting when the DB contains both old-style rows
+    # (tagged 'margin'/'cash') and new-style rows (tagged 'brokerage'/'roth_ira').
+    _canonical = ("brokerage", "roth_ira", "traditional_ira")
+    placeholders = ",".join("?" * len(_canonical))
+    cur = conn.execute(
+        f"""
+        SELECT s.*
+        FROM robinhood_live_snapshot s
+        INNER JOIN (
+            SELECT account, MAX(fetched_at) AS max_fetched
+            FROM robinhood_live_snapshot
+            WHERE error IS NULL
+              AND account IS NOT NULL
+              AND account != 'all'
+              AND account IN ({placeholders})
+            GROUP BY account
+        ) latest ON s.account = latest.account AND s.fetched_at = latest.max_fetched
+        WHERE s.error IS NULL
+        ORDER BY s.account
+        """,
+        _canonical,
+    )
+    return cur.fetchall()
 
 
 def write_live_snapshot(

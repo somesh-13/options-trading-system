@@ -1564,11 +1564,16 @@ def robinhood_ingest():
 
 @app.post("/api/robinhood/sync", response_model=RobinhoodSyncResponse)
 def robinhood_sync(account: Optional[str] = None):
-    """Pull live positions from the Robinhood API and persist a snapshot.
+    """Pull live positions from ALL Robinhood accounts and persist one snapshot per account.
+
+    When `account` is omitted (the normal case) every account the user has
+    (brokerage, Roth IRA, …) is fetched and stored in separate
+    robinhood_live_snapshot rows tagged by their internal account name.
+    When a specific account tag is passed only that account is fetched
+    (useful for targeted re-syncs).
 
     Reads ROBINHOOD_USERNAME / ROBINHOOD_PASSWORD / ROBINHOOD_TOTP_SECRET
-    from the environment. Writes a row to robinhood_live_snapshot. Falls
-    back to the previous snapshot (with stale=True) if the API call fails.
+    from the environment.
     """
     from datetime import datetime, timezone
     from brokers import robinhood_api as rh_api
@@ -1583,6 +1588,51 @@ def robinhood_sync(account: Optional[str] = None):
             error="ROBINHOOD_USERNAME / ROBINHOOD_PASSWORD not set in .env.local",
         )
 
+    # --- Full multi-account sync (default path) ---
+    if not account:
+        equities_by_tag, options_by_tag, summaries_by_tag, first_error = \
+            rh_api.fetch_all_accounts_positions()
+
+        if not equities_by_tag and not options_by_tag:
+            # Nothing came back at all — likely a credentials/network failure.
+            return RobinhoodSyncResponse(
+                ok=False,
+                fetched_at=fetched_at,
+                account=None,
+                error=first_error or "fetch_all_accounts_positions returned empty",
+            )
+
+        total_eq = 0
+        total_opt = 0
+        last_snapshot_id = 0
+        for tag in set(list(equities_by_tag.keys()) + list(options_by_tag.keys())):
+            eq_list = equities_by_tag.get(tag, [])
+            opt_list = options_by_tag.get(tag, [])
+            summary = summaries_by_tag.get(tag, {})
+            payload_json = rh_portfolio.serialize_live_snapshot(eq_list, opt_list, summary)
+            snap_id = rh_db.write_live_snapshot(
+                fetched_at=fetched_at,
+                account=tag,
+                payload_json=payload_json,
+                stale=False,
+                error=None,
+            )
+            last_snapshot_id = snap_id
+            total_eq += len(eq_list)
+            total_opt += len(opt_list)
+
+        return RobinhoodSyncResponse(
+            ok=first_error is None,
+            fetched_at=fetched_at,
+            account="all",
+            equities_count=total_eq,
+            options_count=total_opt,
+            snapshot_id=last_snapshot_id,
+            stale=False,
+            error=first_error,
+        )
+
+    # --- Single-account targeted sync ---
     equities, eq_err = rh_api.fetch_equity_positions(account)
     options, op_err = rh_api.fetch_option_positions(account)
     summary, sm_err = rh_api.fetch_account_summary()

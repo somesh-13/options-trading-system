@@ -9,7 +9,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from typing import Dict, List, Optional
 
-from .database import get_conn, latest_live_snapshot
+from .database import get_conn, latest_live_snapshot, latest_live_snapshots_all
 from .parser import parse_option_description
 
 
@@ -544,17 +544,8 @@ def compute_summary(
 
 # --- live snapshot views (Robinhood API source) ---------------------------
 
-def compute_live_holdings(account: Optional[str] = None) -> List[EquityHolding]:
-    """Return equity holdings from the latest robinhood_live_snapshot row.
-
-    Returns an empty list if no snapshot exists yet. The snapshot's
-    `equities` array carries the same EquityHolding shape — current_price
-    and market_value are already populated by the API fetch, so we don't
-    need to call yfinance for live data (callers can still re-enrich).
-    """
-    row = latest_live_snapshot(account)
-    if row is None:
-        return []
+def _equities_from_snapshot_row(row) -> List[EquityHolding]:
+    """Deserialise EquityHolding objects from one snapshot DB row."""
     payload = json.loads(row["payload_json"])
     out: List[EquityHolding] = []
     for h in payload.get("equities", []):
@@ -565,28 +556,71 @@ def compute_live_holdings(account: Optional[str] = None) -> List[EquityHolding]:
     return out
 
 
-def compute_live_options(account: Optional[str] = None) -> List[OptionHolding]:
-    """Return option holdings from the latest live snapshot.
-
-    If the stored snapshot pre-dates the market_value field (i.e. legs
-    have market_value=None), we apply a Black-Scholes fallback using
-    yfinance spot prices so that option MV is always present.
-    """
-    row = latest_live_snapshot(account)
-    if row is None:
-        return []
+def _options_from_snapshot_row(row) -> List[OptionHolding]:
+    """Deserialise OptionHolding objects from one snapshot DB row."""
+    import dataclasses as _dc
+    known = {f.name for f in _dc.fields(OptionHolding)}
     payload = json.loads(row["payload_json"])
     out: List[OptionHolding] = []
     for o in payload.get("options", []):
         try:
-            # Drop unknown keys so OptionHolding(**o) doesn't blow up on
-            # future schema additions we haven't handled yet.
-            import dataclasses as _dc
-            known = {f.name for f in _dc.fields(OptionHolding)}
             filtered = {k: v for k, v in o.items() if k in known}
             out.append(OptionHolding(**filtered))
         except TypeError:
             continue
+    return out
+
+
+def compute_live_holdings(account: Optional[str] = None) -> List[EquityHolding]:
+    """Return equity holdings from the latest robinhood_live_snapshot row(s).
+
+    When account is None or 'all', merges the most recent snapshot for every
+    distinct account tag so Roth IRA + brokerage positions are both returned.
+    Returns an empty list if no snapshots exist yet.
+    """
+    if not account or account == "all":
+        rows = latest_live_snapshots_all()
+        if not rows:
+            # Fall back to legacy single-row query in case only an 'all'
+            # tagged row exists (pre-migration snapshots).
+            row = latest_live_snapshot(None)
+            if row is None:
+                return []
+            return _equities_from_snapshot_row(row)
+        out: List[EquityHolding] = []
+        for row in rows:
+            out.extend(_equities_from_snapshot_row(row))
+        return out
+
+    row = latest_live_snapshot(account)
+    if row is None:
+        return []
+    return _equities_from_snapshot_row(row)
+
+
+def compute_live_options(account: Optional[str] = None) -> List[OptionHolding]:
+    """Return option holdings from the latest live snapshot(s).
+
+    When account is None or 'all', merges across all known account tags.
+    Applies a Black-Scholes fallback for any legs still missing market_value.
+    """
+    if not account or account == "all":
+        rows = latest_live_snapshots_all()
+        if not rows:
+            row = latest_live_snapshot(None)
+            if row is None:
+                return []
+            out_rows = [row]
+        else:
+            out_rows = list(rows)
+        out: List[OptionHolding] = []
+        for row in out_rows:
+            out.extend(_options_from_snapshot_row(row))
+    else:
+        row = latest_live_snapshot(account)
+        if row is None:
+            return []
+        out = _options_from_snapshot_row(row)
 
     # Enrich any legs still missing market_value with the BS fallback.
     missing = [h for h in out if h.market_value is None]
@@ -609,12 +643,20 @@ def compute_live_summary(
     doesn't expose YTD dividends/interest/fees the same way the activity
     CSV does, so those fields are zero in live mode — callers that need
     them should fall back to the CSV-derived summary."""
-    row = latest_live_snapshot(account)
     cash_balance = 0.0
-    if row is not None:
-        payload = json.loads(row["payload_json"])
-        acct = payload.get("account_summary") or {}
-        cash_balance = float(acct.get("cash") or 0.0)
+    if account is None or account == ALL_ACCOUNTS:
+        # Sum cash across all accounts so /summary?account=all reflects every
+        # account's cash position (brokerage debit + IRA cash, etc.)
+        for r in latest_live_snapshots_all():
+            payload = json.loads(r["payload_json"])
+            acct = payload.get("account_summary") or {}
+            cash_balance += float(acct.get("cash") or 0.0)
+    else:
+        row = latest_live_snapshot(account)
+        if row is not None:
+            payload = json.loads(row["payload_json"])
+            acct = payload.get("account_summary") or {}
+            cash_balance = float(acct.get("cash") or 0.0)
 
     equity_market_value = sum((h.market_value or 0.0) for h in equities)
     equity_unrealized = sum((h.unrealized_pnl or 0.0) for h in equities)

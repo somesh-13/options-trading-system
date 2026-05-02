@@ -206,32 +206,144 @@ def logout() -> None:
         _logged_in = False
 
 
-def _account_tag(account: Optional[str]) -> str:
-    return account or "brokerage"
+# Maps Robinhood account `type` field → internal account tag used in our DB.
+#
+# Robinhood's actual `type` values differ from their marketing names:
+#   margin  — standard brokerage account (margin-enabled)
+#   cash    — cash-only account; Robinhood uses this for IRA accounts
+#             (IRAs cannot have margin, hence "cash")
+#   individual — older account type name, same as margin
+#   ira_roth / ira_traditional — explicitly typed IRA accounts (some API versions)
+#
+# We use position in the accounts list as a tiebreaker: if two accounts share
+# the same type, the first is brokerage and the second is the IRA.
+_RH_TYPE_TO_TAG: Dict[str, str] = {
+    "individual": "brokerage",
+    "margin": "brokerage",
+    "cash": "roth_ira",       # Robinhood IRAs come back as type='cash'
+    "ira_roth": "roth_ira",
+    "ira_traditional": "traditional_ira",
+}
+
+def _rh_type_to_tag(rh_type: Optional[str]) -> str:
+    """Convert a Robinhood account type string to our internal tag."""
+    if not rh_type:
+        return "brokerage"
+    return _RH_TYPE_TO_TAG.get(rh_type, rh_type)
 
 
-def fetch_equity_positions(account: Optional[str] = None) -> Tuple[List[EquityHolding], Optional[str]]:
-    """Return current equity positions. (holdings, error_message)."""
+def enumerate_accounts() -> Tuple[List[Dict], Optional[str]]:
+    """Return all Robinhood accounts for the logged-in user.
+
+    Each item in the returned list has:
+        account_number: str   — the RH account number used to filter positions
+        type: str             — RH account type ('individual', 'ira_roth', …)
+        tag: str              — our internal label ('brokerage', 'roth_ira', …)
+
+    Returns (accounts, error_message).
+    """
     if not login():
         return [], "Robinhood credentials not configured"
 
     import robin_stocks.robinhood as rh
 
     try:
-        raw = rh.account.build_holdings()
+        # load_account_profile() with no account_number + dataType='results'
+        # returns all accounts in data['results']; default dataType='indexzero'
+        # only returns results[0].
+        raw = rh.profiles.load_account_profile(dataType="results") or []
     except Exception as exc:  # noqa: BLE001
-        return [], f"build_holdings failed: {exc}"
+        # Fall back to direct REST call if the helper misbehaves
+        try:
+            resp = rh.helper.request_get(
+                "https://api.robinhood.com/accounts/?default_to_all_accounts=true",
+                "results",
+            ) or []
+            raw = resp
+        except Exception as exc2:  # noqa: BLE001
+            return [], f"enumerate_accounts failed: {exc}; fallback: {exc2}"
+
+    if not isinstance(raw, list):
+        raw = [raw]
+
+    accounts: List[Dict] = []
+    for acct in raw:
+        if not acct:
+            continue
+        acct_num = acct.get("account_number") or acct.get("rhs_account_number")
+        if not acct_num:
+            continue
+        rh_type = acct.get("type") or ""
+        tag = _rh_type_to_tag(rh_type)
+        accounts.append({
+            "account_number": acct_num,
+            "type": rh_type,
+            "tag": tag,
+            "cash": acct.get("cash"),
+            "buying_power": acct.get("buying_power"),
+        })
+
+    # Fallback: if enumeration returned nothing, fake a single brokerage entry
+    # using the default account number so we still get data.
+    if not accounts:
+        try:
+            default_num = rh.account.load_account_profile(info="account_number")
+            if default_num:
+                accounts.append({
+                    "account_number": default_num,
+                    "type": "individual",
+                    "tag": "brokerage",
+                    "cash": None,
+                    "buying_power": None,
+                })
+        except Exception:
+            pass
+
+    return accounts, None
+
+
+def _fetch_equity_positions_for_account(
+    account_number: str,
+    tag: str,
+) -> Tuple[List[EquityHolding], Optional[str]]:
+    """Fetch equity positions for a single RH account_number and label them with `tag`."""
+    import robin_stocks.robinhood as rh
+
+    try:
+        raw_positions = rh.account.get_open_stock_positions(account_number=account_number)
+    except Exception as exc:  # noqa: BLE001
+        return [], f"get_open_stock_positions({account_number}) failed: {exc}"
 
     out: List[EquityHolding] = []
-    tag = _account_tag(account)
-    for symbol, info in (raw or {}).items():
+    for pos in raw_positions or []:
+        if not pos:
+            continue
         try:
-            qty = float(info.get("quantity") or 0.0)
+            qty = float(pos.get("quantity") or 0.0)
             if qty <= 0:
                 continue
-            avg_cost = float(info.get("average_buy_price") or 0.0)
-            current_price = float(info.get("price") or 0.0) or None
-            equity = float(info.get("equity") or 0.0)
+            avg_cost = float(pos.get("average_buy_price") or 0.0)
+
+            # Resolve ticker symbol from the instrument URL
+            instrument_url = pos.get("instrument")
+            symbol: Optional[str] = None
+            current_price: Optional[float] = None
+            equity: Optional[float] = None
+            if instrument_url:
+                try:
+                    inst = rh.helper.request_get(instrument_url)
+                    symbol = inst.get("symbol")
+                    # Fetch live price for this symbol
+                    prices = rh.stocks.get_latest_price(symbol)
+                    if prices and prices[0]:
+                        current_price = float(prices[0])
+                        equity = round(current_price * qty, 2)
+                except Exception:
+                    pass
+
+            if not symbol:
+                continue
+
             cost_basis = round(avg_cost * qty, 2)
             unrealized = (
                 round((current_price - avg_cost) * qty, 2)
@@ -243,11 +355,11 @@ def fetch_equity_positions(account: Optional[str] = None) -> Tuple[List[EquityHo
                 quantity=round(qty, 4),
                 avg_cost=round(avg_cost, 4),
                 cost_basis=cost_basis,
-                realized_pnl=0.0,  # not exposed by build_holdings
+                realized_pnl=0.0,
                 account=tag,
                 inferred_opening=False,
                 current_price=current_price,
-                market_value=round(equity, 2) if equity else None,
+                market_value=equity,
                 unrealized_pnl=unrealized,
             ))
         except (TypeError, ValueError):
@@ -256,20 +368,19 @@ def fetch_equity_positions(account: Optional[str] = None) -> Tuple[List[EquityHo
     return out, None
 
 
-def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHolding], Optional[str]]:
-    """Return current option positions with market values. (holdings, error_message)."""
-    if not login():
-        return [], "Robinhood credentials not configured"
-
+def _fetch_option_positions_for_account(
+    account_number: str,
+    tag: str,
+) -> Tuple[List[OptionHolding], Optional[str]]:
+    """Fetch option positions for a single RH account_number and label them with `tag`."""
     import robin_stocks.robinhood as rh
 
     try:
-        raw = rh.options.get_open_option_positions()
+        raw = rh.options.get_open_option_positions(account_number=account_number)
     except Exception as exc:  # noqa: BLE001
-        return [], f"get_open_option_positions failed: {exc}"
+        return [], f"get_open_option_positions({account_number}) failed: {exc}"
 
     out: List[OptionHolding] = []
-    tag = _account_tag(account)
     for pos in raw or []:
         try:
             qty = float(pos.get("quantity") or 0.0)
@@ -277,7 +388,6 @@ def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHo
                 continue
             position_dir = "long" if pos.get("type") == "long" else "short"
             avg_price = float(pos.get("average_price") or 0.0)
-            # Robinhood returns option metadata via a separate endpoint URL.
             instrument_url = pos.get("option")
             side = "Call"
             strike = 0.0
@@ -294,8 +404,6 @@ def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHo
                 except Exception:
                     pass
 
-            # Try to get the mark price directly from RH market data.
-            # adjusted_mark_price is per share (multiply by 100 × qty for total MV).
             try:
                 opt_id = instrument_url.rstrip("/").split("/")[-1] if instrument_url else None
                 if opt_id:
@@ -307,13 +415,12 @@ def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHo
             except Exception:
                 pass
 
-            # robin_stocks returns avg_price per share (×100 for cost per contract).
             cost_per_contract = avg_price
             cost_basis = round(cost_per_contract * qty, 2)
             if position_dir == "long":
-                cost_basis = -abs(cost_basis)  # debit paid
+                cost_basis = -abs(cost_basis)
             else:
-                cost_basis = abs(cost_basis)   # credit received
+                cost_basis = abs(cost_basis)
 
             market_value: Optional[float] = None
             unrealized_pnl: Optional[float] = None
@@ -343,12 +450,124 @@ def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHo
             continue
     out.sort(key=lambda h: (h.underlying, h.expiry, h.side, h.strike))
 
-    # For any legs still missing market_value, use the BS fallback.
     missing_mv = [h for h in out if h.market_value is None]
     if missing_mv:
         _enrich_option_market_values(missing_mv)
 
     return out, None
+
+
+def fetch_all_accounts_positions() -> Tuple[
+    Dict[str, List[EquityHolding]],
+    Dict[str, List[OptionHolding]],
+    Dict[str, dict],
+    Optional[str],
+]:
+    """Enumerate all RH accounts and fetch positions + cash for each.
+
+    Returns:
+        equities_by_tag   — {tag: [EquityHolding, ...]}
+        options_by_tag    — {tag: [OptionHolding, ...]}
+        summaries_by_tag  — {tag: {"cash": ..., "buying_power": ..., ...}}
+        error_message     — first error encountered, or None
+    """
+    accounts, err = enumerate_accounts()
+    if err and not accounts:
+        return {}, {}, {}, err
+
+    first_error: Optional[str] = err  # carry through enumeration warning if any
+
+    equities_by_tag: Dict[str, List[EquityHolding]] = {}
+    options_by_tag: Dict[str, List[OptionHolding]] = {}
+    summaries_by_tag: Dict[str, dict] = {}
+
+    for acct in accounts:
+        acct_num = acct["account_number"]
+        tag = acct["tag"]
+
+        eq, eq_err = _fetch_equity_positions_for_account(acct_num, tag)
+        if eq_err and first_error is None:
+            first_error = eq_err
+        equities_by_tag[tag] = eq
+
+        opts, op_err = _fetch_option_positions_for_account(acct_num, tag)
+        if op_err and first_error is None:
+            first_error = op_err
+        options_by_tag[tag] = opts
+
+        # Cash/buying-power: use values already embedded in the accounts list
+        # (came from load_account_profile). Falls back to 0 for IRA if not present.
+        cash_val: Optional[float] = None
+        bp_val: Optional[float] = None
+        try:
+            cash_val = float(acct["cash"]) if acct.get("cash") is not None else None
+        except (TypeError, ValueError):
+            pass
+        try:
+            bp_val = float(acct["buying_power"]) if acct.get("buying_power") is not None else None
+        except (TypeError, ValueError):
+            pass
+
+        # For the brokerage account, also load portfolio equity from the
+        # portfolio profile to get a proper NAV figure.
+        portfolio_value: Optional[float] = None
+        if tag == "brokerage":
+            try:
+                import robin_stocks.robinhood as rh
+                port = rh.profiles.load_portfolio_profile() or {}
+                portfolio_value = float(port.get("equity") or 0.0) or None
+            except Exception:
+                pass
+
+        summaries_by_tag[tag] = {
+            "cash": cash_val,
+            "buying_power": bp_val,
+            "portfolio_value": portfolio_value,
+            "extended_hours_value": None,
+        }
+
+    return equities_by_tag, options_by_tag, summaries_by_tag, first_error
+
+
+# ---------------------------------------------------------------------------
+# Legacy single-account helpers kept for backward compatibility.
+# Both now delegate to the per-account helpers using the default account.
+# ---------------------------------------------------------------------------
+
+def fetch_equity_positions(account: Optional[str] = None) -> Tuple[List[EquityHolding], Optional[str]]:
+    """Return equity positions tagged with `account` (defaults to 'brokerage').
+
+    Uses the first RH account whose tag matches, or the first account overall.
+    For full multi-account sync use fetch_all_accounts_positions() instead.
+    """
+    if not login():
+        return [], "Robinhood credentials not configured"
+
+    accounts, err = enumerate_accounts()
+    if not accounts:
+        return [], err or "No accounts found"
+
+    tag = account or "brokerage"
+    # Find matching account or fall back to first
+    target = next((a for a in accounts if a["tag"] == tag), accounts[0])
+    return _fetch_equity_positions_for_account(target["account_number"], target["tag"])
+
+
+def fetch_option_positions(account: Optional[str] = None) -> Tuple[List[OptionHolding], Optional[str]]:
+    """Return option positions tagged with `account` (defaults to 'brokerage').
+
+    For full multi-account sync use fetch_all_accounts_positions() instead.
+    """
+    if not login():
+        return [], "Robinhood credentials not configured"
+
+    accounts, err = enumerate_accounts()
+    if not accounts:
+        return [], err or "No accounts found"
+
+    tag = account or "brokerage"
+    target = next((a for a in accounts if a["tag"] == tag), accounts[0])
+    return _fetch_option_positions_for_account(target["account_number"], target["tag"])
 
 
 def fetch_account_summary() -> Tuple[dict, Optional[str]]:

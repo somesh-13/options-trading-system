@@ -60,11 +60,14 @@ from api.models import (
     RobinhoodActivityRow,
     RobinhoodIngestResponse,
     RobinhoodAccountsResponse,
+    RobinhoodSyncResponse,
+    RobinhoodSyncStatus,
 )
 
 # Robinhood activity ingestion + portfolio derivation.
 from robinhood import database as rh_db
 from robinhood import portfolio as rh_portfolio
+from robinhood import analytics as rh_analytics
 
 # Trade Journal
 from journal.database import (
@@ -139,7 +142,9 @@ def startup():
 
     init_db()
 
-    # Robinhood activity table + idempotent ingest from `hood reports/`.
+    # Broker activity table + idempotent ingest from `hood reports/` (Robinhood)
+    # and `sofi reports/` (SoFi). Rows live in the same `robinhood_activity`
+    # table tagged by `account` — the table name is legacy.
     try:
         rh_db.ensure_schema()
         from pathlib import Path as _Path
@@ -149,13 +154,18 @@ def startup():
         if str(_scripts) not in _sys.path:
             _sys.path.insert(0, str(_scripts))
         from ingest_robinhood import ingest as _rh_ingest  # type: ignore
+        from ingest_sofi import ingest as _sofi_ingest  # type: ignore
 
-        reports = _Path(__file__).parent.parent.parent.parent / "hood reports"
-        if reports.exists():
-            _rh_ingest(reports)
+        app_root = _Path(__file__).parent.parent.parent.parent
+        rh_reports = app_root / "hood reports"
+        if rh_reports.exists():
+            _rh_ingest(rh_reports)
+        sofi_reports = app_root / "sofi reports"
+        if sofi_reports.exists():
+            _sofi_ingest(sofi_reports)
     except Exception as exc:  # noqa: BLE001
         import logging
-        logging.getLogger(__name__).warning("Robinhood ingest skipped: %s", exc)
+        logging.getLogger(__name__).warning("Broker ingest skipped: %s", exc)
 
     # APScheduler — non-fatal if startup fails (tests / CI may not want jobs running).
     try:
@@ -1531,7 +1541,7 @@ async def agents_trade_recommendation(payload: dict):
 
 @app.post("/api/robinhood/ingest", response_model=RobinhoodIngestResponse)
 def robinhood_ingest():
-    """Re-scan the `hood reports/` directory and upsert any new activity rows."""
+    """Re-scan `hood reports/` and `sofi reports/` and upsert new activity rows."""
     try:
         from pathlib import Path as _Path
         import sys as _sys
@@ -1539,14 +1549,85 @@ def robinhood_ingest():
         _scripts = _Path(__file__).parent.parent.parent / "scripts"
         if str(_scripts) not in _sys.path:
             _sys.path.insert(0, str(_scripts))
-        from ingest_robinhood import ingest as _rh_ingest, REPORTS_DIR  # type: ignore
+        from ingest_robinhood import ingest as _rh_ingest, REPORTS_DIR as _RH_DIR  # type: ignore
+        from ingest_sofi import ingest as _sofi_ingest, REPORTS_DIR as _SOFI_DIR  # type: ignore
 
-        result = _rh_ingest(REPORTS_DIR)
-        return RobinhoodIngestResponse(**result)
+        rh_result = _rh_ingest(_RH_DIR)
+        sofi_result = _sofi_ingest(_SOFI_DIR)
+        rh_result["sofi"] = sofi_result
+        return RobinhoodIngestResponse(**rh_result)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"Ingest failed: {exc}")
+
+
+@app.post("/api/robinhood/sync", response_model=RobinhoodSyncResponse)
+def robinhood_sync(account: Optional[str] = None):
+    """Pull live positions from the Robinhood API and persist a snapshot.
+
+    Reads ROBINHOOD_USERNAME / ROBINHOOD_PASSWORD / ROBINHOOD_TOTP_SECRET
+    from the environment. Writes a row to robinhood_live_snapshot. Falls
+    back to the previous snapshot (with stale=True) if the API call fails.
+    """
+    from datetime import datetime, timezone
+    from brokers import robinhood_api as rh_api
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+
+    if not rh_api._is_configured():
+        return RobinhoodSyncResponse(
+            ok=False,
+            fetched_at=fetched_at,
+            account=account,
+            error="ROBINHOOD_USERNAME / ROBINHOOD_PASSWORD not set in .env.local",
+        )
+
+    equities, eq_err = rh_api.fetch_equity_positions(account)
+    options, op_err = rh_api.fetch_option_positions(account)
+    summary, sm_err = rh_api.fetch_account_summary()
+    error = eq_err or op_err or sm_err
+
+    payload_json = rh_portfolio.serialize_live_snapshot(equities, options, summary)
+    snapshot_id = rh_db.write_live_snapshot(
+        fetched_at=fetched_at,
+        account=account,
+        payload_json=payload_json,
+        stale=False,
+        error=error,
+    )
+
+    return RobinhoodSyncResponse(
+        ok=error is None,
+        fetched_at=fetched_at,
+        account=account,
+        equities_count=len(equities),
+        options_count=len(options),
+        snapshot_id=snapshot_id,
+        stale=False,
+        error=error,
+    )
+
+
+@app.get("/api/robinhood/sync/status", response_model=RobinhoodSyncStatus)
+def robinhood_sync_status(account: Optional[str] = None):
+    """Last-known live-sync state for the dashboard's source toggle."""
+    from brokers import robinhood_api as rh_api
+
+    row = rh_db.latest_live_snapshot(account)
+    if row is None:
+        return RobinhoodSyncStatus(
+            has_snapshot=False,
+            configured=rh_api._is_configured(),
+        )
+    return RobinhoodSyncStatus(
+        has_snapshot=True,
+        fetched_at=row["fetched_at"],
+        account=row["account"],
+        stale=bool(row["stale"]),
+        error=row["error"],
+        configured=rh_api._is_configured(),
+    )
 
 
 @app.get("/api/robinhood/accounts", response_model=RobinhoodAccountsResponse)
@@ -1556,17 +1637,27 @@ def robinhood_accounts():
 
 
 @app.get("/api/robinhood/holdings", response_model=RobinhoodHoldingsResponse)
-def robinhood_holdings(live_prices: bool = True, account: Optional[str] = None):
-    """Current Robinhood holdings derived from activity log.
+def robinhood_holdings(
+    live_prices: bool = True,
+    account: Optional[str] = None,
+    source: str = "csv",
+):
+    """Current Robinhood holdings.
 
     `account` may be `brokerage`, `roth_ira`, or `all` (default). Set
-    `live_prices=false` to skip the yfinance enrichment (useful when the
+    `live_prices=false` to skip yfinance enrichment (useful when the
     network is flaky; purely cost-basis view still works).
+    `source=csv` (default) replays the activity log; `source=live` reads
+    the latest snapshot from POST /api/robinhood/sync (Robinhood API).
     """
-    equities = rh_portfolio.compute_equity_holdings(account)
-    if live_prices:
-        equities = rh_portfolio.enrich_equity_with_prices(equities)
-    options = rh_portfolio.compute_option_holdings(account)
+    if source == "live":
+        equities = rh_portfolio.compute_live_holdings(account)
+        options = rh_portfolio.compute_live_options(account)
+    else:
+        equities = rh_portfolio.compute_equity_holdings(account)
+        if live_prices:
+            equities = rh_portfolio.enrich_equity_with_prices(equities)
+        options = rh_portfolio.compute_option_holdings(account)
 
     return RobinhoodHoldingsResponse(
         equities=[RobinhoodHolding(**e.__dict__) for e in equities],
@@ -1575,12 +1666,21 @@ def robinhood_holdings(live_prices: bool = True, account: Optional[str] = None):
 
 
 @app.get("/api/robinhood/summary", response_model=RobinhoodSummary)
-def robinhood_summary(live_prices: bool = True, account: Optional[str] = None):
-    equities = rh_portfolio.compute_equity_holdings(account)
-    if live_prices:
-        equities = rh_portfolio.enrich_equity_with_prices(equities)
-    options = rh_portfolio.compute_option_holdings(account)
-    s = rh_portfolio.compute_summary(equities, options, account)
+def robinhood_summary(
+    live_prices: bool = True,
+    account: Optional[str] = None,
+    source: str = "csv",
+):
+    if source == "live":
+        equities = rh_portfolio.compute_live_holdings(account)
+        options = rh_portfolio.compute_live_options(account)
+        s = rh_portfolio.compute_live_summary(equities, options, account)
+    else:
+        equities = rh_portfolio.compute_equity_holdings(account)
+        if live_prices:
+            equities = rh_portfolio.enrich_equity_with_prices(equities)
+        options = rh_portfolio.compute_option_holdings(account)
+        s = rh_portfolio.compute_summary(equities, options, account)
     return RobinhoodSummary(**s.__dict__)
 
 
@@ -1589,6 +1689,89 @@ def robinhood_activity(limit: int = 50, trans_code: Optional[str] = None, accoun
     limit = max(1, min(int(limit), 500))
     rows = rh_portfolio.recent_activity(limit=limit, trans_code=trans_code, account=account)
     return [RobinhoodActivityRow(**r.__dict__) for r in rows]
+
+
+# =============================================
+# Robinhood-aware analytics — adapter endpoints that feed the user's actual
+# holdings into the project's existing analytics modules. See
+# `backend/src/robinhood/analytics.py`.
+# =============================================
+
+
+@app.get("/api/robinhood/analytics/portfolio-greeks")
+def robinhood_portfolio_greeks(account: str = "all"):
+    try:
+        return rh_analytics.portfolio_greeks_for_account(account)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Portfolio Greeks failed: {exc}")
+
+
+@app.get("/api/robinhood/analytics/hedge-ratio")
+def robinhood_hedge_ratio(account: str = "all", target_delta: float = 0.0):
+    try:
+        return rh_analytics.hedge_ratio_for_account(account, target_delta=target_delta)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Hedge ratio failed: {exc}")
+
+
+@app.get("/api/robinhood/analytics/rebalance-check")
+def robinhood_rebalance_check(
+    account: str = "all",
+    delta_limit: float = 100.0,
+    gamma_limit: float = 50.0,
+    vega_limit: float = 500.0,
+):
+    try:
+        return rh_analytics.rebalance_check_for_account(
+            account,
+            delta_limit=delta_limit,
+            gamma_limit=gamma_limit,
+            vega_limit=vega_limit,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Rebalance check failed: {exc}")
+
+
+@app.get("/api/robinhood/analytics/stress-test")
+def robinhood_stress_test(
+    account: str = "all",
+    spot_shock: float = 0.10,
+    vol_shock: float = 0.20,
+):
+    try:
+        return rh_analytics.stress_test_for_account(
+            account,
+            spot_shock_pct=spot_shock,
+            vol_shock_pct=vol_shock,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Stress test failed: {exc}")
+
+
+@app.get("/api/robinhood/analytics/limits-check")
+def robinhood_limits_check(
+    account: str = "all",
+    max_delta: float = 10000.0,
+    max_gamma: float = 500.0,
+    max_vega: float = 10000.0,
+):
+    try:
+        return rh_analytics.limits_check_for_account(
+            account,
+            max_portfolio_delta=max_delta,
+            max_portfolio_gamma=max_gamma,
+            max_portfolio_vega=max_vega,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Limits check failed: {exc}")
+
+
+@app.get("/api/robinhood/analytics/drawdown")
+def robinhood_drawdown(account: str = "all", limit: float = 0.10):
+    try:
+        return rh_analytics.drawdown_for_account(account, limit=limit)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Drawdown check failed: {exc}")
 
 
 # =============================================

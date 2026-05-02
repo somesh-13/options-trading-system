@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'CIFR pricing · VegaEdge',
+  title: "Pricing · VegaEdge",
 };
 
 export default function PricingLayout({ children }: { children: React.ReactNode }) {

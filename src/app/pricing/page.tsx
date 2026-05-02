@@ -87,6 +87,10 @@ export default function PricingPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  useEffect(() => {
+    document.title = `${ticker} pricing · VegaEdge`;
+  }, [ticker]);
+
   // Hydrate spot, mispricing, vol surface whenever ticker changes.
   useEffect(() => {
     let cancelled = false;

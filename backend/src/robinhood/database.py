@@ -57,4 +57,71 @@ def ensure_schema() -> None:
         CREATE INDEX IF NOT EXISTS idx_rh_account       ON robinhood_activity(account);
         """
     )
+
+    # Live snapshots from the Robinhood API live alongside the CSV-derived
+    # activity table. One row per sync; the latest row per (account) is the
+    # current view. Activity log remains the source of truth for backtests.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS robinhood_live_snapshot (
+            snapshot_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+            fetched_at    TEXT NOT NULL,
+            account       TEXT,
+            payload_json  TEXT NOT NULL,
+            stale         INTEGER DEFAULT 0,
+            error         TEXT
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_rh_snap_fetched ON robinhood_live_snapshot(fetched_at DESC)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_rh_snap_account ON robinhood_live_snapshot(account)"
+    )
     conn.commit()
+
+
+def latest_live_snapshot(account: Optional[str] = None) -> Optional[sqlite3.Row]:
+    """Return the most recent successful live snapshot row for `account`
+    (or any account if None). Returns None if there are no snapshots."""
+    conn = get_conn()
+    if account and account != "all":
+        cur = conn.execute(
+            """
+            SELECT * FROM robinhood_live_snapshot
+            WHERE account = ? AND error IS NULL
+            ORDER BY fetched_at DESC LIMIT 1
+            """,
+            (account,),
+        )
+    else:
+        cur = conn.execute(
+            """
+            SELECT * FROM robinhood_live_snapshot
+            WHERE error IS NULL
+            ORDER BY fetched_at DESC LIMIT 1
+            """
+        )
+    return cur.fetchone()
+
+
+def write_live_snapshot(
+    fetched_at: str,
+    account: Optional[str],
+    payload_json: str,
+    stale: bool = False,
+    error: Optional[str] = None,
+) -> int:
+    """Insert a snapshot row. Returns the snapshot_id."""
+    conn = get_conn()
+    cur = conn.execute(
+        """
+        INSERT INTO robinhood_live_snapshot
+            (fetched_at, account, payload_json, stale, error)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (fetched_at, account, payload_json, 1 if stale else 0, error),
+    )
+    conn.commit()
+    return int(cur.lastrowid or 0)

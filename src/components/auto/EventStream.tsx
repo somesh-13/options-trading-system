@@ -4,58 +4,165 @@
  * Event stream card — port of the right card in `engineAfter()` from the
  * design source (design/stocks-revamp/project/pages/06-auto-engine.js).
  *
- * Filter chips are visual + interactive (state held locally) but do not
- * actually filter the mock rows; once wired to /api/auto-engine/events we
- * pass the active filter to the request.
+ * Wired to GET /api/engine/logs (proxied to FastAPI). Polls every 5s.
  */
 
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type Filter = 'all' | 'exec' | 'signal' | 'skip' | 'error';
 
 type EventRow = {
   time: string;
-  label: string;       // EXEC / SIGNAL / SKIP / SCAN / ERROR
+  label: string;
   cls: 'exec' | 'signal' | 'skip' | 'scan' | 'err';
   sym: string;
   msg: string;
   trace?: string;
 };
 
-// TODO: wire GET /api/auto-engine/events (filtered by chip selection)
-const EVENTS: EventRow[] = [
-  {
-    time: '12:08:42',
-    label: 'EXEC',
-    cls: 'exec',
-    sym: 'CIFR',
-    msg: 'SELL 3x CIFR240517C16.00 @ $0.82 · order OID-8811 · filled',
-    trace:
-      'spot 15.50 · IV 72.4 · ratio 1.45x · EV $82 · hit 61% · regime high-vol · decision: approved · all guards passed',
-  },
-  { time: '12:06:18', label: 'SIGNAL', cls: 'signal', sym: 'CIFR', msg: 'IV/HV 1.45 · EV $82 · approved' },
-  { time: '11:54:01', label: 'EXEC', cls: 'exec', sym: 'MARA', msg: 'SELL 5x MARA240517C22.00 @ $1.20 · order OID-8810 · filled' },
-  { time: '11:53:40', label: 'SIGNAL', cls: 'signal', sym: 'MARA', msg: 'IV/HV 1.51 · EV $94 · approved' },
-  {
-    time: '11:31:15',
-    label: 'SKIP',
-    cls: 'skip',
-    sym: 'HOOD',
-    msg: 'EV $18 < threshold $50',
-    trace: 'IV 41.2 · HV 38.1 · ratio 1.08 · signal NEUTRAL · no edge',
-  },
-  { time: '11:29:02', label: 'SKIP', cls: 'skip', sym: 'COIN', msg: 'hit rate 49% < threshold 55%' },
-  { time: '11:05:22', label: 'SCAN', cls: 'scan', sym: '—', msg: 'scan #7 · 8 tickers · 2 signals · 1 exec' },
-  { time: '10:58:11', label: 'EXEC', cls: 'exec', sym: 'PYPL', msg: 'BUY 4x PYPL240607C70.00 @ $1.80 · order OID-8808 · filled' },
-  { time: '10:42:03', label: 'SKIP', cls: 'skip', sym: 'GRAB', msg: 'position limit reached (4/5)' },
-  { time: '10:30:22', label: 'SCAN', cls: 'scan', sym: '—', msg: 'scan #6 · 8 tickers · 1 signal · 1 exec' },
-  { time: '10:05:22', label: 'SCAN', cls: 'scan', sym: '—', msg: 'scan #5 · 8 tickers · 0 signals' },
-];
+type RawLog = {
+  id: number;
+  timestamp: string;
+  event_type: string;
+  ticker: string | null;
+  details: Record<string, unknown> | null;
+  trade_id: string | null;
+};
 
 const FILTERS: Filter[] = ['all', 'exec', 'signal', 'skip', 'error'];
+const POLL_MS = 5000;
+
+function eventTypeForFilter(f: Filter): string | null {
+  if (f === 'all') return null;
+  if (f === 'exec') return 'execute';
+  return f;
+}
+
+function clsFor(eventType: string): EventRow['cls'] {
+  switch (eventType) {
+    case 'execute': return 'exec';
+    case 'skip': return 'skip';
+    case 'scan': return 'scan';
+    case 'error': return 'err';
+    case 'signal': return 'signal';
+    default: return 'scan';
+  }
+}
+
+function labelFor(eventType: string): string {
+  if (eventType === 'execute') return 'EXEC';
+  return eventType.toUpperCase();
+}
+
+function fmtTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('en-US', { hour12: false });
+  } catch {
+    return iso.slice(11, 19);
+  }
+}
+
+function summarize(row: RawLog): { msg: string; trace?: string } {
+  const d = row.details ?? {};
+  const t = row.event_type;
+
+  if (t === 'execute') {
+    const side = String(d.side ?? '').toUpperCase();
+    const qty = d.qty ?? '?';
+    const occ = d.occ_symbol ?? '?';
+    const px = d.limit_price ?? '?';
+    const orderResult = d.order_result as { error?: string; detail?: string; id?: string } | undefined;
+    const dryRun = d.dry_run === true;
+    let status = '';
+    if (dryRun) status = 'dry-run';
+    else if (orderResult?.error) status = `REJECTED: ${orderResult.error}`;
+    else if (orderResult?.id) status = `order ${orderResult.id}`;
+    else status = 'submitted';
+    const msg = `${side} ${qty}x ${occ} @ $${px} · ${status}`;
+
+    const sig = d.signal_data as Record<string, unknown> | undefined;
+    const traceParts: string[] = [];
+    if (sig) {
+      if (sig.iv_hv_ratio != null) traceParts.push(`IV/HV ${Number(sig.iv_hv_ratio).toFixed(2)}`);
+      if (sig.ev_per_contract != null) traceParts.push(`EV $${Number(sig.ev_per_contract).toFixed(2)}`);
+      if (sig.spot_price != null) traceParts.push(`spot ${Number(sig.spot_price).toFixed(2)}`);
+      if (sig.implied_vol_atm != null) traceParts.push(`IV ${(Number(sig.implied_vol_atm) * 100).toFixed(1)}`);
+      if (sig.signal != null) traceParts.push(`signal ${sig.signal}`);
+    }
+    if (orderResult?.detail) traceParts.push(`detail: ${orderResult.detail}`);
+    return { msg, trace: traceParts.length ? traceParts.join(' · ') : undefined };
+  }
+
+  if (t === 'skip') {
+    const reason = d.reason ?? 'unknown';
+    const extras: string[] = [];
+    if (d.strike != null) extras.push(`strike ${d.strike}`);
+    if (d.expiration) extras.push(`exp ${d.expiration}`);
+    return {
+      msg: `skip · ${reason}`,
+      trace: extras.length ? extras.join(' · ') : undefined,
+    };
+  }
+
+  if (t === 'scan') return { msg: `scan ${row.ticker ?? ''}` };
+  if (t === 'start') return { msg: 'engine started' };
+  if (t === 'stop') return { msg: 'engine stopped' };
+  if (t === 'config_update') return { msg: 'config updated', trace: JSON.stringify(d) };
+  if (t === 'error') {
+    return {
+      msg: typeof d.error === 'string' ? d.error : 'engine error',
+      trace: typeof d.traceback === 'string' ? (d.traceback as string).slice(0, 400) : undefined,
+    };
+  }
+  return { msg: t };
+}
+
+function toEventRow(row: RawLog): EventRow {
+  const { msg, trace } = summarize(row);
+  return {
+    time: fmtTime(row.timestamp),
+    label: labelFor(row.event_type),
+    cls: clsFor(row.event_type),
+    sym: row.ticker ?? '—',
+    msg,
+    trace,
+  };
+}
 
 export function EventStream() {
   const [filter, setFilter] = useState<Filter>('all');
+  const [rows, setRows] = useState<EventRow[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async (f: Filter) => {
+    const qs = new URLSearchParams({ limit: '100' });
+    const eventType = eventTypeForFilter(f);
+    if (eventType) qs.set('event_type', eventType);
+    try {
+      const res = await fetch(`/api/engine/logs?${qs.toString()}`, { cache: 'no-store' });
+      if (!res.ok) {
+        setError(`logs ${res.status}`);
+        return;
+      }
+      const body: { logs?: RawLog[] } = await res.json();
+      setRows((body.logs ?? []).map(toEventRow));
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'fetch failed');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load(filter);
+    const id = setInterval(() => load(filter), POLL_MS);
+    return () => clearInterval(id);
+  }, [filter, load]);
+
+  const visible = useMemo(() => rows, [rows]);
 
   return (
     <div className="rv-card" style={{ padding: 0 }}>
@@ -65,8 +172,14 @@ export function EventStream() {
           {FILTERS.map((f) => (
             <span
               key={f}
+              role="button"
+              tabIndex={0}
               className={filter === f ? 'on' : ''}
               onClick={() => setFilter(f)}
+              onKeyDown={(ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') setFilter(f);
+              }}
+              style={{ cursor: 'pointer' }}
             >
               {f}
             </span>
@@ -74,17 +187,31 @@ export function EventStream() {
         </div>
       </div>
       <div className="rv-log" style={{ maxHeight: 480, overflow: 'auto' }}>
-        {EVENTS.map((e, i) => (
-          <div className="row" key={`${e.time}-${i}`}>
-            <span className="t">{e.time}</span>
-            <span className={`ev ${e.cls}`}>{e.label}</span>
-            <span className="sym">{e.sym}</span>
-            <span className="msg">
-              {e.msg}
-              {e.trace && <div className="trace">{e.trace}</div>}
-            </span>
+        {error ? (
+          <div className="row" style={{ color: 'var(--pink)', fontSize: 12, padding: 14 }}>
+            <span className="msg">error: {error}</span>
           </div>
-        ))}
+        ) : loading ? (
+          <div className="row" style={{ color: 'var(--ink-mute)', fontSize: 12, padding: 14 }}>
+            <span className="msg">loading…</span>
+          </div>
+        ) : visible.length === 0 ? (
+          <div className="row" style={{ color: 'var(--ink-mute)', fontSize: 12, padding: 14 }}>
+            <span className="msg">no events match this filter</span>
+          </div>
+        ) : (
+          visible.map((e, i) => (
+            <div className="row" key={`${e.time}-${i}`}>
+              <span className="t">{e.time}</span>
+              <span className={`ev ${e.cls}`}>{e.label}</span>
+              <span className="sym">{e.sym}</span>
+              <span className="msg">
+                {e.msg}
+                {e.trace && <div className="trace">{e.trace}</div>}
+              </span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

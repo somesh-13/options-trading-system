@@ -4,8 +4,12 @@ import type { NextConfig } from "next";
 // publicly reachable through any ngrok tunnel that fronts port 3000 (e.g. the
 // reserved domain `dashboard` tunnel).
 //
-// REMOVED for the public attack surface (still reachable on localhost:8000):
-//   - execution, portfolio, robinhood — Alpaca/Robinhood trading + real account state
+// `robinhood` is read-only holdings/summary/activity. Re-exposed for the
+// LAN-only setup so /robinhood can render. **Remove from this list before
+// fronting port 3000 with a public tunnel** — it carries real account state.
+//
+// STILL REMOVED for the public attack surface (reachable on localhost:8000 only):
+//   - execution, portfolio — Alpaca trading + real account state
 //   - journal              — trade journal (sensitive)
 //   - risk                 — VaR / position limits (writes accepted)
 //   - engine               — auto-engine controls (start/stop scans)
@@ -19,6 +23,7 @@ const BACKEND_PROXY_PREFIXES = [
   "pricing",
   "regime",
   "replay",
+  "robinhood",
   "scanner",
   "sentiment",
   "signals",

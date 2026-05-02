@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { FilterChips, SCANNER_TABS, type ScannerTab } from './FilterChips';
 import { ScannerTable, SCANNER_ROWS, type Opportunity } from './ScannerTable';
 import { NLScannerBar, type ScannerParseResult } from './NLScannerBar';
+import { InflectionTable, type InflectionCandidate } from './InflectionTable';
+import INFLECTION_DATA from '@/data/inflection-candidates.json';
+
+const INFLECTION_CANDIDATES = (INFLECTION_DATA.candidates as InflectionCandidate[]) ?? [];
+const INFLECTION_AS_OF = (INFLECTION_DATA as { as_of: string }).as_of;
 
 function intentToTab(intent: string): ScannerTab | null {
   switch (intent) {
@@ -56,6 +61,7 @@ export function ScannerShell() {
     for (const t of SCANNER_TABS) {
       out[t.id] = livedRows.filter(t.predicate).length;
     }
+    out.inflection = INFLECTION_CANDIDATES.length;
     return out;
   }, [livedRows]);
 
@@ -90,7 +96,11 @@ export function ScannerShell() {
 
       <FilterChips active={activeTab} counts={counts} onChange={setActiveTab} />
 
-      <ScannerTable rows={rows} highlightTicker={highlightTicker} />
+      {activeTab === 'inflection' ? (
+        <InflectionTable candidates={INFLECTION_CANDIDATES} asOf={INFLECTION_AS_OF} />
+      ) : (
+        <ScannerTable rows={rows} highlightTicker={highlightTicker} />
+      )}
 
       <div
         style={{
@@ -102,16 +112,27 @@ export function ScannerShell() {
           fontFamily: "'JetBrains Mono', monospace",
         }}
       >
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <span>
-            {rows.length} of {livedRows.length} shown · sort: ratio desc
-          </span>
-          <span className="rv-kbd">/</span> filter
-          <span className="rv-kbd">j/k</span> row
-          <span className="rv-kbd">⏎</span> open chain
-          <span className="rv-kbd">b</span> build trade
-        </div>
-        <div>auto-refresh: 5m · last: 12:08:42</div>
+        {activeTab === 'inflection' ? (
+          <>
+            <div>
+              {INFLECTION_CANDIDATES.length} candidates · snapshot {INFLECTION_AS_OF} · sort: score desc
+            </div>
+            <div>refresh: manual · live recompute = wave 2</div>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <span>
+                {rows.length} of {livedRows.length} shown · sort: ratio desc
+              </span>
+              <span className="rv-kbd">/</span> filter
+              <span className="rv-kbd">j/k</span> row
+              <span className="rv-kbd">⏎</span> open chain
+              <span className="rv-kbd">b</span> build trade
+            </div>
+            <div>auto-refresh: 5m · last: 12:08:42</div>
+          </>
+        )}
       </div>
     </>
   );

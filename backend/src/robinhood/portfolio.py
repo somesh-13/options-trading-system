@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import json
 import re
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Dict, List, Optional
 
-from .database import get_conn
+from .database import get_conn, latest_live_snapshot
 from .parser import parse_option_description
 
 
@@ -517,6 +518,90 @@ def compute_summary(
         total_invested=round(total_invested, 2),
         unknown_basis_proceeds=round(unknown_basis, 2),
     )
+
+
+# --- live snapshot views (Robinhood API source) ---------------------------
+
+def compute_live_holdings(account: Optional[str] = None) -> List[EquityHolding]:
+    """Return equity holdings from the latest robinhood_live_snapshot row.
+
+    Returns an empty list if no snapshot exists yet. The snapshot's
+    `equities` array carries the same EquityHolding shape — current_price
+    and market_value are already populated by the API fetch, so we don't
+    need to call yfinance for live data (callers can still re-enrich).
+    """
+    row = latest_live_snapshot(account)
+    if row is None:
+        return []
+    payload = json.loads(row["payload_json"])
+    out: List[EquityHolding] = []
+    for h in payload.get("equities", []):
+        try:
+            out.append(EquityHolding(**h))
+        except TypeError:
+            continue
+    return out
+
+
+def compute_live_options(account: Optional[str] = None) -> List[OptionHolding]:
+    """Return option holdings from the latest live snapshot."""
+    row = latest_live_snapshot(account)
+    if row is None:
+        return []
+    payload = json.loads(row["payload_json"])
+    out: List[OptionHolding] = []
+    for o in payload.get("options", []):
+        try:
+            out.append(OptionHolding(**o))
+        except TypeError:
+            continue
+    return out
+
+
+def compute_live_summary(
+    equities: List[EquityHolding],
+    options: List[OptionHolding],
+    account: Optional[str] = None,
+) -> CashSummary:
+    """Build a CashSummary from a live snapshot. The Robinhood live API
+    doesn't expose YTD dividends/interest/fees the same way the activity
+    CSV does, so those fields are zero in live mode — callers that need
+    them should fall back to the CSV-derived summary."""
+    row = latest_live_snapshot(account)
+    cash_total = 0.0
+    if row is not None:
+        payload = json.loads(row["payload_json"])
+        acct = payload.get("account_summary") or {}
+        cash_total = float(acct.get("cash") or 0.0)
+
+    market_value = sum((h.market_value or 0.0) for h in equities)
+    unrealized = sum((h.unrealized_pnl or 0.0) for h in equities)
+    invested = sum(h.cost_basis for h in equities)
+
+    return CashSummary(
+        cash_net_transfers=round(cash_total, 2),
+        dividends_ytd=0.0,
+        interest_ytd=0.0,
+        fees_ytd=0.0,
+        realized_pnl=0.0,  # not surfaced by live API
+        unrealized_pnl=round(unrealized, 2),
+        total_market_value=round(market_value, 2),
+        total_invested=round(invested, 2),
+        unknown_basis_proceeds=0.0,
+    )
+
+
+def serialize_live_snapshot(
+    equities: List[EquityHolding],
+    options: List[OptionHolding],
+    account_summary: Optional[dict] = None,
+) -> str:
+    """Serialize live data to JSON for storage in robinhood_live_snapshot.payload_json."""
+    return json.dumps({
+        "equities": [asdict(h) for h in equities],
+        "options": [asdict(h) for h in options],
+        "account_summary": account_summary or {},
+    })
 
 
 # --- activity timeline ----------------------------------------------------

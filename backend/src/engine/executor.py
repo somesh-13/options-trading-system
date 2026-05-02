@@ -195,7 +195,9 @@ class MispricingEngine:
             self.config.max_contracts_per_trade,
             opp.get("contracts", 1),
         )
-        limit_price = opp.get("premium") or mispricing.get("atm_call_price")
+        raw_limit = opp.get("premium") or mispricing.get("atm_call_price")
+        # Alpaca rejects option limit prices with more than 2 decimal places (HTTP 422).
+        limit_price = round(float(raw_limit), 2) if raw_limit is not None else None
 
         # Build signal_data for journal
         signal_data = {

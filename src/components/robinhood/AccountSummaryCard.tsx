@@ -16,9 +16,13 @@ const fmtSigned = (n: number | null | undefined) => {
 export function AccountSummaryCard({
   summary,
   accountLabel = 'All accounts',
+  source = 'csv',
+  fetchedAt = null,
 }: {
   summary: RobinhoodSummary | null;
   accountLabel?: string;
+  source?: 'csv' | 'live';
+  fetchedAt?: string | null;
 }) {
   const cls = (n: number | null | undefined) => (n == null ? '' : n > 0 ? 'rv-up' : n < 0 ? 'rv-dn' : '');
   const nav =
@@ -30,7 +34,30 @@ export function AccountSummaryCard({
     <div className="rv-card">
       <div className="rv-card-head">
         <h3>NAV · {summary ? fmt(summary.total_market_value) : '—'}</h3>
-        <span className="rv-chip">{accountLabel}</span>
+        <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <span className="rv-chip">{accountLabel}</span>
+          <span
+            data-testid="summary-source-chip"
+            className="rv-chip"
+            style={{
+              background: source === 'live' ? 'rgba(0,200,5,0.12)' : undefined,
+              color: source === 'live' ? 'var(--green, #00C805)' : undefined,
+              borderColor: source === 'live' ? 'var(--green, #00C805)' : undefined,
+            }}
+            title={
+              fetchedAt
+                ? `Last live sync: ${new Date(fetchedAt).toLocaleString()}`
+                : source === 'live'
+                ? 'Live snapshot'
+                : 'Derived from activity CSV'
+            }
+          >
+            {source === 'live' ? 'LIVE' : 'CSV'}
+            {source === 'live' && fetchedAt
+              ? ` · ${new Date(fetchedAt).toLocaleTimeString()}`
+              : ''}
+          </span>
+        </span>
       </div>
       <div
         style={{

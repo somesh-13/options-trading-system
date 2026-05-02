@@ -437,7 +437,30 @@ class RobinhoodIngestResponse(BaseModel):
     skipped: int
     backfilled: Optional[int] = 0
     accounts: Optional[Dict[str, str]] = None
+    sofi: Optional[Dict[str, Any]] = None
 
 
 class RobinhoodAccountsResponse(BaseModel):
     accounts: List[str]
+
+
+class RobinhoodSyncResponse(BaseModel):
+    """Response from POST /api/robinhood/sync."""
+    ok: bool
+    fetched_at: str
+    account: Optional[str] = None
+    equities_count: int = 0
+    options_count: int = 0
+    snapshot_id: Optional[int] = None
+    stale: bool = False
+    error: Optional[str] = None
+
+
+class RobinhoodSyncStatus(BaseModel):
+    """Response from GET /api/robinhood/sync/status."""
+    has_snapshot: bool
+    fetched_at: Optional[str] = None
+    account: Optional[str] = None
+    stale: bool = False
+    error: Optional[str] = None
+    configured: bool = False  # are RH credentials present in the env

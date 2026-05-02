@@ -5,7 +5,7 @@
 
 import { PRICING_API_URL } from './pricing-api';
 
-export type RobinhoodAccount = 'brokerage' | 'roth_ira' | 'all';
+export type RobinhoodAccount = 'brokerage' | 'roth_ira' | 'sofi' | 'all';
 
 export interface RobinhoodHolding {
   symbol: string;
@@ -77,24 +77,29 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-function qp(livePrices: boolean, account: RobinhoodAccount): string {
+export type RobinhoodSource = 'csv' | 'live';
+
+function qp(livePrices: boolean, account: RobinhoodAccount, source: RobinhoodSource = 'csv'): string {
   const q = new URLSearchParams({ live_prices: String(livePrices) });
   if (account !== 'all') q.set('account', account);
+  if (source !== 'csv') q.set('source', source);
   return q.toString();
 }
 
 export function getRobinhoodHoldings(
   livePrices = true,
   account: RobinhoodAccount = 'all',
+  source: RobinhoodSource = 'csv',
 ): Promise<RobinhoodHoldingsResponse> {
-  return getJson(`/api/robinhood/holdings?${qp(livePrices, account)}`);
+  return getJson(`/api/robinhood/holdings?${qp(livePrices, account, source)}`);
 }
 
 export function getRobinhoodSummary(
   livePrices = true,
   account: RobinhoodAccount = 'all',
+  source: RobinhoodSource = 'csv',
 ): Promise<RobinhoodSummary> {
-  return getJson(`/api/robinhood/summary?${qp(livePrices, account)}`);
+  return getJson(`/api/robinhood/summary?${qp(livePrices, account, source)}`);
 }
 
 export function getRobinhoodActivity(
@@ -116,4 +121,48 @@ export async function triggerRobinhoodIngest(): Promise<{ files_read: number; to
   const res = await fetch(`${PRICING_API_URL}/api/robinhood/ingest`, { method: 'POST' });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json();
+}
+
+export interface RobinhoodSyncResponse {
+  ok: boolean;
+  fetched_at: string;
+  account?: string | null;
+  equities_count: number;
+  options_count: number;
+  snapshot_id?: number | null;
+  stale: boolean;
+  error?: string | null;
+}
+
+export interface RobinhoodSyncStatus {
+  has_snapshot: boolean;
+  fetched_at?: string | null;
+  account?: string | null;
+  stale: boolean;
+  error?: string | null;
+  configured: boolean;
+}
+
+export async function triggerRobinhoodSync(account: RobinhoodAccount = 'all'): Promise<RobinhoodSyncResponse> {
+  const q = new URLSearchParams();
+  if (account !== 'all') q.set('account', account);
+  const url = `${PRICING_API_URL}/api/robinhood/sync${q.toString() ? `?${q}` : ''}`;
+  const res = await fetch(url, { method: 'POST' });
+  if (!res.ok) {
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = body.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+export function getRobinhoodSyncStatus(account: RobinhoodAccount = 'all'): Promise<RobinhoodSyncStatus> {
+  const q = new URLSearchParams();
+  if (account !== 'all') q.set('account', account);
+  return getJson(`/api/robinhood/sync/status${q.toString() ? `?${q}` : ''}`);
 }

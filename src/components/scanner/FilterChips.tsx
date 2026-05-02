@@ -9,7 +9,8 @@ export type ScannerTab =
   | 'high-vol'
   | 'normal'
   | 'buy'
-  | 'sell';
+  | 'sell'
+  | 'inflection';
 
 export interface TabSpec {
   id: ScannerTab;
@@ -60,6 +61,12 @@ export const SCANNER_TABS: TabSpec[] = [
     label: 'SELL signal',
     description: 'Current scanner signal = SELL',
     predicate: (o) => o.signal === 'SELL',
+  },
+  {
+    id: 'inflection',
+    label: 'Inflection',
+    description: 'Mid-cap $2B–$10B inflection candidates (Vishal methodology, static snapshot)',
+    predicate: () => true,
   },
 ];
 

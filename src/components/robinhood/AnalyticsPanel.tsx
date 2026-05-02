@@ -16,8 +16,9 @@
  */
 
 import { Fragment, useCallback, useMemo, useState } from 'react';
-import type { RobinhoodAccount } from '@/lib/robinhood-api';
+import type { RobinhoodAccount, RobinhoodHolding } from '@/lib/robinhood-api';
 import { InfoIcon } from '@/components/ui/InfoIcon';
+import { RecommendedActionsCard } from './RecommendedActionsCard';
 import {
   getPortfolioGreeks,
   getHedgeRatio,
@@ -447,10 +448,11 @@ function summarizeTickerResult(test: TickerTestKey, data: unknown): string {
     return `HV ${hv != null ? (hv * 100).toFixed(1) : '—'}% [${lo != null ? (lo * 100).toFixed(1) : '—'}, ${hi != null ? (hi * 100).toFixed(1) : '—'}]${r === false ? ' (low confidence)' : ''}`;
   }
   if (test === 'var') {
-    const rec = d.recommended as { method?: string; var_95?: number; var_99?: number } | undefined;
-    if (rec) return `${rec.method ?? '?'}: 95% ${fmtMoney(rec.var_95)} · 99% ${fmtMoney(rec.var_99)}`;
-    const hist = d.historical as { var_95?: number } | undefined;
-    return hist?.var_95 != null ? `historical 95% ${fmtMoney(hist.var_95)}` : 'see raw response';
+    const h = d.historical as { var_pct?: number; cvar_pct?: number; var_dollars?: number } | undefined;
+    if (h?.var_pct != null) {
+      return `VaR 95% ${h.var_pct.toFixed(2)}% · CVaR ${h.cvar_pct?.toFixed(2) ?? '—'}%`;
+    }
+    return 'no data';
   }
   if (test === 'sentiment') {
     const c = d.article_count as number | undefined;
@@ -458,9 +460,9 @@ function summarizeTickerResult(test: TickerTestKey, data: unknown): string {
     return `${c ?? 0} articles from ${ds.join(', ') || 'no sources'}`;
   }
   if (test === 'confluence') {
-    const conf = d.confluence as number | undefined;
-    const rec = d.recommendation as string | undefined;
-    return `confluence ${conf?.toFixed(2) ?? '—'} · ${rec ?? '—'}`;
+    const score = d.confluence_score as number | undefined;
+    const strat = d.recommended_strategy as string | undefined;
+    return `confluence ${score?.toFixed(2) ?? '—'} · ${strat ?? '—'}`;
   }
   if (test === 'rec') {
     const strat = d.strategy as string | undefined;
@@ -471,7 +473,7 @@ function summarizeTickerResult(test: TickerTestKey, data: unknown): string {
   if (test === 'backtest') {
     const m = d.metrics as Record<string, number> | undefined;
     if (!m) return 'no metrics';
-    return `Sharpe ${m.sharpe?.toFixed(2) ?? '—'} · MaxDD ${m.max_drawdown != null ? (m.max_drawdown * 100).toFixed(1) + '%' : '—'} · ret ${m.total_return != null ? (m.total_return * 100).toFixed(1) + '%' : '—'}`;
+    return `Sharpe ${m.sharpe_ratio?.toFixed(2) ?? '—'} · MaxDD ${m.max_drawdown_pct != null ? m.max_drawdown_pct.toFixed(1) + '%' : '—'} · ret ${m.total_return_pct != null ? m.total_return_pct.toFixed(1) + '%' : '—'}`;
   }
   return JSON.stringify(d).slice(0, 120);
 }
@@ -490,9 +492,13 @@ const PORTFOLIO_TESTS = [
 export function AnalyticsPanel({
   account,
   tickers: tickersProp,
+  holdings: holdingsProp,
+  totalNAV,
 }: {
   account: RobinhoodAccount;
   tickers: string[];
+  holdings?: RobinhoodHolding[];
+  totalNAV?: number;
 }) {
   // Dedupe incoming tickers so duplicate keys never reach the render tree,
   // regardless of which caller passed the raw (potentially duplicated) list.
@@ -510,6 +516,12 @@ export function AnalyticsPanel({
   const [tickerResults, setTickerResults] = useState<
     Record<string, AsyncState<unknown>>
   >({});
+
+  // Filter / sort toolbar state
+  type SortMode = 'signal' | 'symbol' | 'iv-hv';
+  const [sortMode, setSortMode] = useState<SortMode>('signal');
+  const [hideHold, setHideHold] = useState(false);
+  const [hideNoData, setHideNoData] = useState(false);
 
   const setTickerResult = useCallback(
     (ticker: string, test: TickerTestKey, state: AsyncState<unknown>) => {
@@ -561,6 +573,85 @@ export function AnalyticsPanel({
       runTickerTest(t, 'hv');
     });
   }, [runPortfolio, runTickerTest, tickers]);
+
+  // Filter + sort the tickers list for the per-ticker grid
+  const visibleTickers = useMemo(() => {
+    let result = [...tickers];
+
+    // Hide HOLD: filter out tickers that are NEUTRAL/HOLD with no tradable signal
+    if (hideHold) {
+      result = result.filter((t) => {
+        const mispState = tickerResults[`${t}:mispricing`];
+        const recState = tickerResults[`${t}:rec`];
+        const signal = mispState?.status === 'ok'
+          ? (mispState.data as Record<string, unknown>).signal as string | undefined
+          : undefined;
+        const strategy = recState?.status === 'ok'
+          ? (recState.data as Record<string, unknown>).strategy as string | undefined
+          : undefined;
+        // Keep if signal is BUY or SELL (actionable)
+        if (signal === 'BUY' || signal === 'SELL') return true;
+        // Keep if rec strategy is not HOLD
+        if (strategy && strategy !== 'HOLD') return true;
+        // Keep if neither mispricing nor rec have run yet (not enough info to hide)
+        if (mispState == null && recState == null) return true;
+        return false;
+      });
+    }
+
+    // Hide no-data: filter out tickers where mispricing errored or regime errored with "insufficient"
+    if (hideNoData) {
+      result = result.filter((t) => {
+        const mispState = tickerResults[`${t}:mispricing`];
+        const regimeState = tickerResults[`${t}:regime`];
+        if (mispState?.status === 'err') return false;
+        if (
+          regimeState?.status === 'err' &&
+          regimeState.error.toLowerCase().includes('insufficient')
+        ) return false;
+        return true;
+      });
+    }
+
+    // Sort
+    if (sortMode === 'symbol') {
+      result.sort((a, b) => a.localeCompare(b));
+    } else if (sortMode === 'iv-hv') {
+      result.sort((a, b) => {
+        const getRatio = (t: string) => {
+          const s = tickerResults[`${t}:mispricing`];
+          if (s?.status !== 'ok') return -Infinity;
+          return (s.data as Record<string, unknown>).iv_hv_ratio as number ?? 0;
+        };
+        return getRatio(b) - getRatio(a);
+      });
+    } else {
+      // signal: SELL (ratio desc) → BUY (ratio asc) → NEUTRAL/HOLD → no-data last
+      const signalOrder = (t: string): number => {
+        const s = tickerResults[`${t}:mispricing`];
+        if (s?.status !== 'ok') return 3;
+        const sig = (s.data as Record<string, unknown>).signal as string | undefined;
+        if (sig === 'SELL') return 0;
+        if (sig === 'BUY') return 1;
+        return 2;
+      };
+      const getRatio = (t: string): number => {
+        const s = tickerResults[`${t}:mispricing`];
+        if (s?.status !== 'ok') return 0;
+        return (s.data as Record<string, unknown>).iv_hv_ratio as number ?? 0;
+      };
+      result.sort((a, b) => {
+        const so = signalOrder(a) - signalOrder(b);
+        if (so !== 0) return so;
+        const sga = signalOrder(a);
+        if (sga === 0) return getRatio(b) - getRatio(a); // SELL: higher ratio first
+        if (sga === 1) return getRatio(a) - getRatio(b); // BUY: lower ratio first
+        return 0;
+      });
+    }
+
+    return result;
+  }, [tickers, tickerResults, sortMode, hideHold, hideNoData]);
 
   // Everything: also fires the 5 heavy tests (VaR + Sentiment + Confluence +
   // Trade rec + Backtest) per ticker. 8 tests × N tickers can take minutes
@@ -637,9 +728,118 @@ export function AnalyticsPanel({
         <DrawdownCard state={drawdown} onRun={runPortfolio.drawdown} />
       </div>
 
-      <div className="rv-sub" style={{ marginBottom: 8 }}>
-        Per-ticker · {tickers.length} equity holding{tickers.length === 1 ? '' : 's'}
+      {/* Recommended Actions card — synthesised from latest analytics run */}
+      <RecommendedActionsCard
+        hedge={hedge}
+        rebalance={rebalance}
+        limits={limits}
+        tickerResults={tickerResults}
+        tickers={tickers}
+        holdings={holdingsProp?.map((h) => ({ symbol: h.symbol, market_value: h.market_value ?? null }))}
+        totalNAV={totalNAV}
+      />
+
+      {/* Per-ticker header + filter toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 8,
+        }}
+      >
+        <div className="rv-sub" style={{ margin: 0 }}>
+          Per-ticker · {tickers.length} equity holding{tickers.length === 1 ? '' : 's'}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            flexWrap: 'wrap',
+            marginLeft: 'auto',
+          }}
+        >
+          {/* Sort select */}
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11,
+              color: 'var(--ink-dim)',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            Sort:
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as 'signal' | 'symbol' | 'iv-hv')}
+              style={{
+                fontSize: 11,
+                background: 'var(--surface, #1E1E1E)',
+                color: 'var(--ink)',
+                border: '1px solid var(--line)',
+                borderRadius: 4,
+                padding: '1px 4px',
+              }}
+            >
+              <option value="signal">signal</option>
+              <option value="symbol">symbol</option>
+              <option value="iv-hv">iv-hv</option>
+            </select>
+          </label>
+          {/* Hide HOLD */}
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11,
+              color: 'var(--ink-dim)',
+              fontFamily: "'JetBrains Mono', monospace",
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={hideHold}
+              onChange={(e) => setHideHold(e.target.checked)}
+              style={{ accentColor: 'var(--green, #00C805)' }}
+            />
+            Hide HOLD
+          </label>
+          {/* Hide no-data */}
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11,
+              color: 'var(--ink-dim)',
+              fontFamily: "'JetBrains Mono', monospace",
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={hideNoData}
+              onChange={(e) => setHideNoData(e.target.checked)}
+              style={{ accentColor: 'var(--green, #00C805)' }}
+            />
+            Hide no-data
+          </label>
+          {/* Count label */}
+          <span
+            className="rv-sub"
+            style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            {visibleTickers.length} of {tickers.length} shown
+          </span>
+        </div>
       </div>
+
       <div
         style={{
           border: '1px solid var(--line)',
@@ -651,8 +851,10 @@ export function AnalyticsPanel({
       >
         {tickers.length === 0 ? (
           <div className="rv-sub" style={{ padding: 10 }}>no equity holdings in this account</div>
+        ) : visibleTickers.length === 0 ? (
+          <div className="rv-sub" style={{ padding: 10 }}>all tickers filtered — adjust toolbar above</div>
         ) : (
-          tickers.map((t, idx) => (
+          visibleTickers.map((t, idx) => (
             <div
               key={t}
               style={{

@@ -555,7 +555,7 @@ export default function RobinhoodPage() {
         <div style={{ marginBottom: 12 }}>
           <AnalyticsPanel
             account={account}
-            tickers={(holdings?.equities ?? []).map((e) => e.symbol)}
+            tickers={Array.from(new Set((holdings?.equities ?? []).map((e) => e.symbol)))}
           />
         </div>
       )}

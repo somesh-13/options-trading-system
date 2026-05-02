@@ -411,3 +411,160 @@ body {
 .rv-cmd-item .label { flex: 1; }
 .rv-cmd-item .path  { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-mute); }
 .rv-cmd-empty { padding: 20px; text-align: center; color: var(--ink-mute); font-size: 12px; }
+
+/* ===========================================================================
+   Hamburger button — shown only on mobile (<768 px)
+   =========================================================================== */
+.rv-hamburger {
+  display: none; /* hidden on desktop — shown via media query below */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.rv-hamburger span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  background: var(--ink-dim);
+  border-radius: 1px;
+  transition: background 0.12s ease-out;
+}
+.rv-hamburger:hover span { background: var(--ink); }
+
+/* ===========================================================================
+   Mobile-drawer wrapper — wraps the .rv-rail element
+   =========================================================================== */
+.rv-rail-wrapper {
+  /* desktop: just the normal rail in the grid */
+  display: contents; /* transparent wrapper — lets rv-rail sit in the grid cell */
+}
+
+.rv-drawer-backdrop {
+  display: none; /* desktop: never shown */
+}
+
+/* ===========================================================================
+   Responsive layout — collapse rail to hidden drawer below 768 px
+   =========================================================================== */
+@media (max-width: 767px) {
+  /* Switch grid to single-column so content fills the full width */
+  .rv-body {
+    grid-template-columns: 1fr;
+  }
+
+  /* Hamburger becomes visible */
+  .rv-hamburger {
+    display: flex;
+  }
+
+  /* Topbar: allow wrapping on very narrow screens, but keep LIVE + Sync in one row */
+  .rv-topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Search bar — shrink so it doesn't push other elements off-screen */
+  .rv-search {
+    max-width: 100%;
+    flex: 1 1 120px;
+    min-width: 0;
+  }
+
+  /* The drawer wrapper becomes a fixed-overlay container */
+  .rv-rail-wrapper {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 200px;
+    z-index: 200;
+    transform: translateX(-210px); /* hidden off-screen */
+    transition: transform 0.22s ease-out;
+  }
+
+  /* Open state: slides in */
+  .rv-rail-wrapper.rv-rail-open {
+    transform: translateX(0);
+  }
+
+  /* The rail inside the drawer: full height, no sticky needed */
+  .rv-rail-wrapper .rv-rail {
+    height: 100%;
+    position: static;
+    top: unset;
+    overflow-y: auto;
+    padding-top: 56px; /* clear the topbar height */
+  }
+
+  /* Backdrop */
+  .rv-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 199;
+  }
+
+  /* Content fills the full column */
+  .rv-content {
+    padding: 12px 14px;
+  }
+
+  /* Analytics grid — collapse to single column on very small screens */
+  .rv-analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ===========================================================================
+   P2 — Tap-target sizing on touch/coarse-pointer devices
+   =========================================================================== */
+@media (pointer: coarse) {
+  /* All .rv-btn buttons: at least 44 × 44 dp */
+  .rv-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Topbar command-palette trigger (⌘K kbd badge) */
+  .rv-search .kbd {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Hamburger is already 36×36 on desktop; push to 44×44 on touch */
+  .rv-hamburger {
+    min-height: 44px;
+    min-width: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Rail nav items: comfortable tap target */
+  .rv-rail .item {
+    height: 44px;
+    min-height: 44px;
+  }
+}
+
+/* InfoIcon touch target — expand hit area without growing the visible ⓘ glyph */
+@media (pointer: coarse) {
+  .rv-info-icon-btn {
+    /* invisible padding grows the tap area; compensate with negative margin */
+    padding: 10px !important;
+    margin: -10px !important;
+  }
+}

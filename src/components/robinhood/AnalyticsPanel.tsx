@@ -489,11 +489,15 @@ const PORTFOLIO_TESTS = [
 
 export function AnalyticsPanel({
   account,
-  tickers,
+  tickers: tickersProp,
 }: {
   account: RobinhoodAccount;
   tickers: string[];
 }) {
+  // Dedupe incoming tickers so duplicate keys never reach the render tree,
+  // regardless of which caller passed the raw (potentially duplicated) list.
+  const tickers = Array.from(new Set(tickersProp));
+
   const [greeks, setGreeks] = useState<AsyncState<PortfolioGreeksResult>>(idle);
   const [hedge, setHedge] = useState<AsyncState<HedgeRatioResult>>(idle);
   const [rebalance, setRebalance] = useState<AsyncState<RebalanceCheckResult>>(idle);
@@ -587,6 +591,7 @@ export function AnalyticsPanel({
         Portfolio-level — runs on every option leg in this account
       </div>
       <div
+        className="rv-analytics-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',

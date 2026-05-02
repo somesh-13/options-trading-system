@@ -47,7 +47,11 @@ function crumbsFromPath(pathname: string): Crumb[] {
 
 const NOOP_SUBSCRIBE = () => () => {};
 
-export function TopBar() {
+interface TopBarProps {
+  onHamburgerClick?: () => void;
+}
+
+export function TopBar({ onHamburgerClick }: TopBarProps) {
   const pathname = usePathname();
   const mounted = useSyncExternalStore(
     NOOP_SUBSCRIBE,
@@ -57,6 +61,18 @@ export function TopBar() {
   const crumbs = mounted && pathname ? crumbsFromPath(pathname) : [{ label: 'Home', href: '/' }];
   return (
     <div className="rv-topbar">
+      {/* Hamburger — visible only on mobile (hidden via CSS above 768 px) */}
+      <button
+        type="button"
+        className="rv-hamburger"
+        aria-label="Open navigation menu"
+        onClick={onHamburgerClick}
+      >
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+      </button>
+
       <Link href="/" className="rv-brand" prefetch aria-label="VegaEdge home">
         <div className="logo" />
         <div className="name">vega<span>Edge</span></div>

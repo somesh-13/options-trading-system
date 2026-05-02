@@ -24,7 +24,12 @@ const ITEMS: RailItem[] = [
   { icon: '?', label: 'Glossary',   tooltip: 'Glossary — plain-English definitions of every term', href: '/glossary' },
 ];
 
-export function LeftRail() {
+interface LeftRailProps {
+  /** Called after a nav link is clicked — used by AppShell to close the mobile drawer. */
+  onNavigate?: () => void;
+}
+
+export function LeftRail({ onNavigate }: LeftRailProps) {
   const pathname = usePathname() || '/';
   return (
     <div className="rv-rail">
@@ -37,6 +42,7 @@ export function LeftRail() {
             href={it.href}
             title={it.tooltip}
             className={`item ${pathname === it.href ? 'active' : ''}`}
+            onClick={onNavigate}
           >
             <span className="ricon" aria-hidden>{it.icon}</span>
             <span className="rlabel">{it.label}</span>

@@ -108,6 +108,7 @@ export function InfoIcon({ term }: InfoIconProps) {
       <button
         ref={btnRef}
         type="button"
+        className="rv-info-icon-btn"
         aria-label={`Help: ${entry.term}`}
         aria-expanded={open}
         aria-haspopup="dialog"

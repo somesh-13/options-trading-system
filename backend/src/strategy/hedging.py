@@ -85,6 +85,8 @@ def aggregate_portfolio_greeks(positions: list[dict]) -> dict:
         total["total_rho"] += scaled["rho"]
 
         per_position.append({
+            "underlying": pos.get("underlying"),
+            "expiry": pos.get("expiry"),
             "strike": pos["K"],
             "type": pos["option_type"],
             "qty": qty,

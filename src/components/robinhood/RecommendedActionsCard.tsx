@@ -1,9 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { InfoIcon } from '@/components/ui/InfoIcon';
-import type { HedgeRatioResult, RebalanceCheckResult, LimitsCheckResult } from '@/lib/robinhood-analytics-api';
+import type {
+  HedgeRatioResult,
+  RebalanceCheckResult,
+  LimitsCheckResult,
+  PortfolioGreeksResult,
+} from '@/lib/robinhood-analytics-api';
 
 // ---- types ------------------------------------------------------------------
 
@@ -16,24 +21,32 @@ type AsyncState<T> =
 type Severity = 'critical' | 'warn' | 'info';
 type Category = 'hedge' | 'limits' | 'opportunity' | 'concentration';
 
+interface Contributor {
+  ticker: string;
+  contribution: number;  // signed
+  unit?: string;          // e.g. 'Δ', 'Γ', 'shares'
+}
+
 interface Action {
   severity: Severity;
   category: Category;
   title: string;
   detail?: string;
   ticker?: string;           // when set, the ticker symbol in the title is rendered as a Link
+  contributors?: Contributor[];
   link?: { label: string; href: string };
 }
 
 // ---- props ------------------------------------------------------------------
 
 export interface RecommendedActionsCardProps {
+  greeks: AsyncState<PortfolioGreeksResult>;
   hedge: AsyncState<HedgeRatioResult>;
   rebalance: AsyncState<RebalanceCheckResult>;
   limits: AsyncState<LimitsCheckResult>;
   tickerResults: Record<string, AsyncState<unknown>>;
   tickers: string[];
-  holdings?: Array<{ symbol: string; market_value: number | null }>;
+  holdings?: Array<{ symbol: string; market_value: number | null; quantity?: number }>;
   totalNAV?: number;
 }
 
@@ -58,6 +71,45 @@ function sortActions(a: Action, b: Action): number {
   return CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category];
 }
 
+type GreekKey = 'delta' | 'gamma' | 'vega' | 'theta' | 'rho';
+
+/**
+ * Rank tickers by their contribution to a given Greek, summed across option
+ * legs and (for delta only) equity positions. Returns top N by absolute
+ * contribution, signed.
+ */
+function topContributors(
+  greeks: PortfolioGreeksResult | undefined,
+  equities: RecommendedActionsCardProps['holdings'],
+  key: GreekKey,
+  topN = 3,
+): Contributor[] {
+  const buckets: Record<string, number> = {};
+
+  // Option legs (signed deltas/gammas/vegas already include qty sign).
+  for (const p of greeks?.per_position ?? []) {
+    const sym = (p as { underlying?: string }).underlying;
+    if (!sym) continue;
+    const v = p.greeks?.[key];
+    if (v == null) continue;
+    buckets[sym] = (buckets[sym] ?? 0) + v;
+  }
+
+  // Equity legs only contribute to delta (1 delta per share, all long here).
+  if (key === 'delta') {
+    for (const h of equities ?? []) {
+      const q = h.quantity;
+      if (q == null) continue;
+      buckets[h.symbol] = (buckets[h.symbol] ?? 0) + q;
+    }
+  }
+
+  return Object.entries(buckets)
+    .map(([ticker, contribution]) => ({ ticker, contribution }))
+    .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+    .slice(0, topN);
+}
+
 // ---- icon -------------------------------------------------------------------
 
 function SeverityIcon({ s }: { s: Severity }) {
@@ -69,6 +121,7 @@ function SeverityIcon({ s }: { s: Severity }) {
 // ---- main component ---------------------------------------------------------
 
 export function RecommendedActionsCard({
+  greeks,
   hedge,
   rebalance,
   limits,
@@ -79,6 +132,7 @@ export function RecommendedActionsCard({
 }: RecommendedActionsCardProps) {
   const actions = useMemo<Action[]>(() => {
     const result: Action[] = [];
+    const greeksData = greeks.status === 'ok' && !greeks.data.error ? greeks.data : undefined;
 
     // ---- a) Hedge action ----------------------------------------------------
     if (hedge.status === 'ok' && !hedge.data.error) {
@@ -91,6 +145,7 @@ export function RecommendedActionsCard({
           category: 'hedge',
           title: `${hedge_direction} ${Math.abs(hedge_shares).toLocaleString()} shares (≈${fmtMoney(hedge_notional)} notional) to neutralise Δ`,
           detail: `Current Δ ${current_delta.toFixed(2)} → target 0`,
+          contributors: topContributors(greeksData, holdings, 'delta', 4),
           link: { label: 'risk-mgmt', href: '/risk-mgmt' },
         });
       }
@@ -100,10 +155,12 @@ export function RecommendedActionsCard({
     if (limits.status === 'ok' && !limits.data.error) {
       for (const v of limits.data.violations) {
         const over = v.utilization_pct > 100 ? +(v.utilization_pct - 100).toFixed(1) : 0;
+        const greekKey = v.greek.toLowerCase() as GreekKey;
         result.push({
           severity: 'critical',
           category: 'limits',
           title: `Reduce ${v.greek}: ${v.current.toFixed(2)} > ${v.limit.toFixed(2)} (${over}% over)`,
+          contributors: topContributors(greeksData, holdings, greekKey, 4),
           link: { label: 'risk-mgmt', href: '/risk-mgmt' },
         });
       }
@@ -116,10 +173,12 @@ export function RecommendedActionsCard({
           (a) => a.category === 'limits' && a.title.includes(b.greek),
         );
         if (!alreadyReported) {
+          const greekKey = b.greek.toLowerCase() as GreekKey;
           result.push({
             severity: 'critical',
             category: 'limits',
             title: `Rebalance ${b.greek}: ${b.current.toFixed(2)} > ${b.limit.toFixed(2)} (${b.severity})`,
+            contributors: topContributors(greeksData, holdings, greekKey, 4),
             link: { label: 'risk-mgmt', href: '/risk-mgmt' },
           });
         }
@@ -192,7 +251,7 @@ export function RecommendedActionsCard({
     }
 
     return result.sort(sortActions);
-  }, [hedge, rebalance, limits, tickerResults, tickers, holdings, totalNAV]);
+  }, [greeks, hedge, rebalance, limits, tickerResults, tickers, holdings, totalNAV]);
 
   const visible = actions.slice(0, 8);
   const overflow = actions.length - visible.length;
@@ -289,6 +348,42 @@ export function RecommendedActionsCard({
                     style={{ display: 'block', fontSize: 10, marginTop: 1 }}
                   >
                     {action.detail}
+                  </span>
+                )}
+                {action.contributors && action.contributors.length > 0 && (
+                  <span
+                    className="rv-sub"
+                    style={{
+                      display: 'block',
+                      fontSize: 10,
+                      marginTop: 2,
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                  >
+                    top contributors:&nbsp;
+                    {action.contributors.map((c, idx) => {
+                      const sign = c.contribution >= 0 ? '+' : '−';
+                      const mag = Math.abs(c.contribution);
+                      const formatted = mag >= 100 ? mag.toFixed(0) : mag.toFixed(1);
+                      return (
+                        <Fragment key={c.ticker}>
+                          {idx > 0 && <span style={{ color: 'var(--ink-mute)' }}>, </span>}
+                          <Link
+                            href={stockHref(c.ticker)}
+                            style={{
+                              color: 'var(--gold, #FFD700)',
+                              textDecoration: 'underline',
+                              textDecorationColor: 'var(--gold-dim, #cdaa3d)',
+                            }}
+                          >
+                            {c.ticker}
+                          </Link>
+                          <span style={{ color: 'var(--ink-mute)' }}>
+                            {' '}({sign}{formatted})
+                          </span>
+                        </Fragment>
+                      );
+                    })}
                   </span>
                 )}
               </span>

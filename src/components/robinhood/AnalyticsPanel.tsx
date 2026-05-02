@@ -841,12 +841,17 @@ export function AnalyticsPanel({
 
       {/* Recommended Actions card — synthesised from latest analytics run */}
       <RecommendedActionsCard
+        greeks={greeks}
         hedge={hedge}
         rebalance={rebalance}
         limits={limits}
         tickerResults={tickerResults}
         tickers={tickers}
-        holdings={holdingsProp?.map((h) => ({ symbol: h.symbol, market_value: h.market_value ?? null }))}
+        holdings={holdingsProp?.map((h) => ({
+          symbol: h.symbol,
+          market_value: h.market_value ?? null,
+          quantity: h.quantity,
+        }))}
         totalNAV={totalNAV}
       />
 

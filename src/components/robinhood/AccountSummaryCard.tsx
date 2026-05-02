@@ -16,19 +16,18 @@ const fmtSigned = (n: number | null | undefined) => {
 export function AccountSummaryCard({
   summary,
   accountLabel = 'All accounts',
-  source = 'csv',
   fetchedAt = null,
 }: {
   summary: RobinhoodSummary | null;
   accountLabel?: string;
-  source?: 'csv' | 'live';
   fetchedAt?: string | null;
 }) {
   const cls = (n: number | null | undefined) => (n == null ? '' : n > 0 ? 'rv-up' : n < 0 ? 'rv-dn' : '');
+
   const nav =
     summary == null
       ? null
-      : summary.total_market_value + summary.cash_net_transfers + summary.dividends_ytd + summary.interest_ytd + summary.fees_ytd + summary.realized_pnl - summary.total_invested;
+      : summary.total_market_value + summary.cash_net_transfers - summary.total_invested;
 
   return (
     <div className="rv-card">
@@ -40,22 +39,18 @@ export function AccountSummaryCard({
             data-testid="summary-source-chip"
             className="rv-chip"
             style={{
-              background: source === 'live' ? 'rgba(0,200,5,0.12)' : undefined,
-              color: source === 'live' ? 'var(--green, #00C805)' : undefined,
-              borderColor: source === 'live' ? 'var(--green, #00C805)' : undefined,
+              background: 'rgba(0,200,5,0.12)',
+              color: 'var(--green, #00C805)',
+              borderColor: 'var(--green, #00C805)',
             }}
             title={
               fetchedAt
                 ? `Last live sync: ${new Date(fetchedAt).toLocaleString()}`
-                : source === 'live'
-                ? 'Live snapshot'
-                : 'Derived from activity CSV'
+                : 'Live snapshot'
             }
           >
-            {source === 'live' ? 'LIVE' : 'CSV'}
-            {source === 'live' && fetchedAt
-              ? ` · ${new Date(fetchedAt).toLocaleTimeString()}`
-              : ''}
+            LIVE
+            {fetchedAt ? ` · ${new Date(fetchedAt).toLocaleTimeString()}` : ''}
           </span>
         </span>
       </div>
@@ -81,64 +76,18 @@ export function AccountSummaryCard({
           <div className="rv-sub" style={{ margin: 0 }}>mark-to-market</div>
         </div>
         <div>
-          <div className="rv-sub" style={{ margin: 0 }}>Realized</div>
-          <div className={cls(summary?.realized_pnl)}>
-            <b>{fmtSigned(summary?.realized_pnl)}</b>
-          </div>
-          <div className="rv-sub" style={{ margin: 0 }}>YTD P&amp;L</div>
-        </div>
-        <div>
-          <div className="rv-sub" style={{ margin: 0 }}>Dividends</div>
-          <div className={cls(summary?.dividends_ytd)}>
-            <b>{fmtSigned(summary?.dividends_ytd)}</b>
-          </div>
-          <div className="rv-sub" style={{ margin: 0 }}>YTD</div>
-        </div>
-        <div>
           <div className="rv-sub" style={{ margin: 0 }}>Transfers</div>
           <div><b>{fmtSigned(summary?.cash_net_transfers)}</b></div>
           <div className="rv-sub" style={{ margin: 0 }}>ACH net</div>
-        </div>
-        <div>
-          <div className="rv-sub" style={{ margin: 0 }}>Interest</div>
-          <div className={cls(summary?.interest_ytd)}>
-            <b>{fmtSigned(summary?.interest_ytd)}</b>
-          </div>
-          <div className="rv-sub" style={{ margin: 0 }}>YTD</div>
-        </div>
-        <div>
-          <div className="rv-sub" style={{ margin: 0 }}>Fees</div>
-          <div className={cls(summary?.fees_ytd)}>
-            <b>{fmtSigned(summary?.fees_ytd)}</b>
-          </div>
-          <div className="rv-sub" style={{ margin: 0 }}>YTD</div>
         </div>
         <div>
           <div className="rv-sub" style={{ margin: 0 }}>NAV est.</div>
           <div className={cls(nav)}>
             <b>{fmtSigned(nav)}</b>
           </div>
-          <div className="rv-sub" style={{ margin: 0 }}>cost + pnl + cash</div>
+          <div className="rv-sub" style={{ margin: 0 }}>market + transfers − cost</div>
         </div>
       </div>
-      {summary && summary.unknown_basis_proceeds > 0 && (
-        <div
-          style={{
-            marginTop: 10,
-            paddingTop: 8,
-            borderTop: '1px dashed var(--line)',
-            fontSize: 11,
-            color: 'var(--ink-mute)',
-            fontFamily: "'JetBrains Mono', monospace",
-          }}
-          data-testid="unknown-basis-note"
-        >
-          ⚠ {fmt(summary.unknown_basis_proceeds)} of sale proceeds came from pre-CSV shares
-          (e.g. shares called away via option assignment before the earliest CSV date).
-          The original cost basis is not in the exports, so Realized P&amp;L above does
-          <em> not</em> include gain/loss on those shares.
-        </div>
-      )}
     </div>
   );
 }

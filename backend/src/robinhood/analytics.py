@@ -16,10 +16,9 @@ from typing import Dict, List, Optional
 from .portfolio import (
     OptionHolding,
     _cached_price,
-    compute_equity_holdings,
-    compute_option_holdings,
-    compute_summary,
-    enrich_equity_with_prices,
+    compute_live_holdings,
+    compute_live_options,
+    compute_live_summary,
 )
 
 from data.cifr_data import get_historical_volatility  # type: ignore
@@ -80,7 +79,7 @@ def options_as_position_dicts(account: str = "all") -> Dict[str, list]:
       - `skipped`:   list of legs that couldn't be priced, with a reason
       - `assumptions`: {risk_free_rate, hv_window_days, vol_fallback}
     """
-    legs = compute_option_holdings(account)
+    legs = compute_live_options(account)
     underlyings = sorted({leg.underlying for leg in legs})
     hv = _build_hv_cache(underlyings)
 
@@ -141,6 +140,15 @@ def options_as_position_dicts(account: str = "all") -> Dict[str, list]:
 
 
 def _no_positions_response(skipped: list) -> dict:
+    if not skipped:
+        return {
+            "error": "no_live_snapshot",
+            "message": (
+                "No live Robinhood snapshot available. Run "
+                "POST /api/robinhood/sync to pull positions from the broker."
+            ),
+            "skipped": [],
+        }
     return {
         "error": "no_priceable_options",
         "message": (
@@ -252,18 +260,22 @@ def drawdown_for_account(account: str = "all", limit: float = 0.10) -> dict:
 
     The response includes both inputs so the UI can label this clearly.
     """
-    equities = compute_equity_holdings(account)
-    enrich_equity_with_prices(equities)
-    options = compute_option_holdings(account)
-    summary = compute_summary(equities, options, account)
+    equities = compute_live_holdings(account)
+    options = compute_live_options(account)
+    if not equities and not options:
+        return {
+            "error": "no_live_snapshot",
+            "message": (
+                "No live Robinhood snapshot available. Run "
+                "POST /api/robinhood/sync to pull positions from the broker."
+            ),
+        }
+    summary = compute_live_summary(equities, options, account)
 
     market_value = summary.total_market_value
-    cash_flows = (
-        summary.cash_net_transfers
-        + summary.dividends_ytd
-        + summary.interest_ytd
-        + summary.fees_ytd
-    )
+    # Live snapshot doesn't surface dividends/interest/fees, so cash_flows is
+    # just net ACH transfers.
+    cash_flows = summary.cash_net_transfers
     current_equity = market_value + cash_flows
     peak_equity = max(current_equity, summary.total_invested + cash_flows)
 

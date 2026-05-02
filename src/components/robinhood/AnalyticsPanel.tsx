@@ -551,12 +551,32 @@ export function AnalyticsPanel({
     [setTickerResult],
   );
 
-  const runAll = useCallback(() => {
+  // Quick: portfolio-level + the 3 cheap per-ticker tests (IV/HV, Regime, HV CI).
+  // Fast (~seconds), safe to spam.
+  const runQuick = useCallback(() => {
     PORTFOLIO_TESTS.forEach((k) => runPortfolio[k]());
     tickers.forEach((t) => {
       runTickerTest(t, 'mispricing');
       runTickerTest(t, 'regime');
       runTickerTest(t, 'hv');
+    });
+  }, [runPortfolio, runTickerTest, tickers]);
+
+  // Everything: also fires the 5 heavy tests (VaR + Sentiment + Confluence +
+  // Trade rec + Backtest) per ticker. 8 tests × N tickers can take minutes
+  // and hit external APIs (news, LLM). Confirm before kicking off.
+  const runEverything = useCallback(() => {
+    const heavyCount = tickers.length * 5;
+    const totalCount = tickers.length * 8 + PORTFOLIO_TESTS.length;
+    const ok = window.confirm(
+      `Run all ${totalCount} analytics across ${tickers.length} tickers?\n\n` +
+      `This includes ${heavyCount} heavy calls (Backtest, Sentiment, Confluence, ` +
+      `Trade rec, VaR) that hit external APIs and may take several minutes.`,
+    );
+    if (!ok) return;
+    PORTFOLIO_TESTS.forEach((k) => runPortfolio[k]());
+    tickers.forEach((t) => {
+      PER_TICKER_TESTS.forEach((test) => runTickerTest(t, test.key));
     });
   }, [runPortfolio, runTickerTest, tickers]);
 
@@ -570,11 +590,21 @@ export function AnalyticsPanel({
         <span style={{ display: 'flex', gap: 6 }}>
           <button
             type="button"
+            className="rv-btn ghost"
+            style={{ fontSize: 11 }}
+            onClick={runQuick}
+            title="Portfolio-level + IV/HV, Regime, HV CI per ticker (~seconds)"
+          >
+            ▶ Run quick
+          </button>
+          <button
+            type="button"
             className="rv-btn"
             style={{ fontSize: 11 }}
-            onClick={runAll}
+            onClick={runEverything}
+            title="Includes heavy tests: Backtest, Sentiment, Confluence, Trade rec, VaR. Several minutes."
           >
-            ▶ Run all (cheap tests)
+            ▶ Run all
           </button>
           <button
             type="button"

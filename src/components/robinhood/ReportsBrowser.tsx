@@ -14,6 +14,7 @@ import {
   type AnalyticsRunMeta,
   type AnalyticsRunFull,
 } from '@/lib/robinhood-analytics-api';
+import { TickerVerdict, conviction } from './TickerVerdict';
 
 // ---- formatters -------------------------------------------------------------
 
@@ -232,53 +233,35 @@ function PortfolioGrid({ portfolio }: { portfolio: PortfolioSnapshot }) {
   );
 }
 
-const PER_TICKER_LABELS: Record<string, string> = {
-  mispricing: 'IV/HV',
-  regime: 'Regime',
-  hv: 'HV CI',
-  var: 'VaR',
-  sentiment: 'Sentiment',
-  confluence: 'Confluence',
-  rec: 'Trade rec',
-  backtest: 'Backtest 1y',
-};
 
-function summarize(test: string, data: unknown): string {
-  if (!data || typeof data !== 'object') return String(data ?? '').slice(0, 120);
-  const d = data as Record<string, unknown>;
-  if (test === 'mispricing') {
-    return `IV/HV ${(d.iv_hv_ratio as number | undefined)?.toFixed(2) ?? '—'} · ${d.signal ?? '—'}`;
-  }
-  if (test === 'regime') {
-    const prob = d.probability as number | undefined;
-    return `${d.regime ?? '—'} (${prob != null ? (prob * 100).toFixed(0) + '%' : '—'})`;
-  }
-  if (test === 'hv') {
-    const hv = d.hv as number | undefined;
-    return `HV ${hv != null ? (hv * 100).toFixed(1) : '—'}%`;
-  }
-  if (test === 'var') {
-    const h = d.historical as { var_pct?: number } | undefined;
-    return h?.var_pct != null ? `VaR 95% ${h.var_pct.toFixed(2)}%` : 'no data';
-  }
-  if (test === 'sentiment') return `${d.article_count ?? 0} articles`;
-  if (test === 'confluence') return `confluence ${(d.confluence_score as number | undefined)?.toFixed(2) ?? '—'}`;
-  if (test === 'rec') return `${d.strategy ?? '—'} · ${d.recommendation ?? '—'}`;
-  if (test === 'backtest') {
-    const m = d.metrics as Record<string, number> | undefined;
-    return m ? `Sharpe ${m.sharpe_ratio?.toFixed(2) ?? '—'}` : 'no metrics';
-  }
-  return JSON.stringify(d).slice(0, 80);
-}
+type PerTickerEntry = { status: string; data?: unknown; error?: string };
 
 function PerTickerGrid({
   tickers,
   perTicker,
 }: {
   tickers: string[];
-  perTicker: Record<string, { status: string; data?: unknown; error?: string }>;
+  perTicker: Record<string, PerTickerEntry>;
 }) {
-  const keys = Object.keys(PER_TICKER_LABELS);
+  // Normalise saved entries into the AsyncState shape TickerVerdict expects.
+  const results: Record<string, { status: 'idle' } | { status: 'loading' } | { status: 'ok'; data: unknown } | { status: 'err'; error: string }> = {};
+  for (const [key, entry] of Object.entries(perTicker)) {
+    if (entry.status === 'ok') {
+      results[key] = { status: 'ok', data: entry.data };
+    } else if (entry.status === 'err') {
+      results[key] = { status: 'err', error: entry.error ?? 'error' };
+    } else if (entry.status === 'loading') {
+      results[key] = { status: 'loading' };
+    } else {
+      results[key] = { status: 'idle' };
+    }
+  }
+
+  // Sort tickers by conviction (highest first) for the compact read-only view.
+  const sorted = [...tickers].sort(
+    (a, b) => conviction(results, b) - conviction(results, a),
+  );
+
   return (
     <div
       style={{
@@ -289,26 +272,15 @@ function PerTickerGrid({
         marginBottom: 14,
       }}
     >
-      {tickers.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="rv-sub" style={{ padding: 10 }}>no tickers in this run</div>
       ) : (
-        tickers.map((t, idx) => (
+        sorted.map((t, idx) => (
           <div
             key={t}
-            style={{ padding: '8px 10px', borderTop: idx === 0 ? 'none' : '1px solid var(--line)' }}
+            style={{ borderTop: idx === 0 ? 'none' : '1px solid var(--line)' }}
           >
-            <span style={{ minWidth: 60, fontWeight: 700, display: 'inline-block' }}>{t}</span>
-            {keys.map((test) => {
-              const s = perTicker[`${t}:${test}`];
-              if (!s || s.status === 'idle') return null;
-              return (
-                <div key={`${t}-${test}`} style={{ marginTop: 4, marginLeft: 66, fontSize: 10, color: s.status === 'err' ? 'var(--pink)' : 'var(--ink-dim)' }}>
-                  <span style={{ color: 'var(--ink-mute)' }}>{PER_TICKER_LABELS[test]}:</span>
-                  {' '}
-                  {s.status === 'err' ? s.error : summarize(test, s.data)}
-                </div>
-              );
-            })}
+            <TickerVerdict ticker={t} results={results} />
           </div>
         ))
       )}

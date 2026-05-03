@@ -19,6 +19,7 @@ import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import type { RobinhoodAccount, RobinhoodHolding } from '@/lib/robinhood-api';
 import { InfoIcon } from '@/components/ui/InfoIcon';
 import { RecommendedActionsCard } from './RecommendedActionsCard';
+import { TickerVerdict, conviction } from './TickerVerdict';
 import {
   getPortfolioGreeks,
   getHedgeRatio,
@@ -529,6 +530,24 @@ export function AnalyticsPanel({
   const [hideHold, setHideHold] = useState(false);
   const [hideNoData, setHideNoData] = useState(false);
 
+  // View toggle: compact (TickerVerdict rows) vs detailed (existing verbose grid)
+  type ViewMode = 'compact' | 'detailed';
+  const VIEW_STORAGE_KEY = 'rv:robinhood:per-ticker-view';
+  // Lazy init from localStorage — SSR sees 'compact', client hydrates with persisted value.
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === 'undefined') return 'compact';
+    try {
+      const stored = localStorage.getItem(VIEW_STORAGE_KEY);
+      if (stored === 'detailed' || stored === 'compact') return stored;
+    } catch { /* ignore */ }
+    return 'compact';
+  });
+
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    setViewMode(mode);
+    try { localStorage.setItem(VIEW_STORAGE_KEY, mode); } catch { /* ignore */ }
+  }, []);
+
   const setTickerResult = useCallback(
     (ticker: string, test: TickerTestKey, state: AsyncState<unknown>) => {
       setTickerResults((prev) => {
@@ -635,8 +654,11 @@ export function AnalyticsPanel({
         };
         return getRatio(b) - getRatio(a);
       });
+    } else if (sortMode === 'signal' && viewMode === 'compact') {
+      // Compact + signal: sort by conviction score (most decisive first)
+      result.sort((a, b) => conviction(tickerResults, b) - conviction(tickerResults, a));
     } else {
-      // signal: SELL (ratio desc) → BUY (ratio asc) → NEUTRAL/HOLD → no-data last
+      // Detailed signal: SELL (ratio desc) → BUY (ratio asc) → NEUTRAL/HOLD → no-data last
       const signalOrder = (t: string): number => {
         const s = tickerResults[`${t}:mispricing`];
         if (s?.status !== 'ok') return 3;
@@ -661,7 +683,7 @@ export function AnalyticsPanel({
     }
 
     return result;
-  }, [tickers, tickerResults, sortMode, hideHold, hideNoData]);
+  }, [tickers, tickerResults, sortMode, viewMode, hideHold, hideNoData]);
 
   // Everything: also fires the 5 heavy tests (VaR + Sentiment + Confluence +
   // Trade rec + Backtest) per ticker. 8 tests × N tickers can take minutes
@@ -950,6 +972,34 @@ export function AnalyticsPanel({
             />
             Hide no-data
           </label>
+          {/* View toggle */}
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11,
+              color: 'var(--ink-dim)',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            View:
+            <select
+              value={viewMode}
+              onChange={(e) => handleViewModeChange(e.target.value as 'compact' | 'detailed')}
+              style={{
+                fontSize: 11,
+                background: 'var(--surface, #1E1E1E)',
+                color: 'var(--ink)',
+                border: '1px solid var(--line)',
+                borderRadius: 4,
+                padding: '1px 4px',
+              }}
+            >
+              <option value="compact">Compact</option>
+              <option value="detailed">Detailed</option>
+            </select>
+          </label>
           {/* Count label */}
           <span
             className="rv-sub"
@@ -973,7 +1023,18 @@ export function AnalyticsPanel({
           <div className="rv-sub" style={{ padding: 10 }}>no equity holdings in this account</div>
         ) : visibleTickers.length === 0 ? (
           <div className="rv-sub" style={{ padding: 10 }}>all tickers filtered — adjust toolbar above</div>
+        ) : viewMode === 'compact' ? (
+          /* ---- Compact view: one TickerVerdict row per ticker ---- */
+          visibleTickers.map((t, idx) => (
+            <div
+              key={t}
+              style={{ borderTop: idx === 0 ? 'none' : '1px solid var(--line)' }}
+            >
+              <TickerVerdict ticker={t} results={tickerResults} />
+            </div>
+          ))
         ) : (
+          /* ---- Detailed view: existing verbose grid ---- */
           visibleTickers.map((t, idx) => (
             <div
               key={t}

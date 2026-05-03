@@ -192,6 +192,45 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
     return { totalQty, totalCost, totalMV, totalUn, blendedAvg };
   }, [equities]);
 
+  // Option totals — sign-correct for net portfolio contribution.
+  // Per-leg market_value is gross-positive; long is an asset (+mv), short is
+  // a liability to close (−mv). cost_basis is already signed (long: -debit
+  // paid, short: +credit received). unrealized_pnl is signed correctly per
+  // leg. So:
+  //   netContracts   = +qty for longs, −qty for shorts (a market-direction
+  //                    proxy; mostly informational)
+  //   netMarketValue = signed sum (cost to close all legs)
+  //   netCostBasis   = signed sum (positive = net credit received opening
+  //                                the position, negative = net debit)
+  //   netUnrealized  = simple sum of per-leg unrealized
+  const optTotals = useMemo(() => {
+    let netContracts = 0;
+    let netMarketValue = 0;
+    let netCostBasis = 0;
+    let netUnrealized = 0;
+    let mvSeen = false;
+    let unSeen = false;
+    for (const o of options) {
+      const sign = o.position === 'long' ? 1 : -1;
+      netContracts += sign * o.quantity;
+      netCostBasis += o.cost_basis;
+      if (o.market_value != null) {
+        netMarketValue += sign * o.market_value;
+        mvSeen = true;
+      }
+      if (o.unrealized_pnl != null) {
+        netUnrealized += o.unrealized_pnl;
+        unSeen = true;
+      }
+    }
+    return {
+      netContracts,
+      netCostBasis,
+      netMarketValue: mvSeen ? netMarketValue : null,
+      netUnrealized: unSeen ? netUnrealized : null,
+    };
+  }, [options]);
+
   const hasEquity = equities.length > 0;
   const hasOptions = options.length > 0;
   const strategy = !loading && !err
@@ -351,9 +390,46 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
                     </td>
                   </tr>
                 ))}
+                {options.length > 1 && (
+                  <tr style={{ borderTop: '1px solid var(--line)', fontWeight: 700 }}>
+                    <td colSpan={4} title="Sign-corrected: long legs add, short legs subtract">
+                      Total ({options.length} legs)
+                    </td>
+                    <td
+                      className={optTotals.netContracts > 0 ? 'rv-up' : optTotals.netContracts < 0 ? 'rv-dn' : ''}
+                      style={{ textAlign: 'right' }}
+                      title="Long contracts minus short contracts"
+                    >
+                      {optTotals.netContracts >= 0 ? '+' : ''}{fmt(optTotals.netContracts, 0)}
+                    </td>
+                    <td
+                      className={cls(optTotals.netMarketValue)}
+                      style={{ textAlign: 'right' }}
+                      title="Net cost to close all legs (longs as asset, shorts as liability)"
+                    >
+                      {fmtSigned(optTotals.netMarketValue)}
+                    </td>
+                    <td
+                      className={cls(optTotals.netUnrealized)}
+                      style={{ textAlign: 'right' }}
+                      title="Sum of per-leg mark-to-market P&L"
+                    >
+                      {fmtSigned(optTotals.netUnrealized)}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
+          {options.length > 1 && optTotals.netCostBasis !== 0 && (
+            <div className="rv-sub" style={{ fontSize: 10, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
+              Net premium flowed when opening:{' '}
+              <span className={cls(optTotals.netCostBasis)}>
+                {fmtSigned(optTotals.netCostBasis)}
+              </span>
+              {' '}({optTotals.netCostBasis > 0 ? 'net credit received' : 'net debit paid'})
+            </div>
+          )}
         </div>
       )}
     </div>

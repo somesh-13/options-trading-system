@@ -1798,9 +1798,9 @@ def robinhood_hedge_ratio(account: str = "all", target_delta: float = 0.0):
 @app.get("/api/robinhood/analytics/rebalance-check")
 def robinhood_rebalance_check(
     account: str = "all",
-    delta_limit: float = 100.0,
-    gamma_limit: float = 50.0,
-    vega_limit: float = 500.0,
+    delta_limit: float = 1000.0,
+    gamma_limit: float = 100.0,
+    vega_limit: float = 1000.0,
 ):
     try:
         return rh_analytics.rebalance_check_for_account(

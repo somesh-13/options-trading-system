@@ -133,9 +133,11 @@ export interface RebalanceCheckResult {
 
 export function getRebalanceCheck(
   account: RobinhoodAccount,
-  deltaLimit = 100,
-  gammaLimit = 50,
-  vegaLimit = 500,
+  // Defaults sized for a diversified multi-ticker portfolio. Previous
+  // 100/50/500 values were single-name-sized and fired constantly.
+  deltaLimit = 1000,
+  gammaLimit = 100,
+  vegaLimit = 1000,
 ): Promise<RebalanceCheckResult> {
   const qs = new URLSearchParams({
     account,

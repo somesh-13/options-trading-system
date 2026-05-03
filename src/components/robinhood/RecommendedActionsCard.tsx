@@ -166,14 +166,27 @@ export function RecommendedActionsCard({
       }
     }
 
+    // Did the hedge action already cover delta?
+    const hedgeFired =
+      hedge.status === 'ok' &&
+      !hedge.data.error &&
+      hedge.data.hedge_direction !== 'NONE' &&
+      Math.abs(hedge.data.current_delta) > 1;
+
     if (rebalance.status === 'ok' && !rebalance.data.error && rebalance.data.needs_rebalance) {
       for (const b of rebalance.data.breaches) {
-        // Avoid duplicate if limits already reported it
-        const alreadyReported = result.some(
+        const greekLower = b.greek.toLowerCase();
+        // Skip if the same Greek is already a hard-limits violation (different
+        // wording, same problem).
+        const alreadyByLimits = result.some(
           (a) => a.category === 'limits' && a.title.includes(b.greek),
         );
-        if (!alreadyReported) {
-          const greekKey = b.greek.toLowerCase() as GreekKey;
+        // Skip rebalance-delta when the hedge action is already firing — the
+        // hedge row gives a concrete trade ("SELL N shares") which is a more
+        // useful version of the same delta breach.
+        const coveredByHedge = greekLower === 'delta' && hedgeFired;
+        if (!alreadyByLimits && !coveredByHedge) {
+          const greekKey = greekLower as GreekKey;
           result.push({
             severity: 'critical',
             category: 'limits',

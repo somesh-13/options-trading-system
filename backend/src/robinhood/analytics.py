@@ -183,10 +183,13 @@ def hedge_ratio_for_account(account: str = "all", target_delta: float = 0.0) -> 
 
 def rebalance_check_for_account(
     account: str = "all",
-    delta_limit: float = 100.0,
-    gamma_limit: float = 50.0,
-    vega_limit: float = 500.0,
+    delta_limit: float = 1000.0,
+    gamma_limit: float = 100.0,
+    vega_limit: float = 1000.0,
 ) -> dict:
+    # Defaults sized for a multi-ticker portfolio (~$50k+ NAV, dozens of legs).
+    # Tighter values like 100/50/500 fired constantly and were originally
+    # meant for single-name option books.
     bundle = options_as_position_dicts(account)
     positions = bundle["positions"]
     if not positions:

@@ -6,7 +6,7 @@
  * tickers not in the portfolio).
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   getRobinhoodHoldings,
   type RobinhoodHolding,
@@ -31,10 +31,16 @@ const fmtSigned = (n: number | null | undefined) => {
 
 const cls = (n: number | null | undefined) => (n == null ? '' : n > 0 ? 'rv-up' : n < 0 ? 'rv-dn' : '');
 
+const ACCOUNT_LABEL: Record<string, string> = {
+  brokerage: 'Individual',
+  roth_ira: 'Roth IRA',
+  sofi: 'SoFi',
+  crypto: 'Crypto',
+};
+const accountLabel = (a: string) => ACCOUNT_LABEL[a] ?? a.replace('_', ' ');
+
 // ---- helpers ----------------------------------------------------------------
 
-// Detects the option strategy implied by the user's combined equity + option legs.
-// Conservative: returns null when the shape doesn't fit a clean named strategy.
 function detectStrategy(
   shares: number,
   legs: RobinhoodOption[],
@@ -47,101 +53,165 @@ function detectStrategy(
   const totalShortCallContracts = shortCalls.reduce((s, l) => s + l.quantity, 0);
   const totalLongCallContracts  = longCalls.reduce((s, l) => s + l.quantity, 0);
 
-  // Covered call: long shares cover every short call (100 shares per contract).
   if (shortCalls.length > 0 && longCalls.length === 0 && longPuts.length === 0 && shortPuts.length === 0) {
     return shares >= totalShortCallContracts * 100
       ? { label: 'Covered call', tone: 'good' }
       : { label: 'Naked call', tone: 'warn' };
   }
-  // Cash-secured put (no shares needed for this label, just signals the structure).
   if (shortPuts.length > 0 && longPuts.length === 0 && longCalls.length === 0 && shortCalls.length === 0) {
     return { label: 'Short put', tone: 'neutral' };
   }
-  // Protective put alongside a long share position.
   if (longPuts.length > 0 && shares > 0 && shortPuts.length === 0 && longCalls.length === 0 && shortCalls.length === 0) {
     return { label: 'Protective put', tone: 'good' };
   }
-  // Vertical call spread: equal long and short call contracts, no other legs.
   if (longCalls.length > 0 && shortCalls.length > 0 && longPuts.length === 0 && shortPuts.length === 0
       && totalLongCallContracts === totalShortCallContracts) {
     return { label: 'Call spread', tone: 'neutral' };
   }
-  // Mixed call book on top of shares (e.g. covered call + diagonal/leap) → flag as combo.
   if (shares > 0 && (longCalls.length > 0 || shortCalls.length > 0)) {
     return { label: 'Stock + options combo', tone: 'neutral' };
   }
   return { label: `${legs.length} option leg${legs.length === 1 ? '' : 's'}`, tone: 'neutral' };
 }
 
-interface AggEquity {
-  symbol: string;
-  totalQty: number;
-  totalCost: number;
-  totalMV: number | null;
-  totalUnrealized: number | null;
-  byAccount: Array<{ account: string; qty: number }>;
+interface PerAccountEquity {
+  account: string;
+  qty: number;
+  avgCost: number;
+  costBasis: number;
+  marketValue: number | null;
+  unrealized: number | null;
   inferred: boolean;
 }
 
-function aggregateEquity(rows: RobinhoodHolding[], ticker: string): AggEquity | null {
-  const matching = rows.filter((h) => h.symbol.toUpperCase() === ticker.toUpperCase());
-  if (matching.length === 0) return null;
-  const totalQty = matching.reduce((s, h) => s + h.quantity, 0);
-  const totalCost = matching.reduce((s, h) => s + h.cost_basis, 0);
-  const hasMV = matching.some((h) => h.market_value != null);
-  const totalMV = hasMV ? matching.reduce((s, h) => s + (h.market_value ?? 0), 0) : null;
-  const hasUn = matching.some((h) => h.unrealized_pnl != null);
-  const totalUnrealized = hasUn ? matching.reduce((s, h) => s + (h.unrealized_pnl ?? 0), 0) : null;
-  const byAccount = matching.map((h) => ({ account: h.account, qty: h.quantity }));
-  const inferred = matching.some((h) => h.inferred_opening);
-  return { symbol: ticker.toUpperCase(), totalQty, totalCost, totalMV, totalUnrealized, byAccount, inferred };
+function buildEquityRows(rows: RobinhoodHolding[], ticker: string): PerAccountEquity[] {
+  const t = ticker.toUpperCase();
+  return rows
+    .filter((h) => h.symbol.toUpperCase() === t)
+    .map((h) => ({
+      account: h.account,
+      qty: h.quantity,
+      avgCost: h.avg_cost,
+      costBasis: h.cost_basis,
+      marketValue: h.market_value ?? null,
+      unrealized: h.unrealized_pnl ?? null,
+      inferred: h.inferred_opening,
+    }));
+}
+
+// ---- option sort ------------------------------------------------------------
+
+type OptSortKey = 'side' | 'position' | 'strike' | 'expiry' | 'quantity' | 'market_value' | 'unrealized_pnl';
+type SortDir = 'asc' | 'desc';
+
+const OPT_COLS: Array<{ key: OptSortKey; label: string; align: 'left' | 'right' }> = [
+  { key: 'side', label: 'Side', align: 'left' },
+  { key: 'position', label: 'Position', align: 'left' },
+  { key: 'strike', label: 'Strike', align: 'right' },
+  { key: 'expiry', label: 'Expiry', align: 'left' },
+  { key: 'quantity', label: 'Qty', align: 'right' },
+  { key: 'market_value', label: 'Mkt value', align: 'right' },
+  { key: 'unrealized_pnl', label: 'Unrealized', align: 'right' },
+];
+
+function optValue(o: RobinhoodOption, key: OptSortKey): number | string | null | undefined {
+  switch (key) {
+    case 'side': return o.side;
+    case 'position': return o.position;
+    case 'strike': return o.strike;
+    case 'expiry': return o.expiry;
+    case 'quantity': return o.quantity;
+    case 'market_value': return o.market_value;
+    case 'unrealized_pnl': return o.unrealized_pnl;
+  }
+}
+
+function compareOpt(a: RobinhoodOption, b: RobinhoodOption, key: OptSortKey, dir: SortDir): number {
+  const av = optValue(a, key);
+  const bv = optValue(b, key);
+  if (av == null && bv == null) return 0;
+  if (av == null) return 1;
+  if (bv == null) return -1;
+  const cmp = typeof av === 'string' && typeof bv === 'string'
+    ? av.localeCompare(bv)
+    : (av as number) - (bv as number);
+  return dir === 'asc' ? cmp : -cmp;
 }
 
 // ---- component --------------------------------------------------------------
 
 export function StockPositionCard({ ticker }: { ticker: string }) {
-  const [equityPos, setEquityPos] = useState<AggEquity | null | 'loading'>('loading');
+  const [equityRows, setEquityRows] = useState<PerAccountEquity[] | 'loading'>('loading');
   const [optionLegs, setOptionLegs] = useState<RobinhoodOption[] | 'loading'>('loading');
   const [err, setErr] = useState<string | null>(null);
+
+  const [optSortKey, setOptSortKey] = useState<OptSortKey>('expiry');
+  const [optSortDir, setOptSortDir] = useState<SortDir>('asc');
 
   useEffect(() => {
     let cancelled = false;
     getRobinhoodHoldings(true, 'all', 'live')
       .then((data) => {
         if (cancelled) return;
-        const eq = aggregateEquity(data.equities, ticker);
-        const opts = data.options.filter(
-          (o) => o.underlying.toUpperCase() === ticker.toUpperCase(),
-        );
-        setEquityPos(eq);
-        setOptionLegs(opts);
+        setEquityRows(buildEquityRows(data.equities, ticker));
+        setOptionLegs(data.options.filter((o) => o.underlying.toUpperCase() === ticker.toUpperCase()));
         setErr(null);
       })
       .catch((e: Error) => {
         if (cancelled) return;
         setErr(e.message);
-        setEquityPos(null);
+        setEquityRows([]);
         setOptionLegs([]);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [ticker]);
 
-  const loading = equityPos === 'loading' || optionLegs === 'loading';
-  const equity = equityPos === 'loading' ? null : equityPos;
-  const options = optionLegs === 'loading' ? [] : optionLegs;
+  const loading = equityRows === 'loading' || optionLegs === 'loading';
+  const equities = useMemo<PerAccountEquity[]>(
+    () => (equityRows === 'loading' ? [] : equityRows),
+    [equityRows],
+  );
+  const options = useMemo<RobinhoodOption[]>(
+    () => (optionLegs === 'loading' ? [] : optionLegs),
+    [optionLegs],
+  );
 
-  const hasEquity = equity != null;
+  const sortedOptions = useMemo(
+    () => [...options].sort((a, b) => compareOpt(a, b, optSortKey, optSortDir)),
+    [options, optSortKey, optSortDir],
+  );
+
+  const totals = useMemo(() => {
+    const totalQty = equities.reduce((s, r) => s + r.qty, 0);
+    const totalCost = equities.reduce((s, r) => s + r.costBasis, 0);
+    const hasMV = equities.some((r) => r.marketValue != null);
+    const totalMV = hasMV ? equities.reduce((s, r) => s + (r.marketValue ?? 0), 0) : null;
+    const hasUn = equities.some((r) => r.unrealized != null);
+    const totalUn = hasUn ? equities.reduce((s, r) => s + (r.unrealized ?? 0), 0) : null;
+    const blendedAvg = totalQty > 0 && totalCost > 0 ? totalCost / totalQty : null;
+    return { totalQty, totalCost, totalMV, totalUn, blendedAvg };
+  }, [equities]);
+
+  const hasEquity = equities.length > 0;
   const hasOptions = options.length > 0;
   const strategy = !loading && !err
-    ? detectStrategy(equity?.totalQty ?? 0, options)
+    ? detectStrategy(totals.totalQty, options)
     : null;
   const toneColor = strategy?.tone === 'good'
     ? 'var(--green, #00C805)'
     : strategy?.tone === 'warn'
       ? 'var(--pink, #FF006E)'
       : 'var(--gold, #FFD700)';
+
+  const onOptHeader = (key: OptSortKey) => {
+    if (optSortKey === key) {
+      setOptSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setOptSortKey(key);
+      setOptSortDir(['side', 'position', 'expiry'].includes(key) ? 'asc' : 'desc');
+    }
+  };
+  const arrow = (k: OptSortKey) => (optSortKey === k ? (optSortDir === 'asc' ? ' ▲' : ' ▼') : '');
 
   return (
     <div className="rv-card" style={{ marginBottom: 14 }}>
@@ -158,7 +228,6 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
               borderRadius: 999,
               border: `1px solid ${toneColor}`,
               color: toneColor,
-              background: 'transparent',
               letterSpacing: '.04em',
               textTransform: 'uppercase',
             }}
@@ -169,9 +238,7 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
         )}
       </div>
 
-      {loading && (
-        <div className="rv-sub" style={{ fontSize: 11 }}>loading…</div>
-      )}
+      {loading && <div className="rv-sub" style={{ fontSize: 11 }}>loading…</div>}
 
       {!loading && err && (
         <div style={{ color: 'var(--pink)', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -185,44 +252,53 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
         </div>
       )}
 
-      {!loading && !err && hasEquity && equity && (
-        <div style={{ marginBottom: hasOptions ? 12 : 0 }}>
-          {/* Equity summary row */}
-          <div className="rv-position-equity">
-            <div>
-              <span style={{ color: 'var(--ink)', fontWeight: 700 }}>{fmt(equity.totalQty, 2)}</span>
-              <span className="rv-sub" style={{ marginLeft: 4 }}>shares</span>
-            </div>
-            <div>
-              <span className="rv-sub">cost </span>
-              <span style={{ color: 'var(--ink)' }}>
-                {equity.inferred ? '—' : fmtMoney(equity.totalCost > 0 ? equity.totalCost / equity.totalQty : null)}
-              </span>
-            </div>
-            {equity.totalMV != null && (
-              <div>
-                <span className="rv-sub">market </span>
-                <span style={{ color: 'var(--ink)' }}>{fmtMoney(equity.totalMV)}</span>
-              </div>
-            )}
-            {equity.totalUnrealized != null && (
-              <div>
-                <span className={`${cls(equity.totalUnrealized)}`} style={{ fontWeight: 600 }}>
-                  {fmtSigned(equity.totalUnrealized)} unrealized
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Account breakdown when held in >1 account */}
-          {equity.byAccount.length > 1 && (
-            <div className="rv-sub" style={{ fontSize: 10, marginTop: 2 }}>
-              {equity.byAccount
-                .map((a) => `${fmt(a.qty, 0)} in ${a.account.replace('_', ' ')}`)
-                .join(' + ')}{' '}
-              = {fmt(equity.totalQty, 0)} total
-            </div>
-          )}
+      {!loading && !err && hasEquity && (
+        <div style={{ marginBottom: hasOptions ? 12 : 0, overflowX: 'auto' }}>
+          <table
+            className="rv-table"
+            style={{ width: '100%', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left' }}>Account</th>
+                <th style={{ textAlign: 'right' }}>Qty</th>
+                <th style={{ textAlign: 'right' }}>Avg cost</th>
+                <th style={{ textAlign: 'right' }}>Cost basis</th>
+                <th style={{ textAlign: 'right' }}>Mkt value</th>
+                <th style={{ textAlign: 'right' }}>Unrealized</th>
+              </tr>
+            </thead>
+            <tbody>
+              {equities.map((r) => (
+                <tr key={r.account}>
+                  <td>{accountLabel(r.account)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmt(r.qty, 4)}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    {r.inferred ? '—' : fmtMoney(r.avgCost)}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>{fmtMoney(r.costBasis)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmtMoney(r.marketValue)}</td>
+                  <td className={cls(r.unrealized)} style={{ textAlign: 'right' }}>
+                    {fmtSigned(r.unrealized)}
+                  </td>
+                </tr>
+              ))}
+              {equities.length > 1 && (
+                <tr style={{ borderTop: '1px solid var(--line)', fontWeight: 700 }}>
+                  <td>Total</td>
+                  <td style={{ textAlign: 'right' }}>{fmt(totals.totalQty, 4)}</td>
+                  <td style={{ textAlign: 'right' }} title="cost-weighted average">
+                    {totals.blendedAvg != null ? fmtMoney(totals.blendedAvg) : '—'}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>{fmtMoney(totals.totalCost)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmtMoney(totals.totalMV)}</td>
+                  <td className={cls(totals.totalUn)} style={{ textAlign: 'right' }}>
+                    {fmtSigned(totals.totalUn)}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -231,25 +307,37 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
           <div className="rv-sub" style={{ fontSize: 11, marginBottom: 4 }}>
             Option leg{options.length === 1 ? '' : 's'} ({options.length})
           </div>
-          <div className="rv-table-wrap">
+          <div className="rv-table-wrap" style={{ overflowX: 'auto' }}>
             <table
               className="rv-table"
               style={{ width: '100%', fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}
             >
               <thead>
                 <tr>
-                  <th>Side</th>
-                  <th>Position</th>
-                  <th style={{ textAlign: 'right' }}>Strike</th>
-                  <th>Expiry</th>
-                  <th style={{ textAlign: 'right' }}>Qty</th>
-                  <th style={{ textAlign: 'right' }}>Mkt value</th>
-                  <th style={{ textAlign: 'right' }}>Unrealized</th>
+                  {OPT_COLS.map((col) => {
+                    const active = optSortKey === col.key;
+                    return (
+                      <th
+                        key={col.key}
+                        onClick={() => onOptHeader(col.key)}
+                        aria-sort={active ? (optSortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                        style={{
+                          textAlign: col.align,
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          color: active ? 'var(--gold, #FFD700)' : undefined,
+                        }}
+                        title={`Sort by ${col.label}`}
+                      >
+                        {col.label}{arrow(col.key)}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
-                {options.map((o, i) => (
-                  <tr key={`${o.underlying}-${o.strike}-${o.expiry}-${o.side}-${i}`}>
+                {sortedOptions.map((o, i) => (
+                  <tr key={`${o.account}-${o.strike}-${o.expiry}-${o.side}-${i}`}>
                     <td>{o.side}</td>
                     <td>
                       <span className={o.position === 'long' ? 'rv-up' : 'rv-dn'}>{o.position}</span>

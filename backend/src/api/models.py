@@ -496,6 +496,9 @@ class CryptoQuoteResponse(BaseModel):
 # Hard cap: no single test order may exceed this notional in USD.
 CRYPTO_ORDER_NOTIONAL_CAP_USD: float = 50.0
 
+# Hard cap for equity orders: ~10 shares of a mid-priced stock at test time.
+EQUITY_ORDER_NOTIONAL_CAP_USD: float = 200.0
+
 
 class CryptoOrderRequest(BaseModel):
     """Request to place (or simulate) a crypto order via Robinhood.
@@ -518,6 +521,40 @@ class CryptoOrderResponse(BaseModel):
     side: str
     notional_usd: float
     quantity: Optional[float] = None
+    mark_price: Optional[float] = None
+    dry_run: bool
+    status: str
+    message: Optional[str] = None
+
+
+class EquityOrderRequest(BaseModel):
+    """Request to place (or simulate) an equity (stock) order via Robinhood.
+
+    SAFETY:
+      - dry_run MUST default to True.  When True the order is simulated only.
+      - Live orders (dry_run=False) require confirm=True.
+      - Estimated notional (quantity × mark_price) must be <= EQUITY_ORDER_NOTIONAL_CAP_USD.
+    """
+    symbol: str = Field(..., description="Equity ticker, e.g. 'RDW'")
+    side: Literal["buy", "sell"] = Field(..., description="buy or sell")
+    quantity: float = Field(..., ge=0.000001, description="Number of shares (whole or fractional)")
+    account: Literal["brokerage", "roth_ira"] = Field("brokerage", description="Target account")
+    order_type: Literal["market", "limit"] = Field("market", description="market or limit")
+    limit_price: Optional[float] = Field(None, description="Required when order_type='limit'")
+    dry_run: bool = Field(True, description="When True, simulate only — do NOT place real orders")
+    confirm: bool = Field(False, description="Must be True for live orders (belt-and-braces)")
+
+
+class EquityOrderResponse(BaseModel):
+    """Response from an equity order attempt."""
+    order_id: str
+    symbol: str
+    side: str
+    quantity: float
+    account: str
+    order_type: str
+    limit_price: Optional[float] = None
+    estimated_notional_usd: Optional[float] = None
     mark_price: Optional[float] = None
     dry_run: bool
     status: str

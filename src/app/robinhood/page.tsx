@@ -8,6 +8,7 @@ import { ActivityTimeline } from '@/components/robinhood/ActivityTimeline';
 import { AnalyticsPanel } from '@/components/robinhood/AnalyticsPanel';
 import { CryptoTable } from '@/components/robinhood/CryptoTable';
 import { CryptoTradePanel } from '@/components/robinhood/CryptoTradePanel';
+import { EquityTradePanel } from '@/components/robinhood/EquityTradePanel';
 import { ReportsBrowser } from '@/components/robinhood/ReportsBrowser';
 import {
   getRobinhoodAccounts,
@@ -562,6 +563,10 @@ export default function RobinhoodPage() {
 
           <div style={{ marginBottom: 12 }}>
             <OptionsTable options={holdings?.options ?? []} />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <EquityTradePanel equities={holdings?.equities ?? []} />
           </div>
 
           <div style={{ marginBottom: 12 }}>

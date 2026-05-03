@@ -40,6 +40,10 @@ _SPOT_CACHE_TTL = 120.0  # seconds
 _CRYPTO_QUOTE_CACHE: Dict[str, Tuple[float, float]] = {}  # symbol -> (timestamp, price)
 CRYPTO_CACHE_TTL = 60.0  # seconds
 
+# Cache for equity quotes (60s TTL)
+_EQUITY_QUOTE_CACHE: Dict[str, Tuple[float, float]] = {}  # symbol -> (timestamp, price)
+EQUITY_CACHE_TTL = 60.0  # seconds
+
 
 def _get_crypto_quote_cached(symbol: str) -> Optional[float]:
     """Fetch crypto mark price with a 60-second in-process cache."""
@@ -57,6 +61,25 @@ def _get_crypto_quote_cached(symbol: str) -> Optional[float]:
                 price = float(mark)
                 _CRYPTO_QUOTE_CACHE[symbol] = (now, price)
                 return price
+    except Exception:
+        pass
+    return None
+
+
+def _get_equity_quote_cached(symbol: str) -> Optional[float]:
+    """Fetch equity latest price with a 60-second in-process cache using robin_stocks."""
+    now = time.time()
+    if symbol in _EQUITY_QUOTE_CACHE:
+        ts, price = _EQUITY_QUOTE_CACHE[symbol]
+        if now - ts < EQUITY_CACHE_TTL:
+            return price
+    try:
+        import robin_stocks.robinhood as rh
+        prices = rh.stocks.get_latest_price(symbol)
+        if prices and prices[0] is not None:
+            price = float(prices[0])
+            _EQUITY_QUOTE_CACHE[symbol] = (now, price)
+            return price
     except Exception:
         pass
     return None
@@ -641,6 +664,24 @@ def fetch_all_accounts_positions() -> Tuple[
 # Legacy single-account helpers kept for backward compatibility.
 # Both now delegate to the per-account helpers using the default account.
 # ---------------------------------------------------------------------------
+
+def _account_number_for_tag(tag: str) -> Tuple[Optional[str], Optional[str]]:
+    """Return (account_number, error) for the given tag ('brokerage' or 'roth_ira').
+
+    Calls enumerate_accounts() and returns the first account whose tag matches.
+    If no exact match is found, falls back to the first account overall.
+    """
+    accounts, err = enumerate_accounts()
+    if not accounts:
+        return None, err or f"No accounts found when looking up tag={tag!r}"
+    match = next((a for a in accounts if a["tag"] == tag), None)
+    if match:
+        return match["account_number"], None
+    # Fallback: return first account but surface a warning
+    return accounts[0]["account_number"], (
+        f"No account matched tag={tag!r}; using first account ({accounts[0]['tag']!r}) as fallback"
+    )
+
 
 def fetch_equity_positions(account: Optional[str] = None) -> Tuple[List[EquityHolding], Optional[str]]:
     """Return equity positions tagged with `account` (defaults to 'brokerage').

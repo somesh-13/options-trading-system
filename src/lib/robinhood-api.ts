@@ -241,3 +241,53 @@ export async function placeCryptoOrder(req: CryptoOrderRequest): Promise<CryptoO
   }
   return res.json() as Promise<CryptoOrderResponse>;
 }
+
+// ============================
+// Equity (stock) interfaces + client
+// ============================
+
+export interface EquityOrderRequest {
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  account: 'brokerage' | 'roth_ira';
+  order_type: 'market' | 'limit';
+  limit_price?: number | null;
+  dry_run: boolean;
+  confirm: boolean;
+}
+
+export interface EquityOrderResponse {
+  order_id: string;
+  symbol: string;
+  side: string;
+  quantity: number;
+  account: string;
+  order_type: string;
+  limit_price?: number | null;
+  estimated_notional_usd?: number | null;
+  mark_price?: number | null;
+  dry_run: boolean;
+  status: string;
+  message?: string | null;
+}
+
+export async function placeEquityOrder(req: EquityOrderRequest): Promise<EquityOrderResponse> {
+  const res = await fetch(`${PRICING_API_URL}/api/robinhood/equity/order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = body.detail;
+    } catch {
+      /* non-JSON body */
+    }
+    throw new Error(detail);
+  }
+  return res.json() as Promise<EquityOrderResponse>;
+}

@@ -67,6 +67,9 @@ from api.models import (
     CryptoOrderRequest,
     CryptoOrderResponse,
     CRYPTO_ORDER_NOTIONAL_CAP_USD,
+    EquityOrderRequest,
+    EquityOrderResponse,
+    EQUITY_ORDER_NOTIONAL_CAP_USD,
     AnalyticsRunCreateRequest,
     AnalyticsRunCreateResponse,
     AnalyticsRunMeta,
@@ -2059,6 +2062,243 @@ def robinhood_crypto_order(req: CryptoOrderRequest):
         dry_run=False,
         status=status,
         message=f"Order {order_id} submitted. Check the Robinhood app for status.",
+    )
+
+
+@app.post("/api/robinhood/equity/order", response_model=EquityOrderResponse)
+def robinhood_equity_order(req: EquityOrderRequest):
+    """Place or simulate an equity (stock) order via Robinhood.
+
+    SAFETY CONSTRAINTS (enforced in order):
+      1. Estimated notional cap: quantity × mark_price must be ≤
+         EQUITY_ORDER_NOTIONAL_CAP_USD ($200). For limit orders, uses
+         limit_price × quantity (exact). For market orders, uses current
+         quote × quantity. Fires BEFORE the dry_run branch so oversized
+         quantities are blocked regardless of dry_run setting.
+      2. dry_run=True (default) → returns a simulated order, NEVER calls
+         robin_stocks order functions.
+      3. Live orders (dry_run=False) MUST have confirm=True.
+      4. Live orders MUST resolve a valid account_number via enumerate_accounts().
+      5. After calling robin_stocks, validate result["id"] exists. If not,
+         parse non_field_errors / detail / reject_reason and return HTTP 422.
+         Do NOT fabricate a UUID for a rejected order.
+
+    Every attempt (dry-run AND live) is logged to the backend logger.
+    """
+    import logging as _logging
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from brokers import robinhood_api as rh_api
+
+    logger = _logging.getLogger("equity_order")
+
+    sym = req.symbol.upper().strip()
+    attempt_ts = datetime.now(timezone.utc).isoformat()
+
+    # --- Resolve the notional estimate for cap check ---
+    # For limit orders we know the exact price; for market orders we need a quote.
+    mark_price_for_cap: Optional[float] = None
+    if req.order_type == "limit":
+        if req.limit_price is None or req.limit_price <= 0:
+            raise HTTPException(status_code=400, detail="limit_price required and must be > 0 for limit orders")
+        mark_price_for_cap = req.limit_price
+    else:
+        # Market order: attempt to fetch a live quote for the cap check.
+        # If Robinhood isn't configured we fall back to yfinance spot via the
+        # existing _get_spot_cached helper so the cap check still fires.
+        if rh_api._is_configured() and rh_api.login():
+            mark_price_for_cap = rh_api._get_equity_quote_cached(sym)
+        if mark_price_for_cap is None:
+            mark_price_for_cap = rh_api._get_spot_cached(sym)
+
+    estimated_notional: Optional[float] = None
+    if mark_price_for_cap is not None and mark_price_for_cap > 0:
+        estimated_notional = round(req.quantity * mark_price_for_cap, 4)
+
+    # --- Notional cap guard (fires before dry_run path) ---
+    if estimated_notional is not None and estimated_notional > EQUITY_ORDER_NOTIONAL_CAP_USD:
+        logger.warning(
+            "equity_order REJECTED notional_cap",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "quantity": req.quantity, "mark_price": mark_price_for_cap,
+                "estimated_notional": estimated_notional,
+                "cap": EQUITY_ORDER_NOTIONAL_CAP_USD,
+                "dry_run": req.dry_run,
+            },
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"estimated_notional ${estimated_notional:.2f} exceeds per-order cap of "
+                f"${EQUITY_ORDER_NOTIONAL_CAP_USD:.2f}. Reduce quantity or raise the cap."
+            ),
+        )
+
+    # --- Dry-run path: simulate only ---
+    if req.dry_run:
+        # Refresh quote for response display (may already be cached from cap check)
+        mark_for_display = mark_price_for_cap
+        if mark_for_display is None and rh_api._is_configured() and rh_api.login():
+            mark_for_display = rh_api._get_equity_quote_cached(sym)
+        if mark_for_display is None:
+            mark_for_display = rh_api._get_spot_cached(sym)
+
+        est_notional_display = (
+            round(req.quantity * mark_for_display, 4)
+            if mark_for_display is not None and mark_for_display > 0
+            else None
+        )
+        stub_id = f"DRY-RUN-{str(_uuid.uuid4()).upper()[:16]}"
+        logger.info(
+            "equity_order DRY_RUN",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "quantity": req.quantity, "account": req.account,
+                "order_type": req.order_type, "limit_price": req.limit_price,
+                "mark_price": mark_for_display, "estimated_notional": est_notional_display,
+                "order_id": stub_id,
+            },
+        )
+        return EquityOrderResponse(
+            order_id=stub_id,
+            symbol=sym,
+            side=req.side,
+            quantity=req.quantity,
+            account=req.account,
+            order_type=req.order_type,
+            limit_price=req.limit_price,
+            estimated_notional_usd=est_notional_display,
+            mark_price=mark_for_display,
+            dry_run=True,
+            status="simulated",
+            message=(
+                f"DRY RUN — no real order was placed. "
+                f"Mark price: {mark_for_display}. "
+                f"Estimated notional: ${est_notional_display:.2f}"
+                if est_notional_display is not None
+                else "DRY RUN — no real order was placed."
+            ),
+        )
+
+    # --- Live order path ---
+    if not req.confirm:
+        logger.warning(
+            "equity_order REJECTED no_confirm",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "quantity": req.quantity, "account": req.account, "dry_run": False,
+            },
+        )
+        raise HTTPException(status_code=400, detail="confirm flag required for live orders")
+
+    if not rh_api._is_configured():
+        raise HTTPException(status_code=503, detail="Robinhood credentials not configured")
+    if not rh_api.login():
+        raise HTTPException(status_code=503, detail="Robinhood login failed")
+
+    # Resolve account_number for the requested account tag.
+    acct_num, acct_warn = rh_api._account_number_for_tag(req.account)
+    if acct_num is None:
+        raise HTTPException(status_code=503, detail=f"Could not resolve account_number: {acct_warn}")
+    if acct_warn:
+        logger.warning("equity_order account_number_fallback", extra={"ts": attempt_ts, "warn": acct_warn})
+
+    import robin_stocks.robinhood as rh
+
+    try:
+        if req.order_type == "market":
+            if req.side == "buy":
+                result = rh.orders.order_buy_market(sym, req.quantity, account_number=acct_num)
+            else:
+                result = rh.orders.order_sell_market(sym, req.quantity, account_number=acct_num)
+        else:
+            # limit order — limit_price already validated above
+            if req.side == "buy":
+                result = rh.orders.order_buy_limit(sym, req.quantity, req.limit_price, account_number=acct_num)
+            else:
+                result = rh.orders.order_sell_limit(sym, req.quantity, req.limit_price, account_number=acct_num)
+    except Exception as exc:  # noqa: BLE001
+        logger.error(
+            "equity_order LIVE_ERROR",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "quantity": req.quantity, "account": req.account,
+                "order_type": req.order_type, "dry_run": False,
+                "error": str(exc),
+            },
+        )
+        raise HTTPException(status_code=500, detail=f"Order placement failed: {exc}")
+
+    # CRITICAL: validate that robin_stocks returned a real order dict with an id.
+    # On rejection Robinhood returns an error envelope (non_field_errors, detail,
+    # reject_reason, etc.) without an 'id' field. Do NOT fabricate a UUID — that
+    # would silently mask the rejection. Same pattern as crypto order fix.
+    if not isinstance(result, dict) or not result.get("id"):
+        error_msg = "Order rejected by Robinhood (no order id returned)"
+        if isinstance(result, dict):
+            if result.get("non_field_errors"):
+                error_msg = "; ".join(str(e) for e in result["non_field_errors"])
+            elif result.get("detail"):
+                error_msg = str(result["detail"])
+            elif result.get("reject_reason"):
+                error_msg = f"reject_reason: {result['reject_reason']}"
+            else:
+                error_msg = f"Unexpected response: {result}"
+        elif result is None:
+            error_msg = "Robinhood returned no response (rate-limited or timeout)"
+
+        logger.error(
+            "equity_order LIVE_REJECTED",
+            extra={
+                "ts": attempt_ts, "symbol": sym, "side": req.side,
+                "quantity": req.quantity, "account": req.account,
+                "order_type": req.order_type, "dry_run": False,
+                "raw_response": result, "error": error_msg,
+            },
+        )
+        raise HTTPException(
+            status_code=422,
+            detail=f"Order rejected: {error_msg}",
+        )
+
+    order_id = str(result["id"])
+    status = result.get("state") or "submitted"
+
+    # Refresh mark price for response
+    mark_price_live = rh_api._get_equity_quote_cached(sym)
+    est_notional_live = (
+        round(req.quantity * mark_price_live, 4)
+        if mark_price_live is not None and mark_price_live > 0
+        else None
+    )
+
+    logger.info(
+        "equity_order LIVE_PLACED",
+        extra={
+            "ts": attempt_ts, "symbol": sym, "side": req.side,
+            "quantity": req.quantity, "account": req.account,
+            "order_type": req.order_type, "limit_price": req.limit_price,
+            "dry_run": False, "confirm": req.confirm,
+            "order_id": order_id, "status": status,
+            "mark_price": mark_price_live, "acct_num": acct_num,
+            "raw_response": result,
+        },
+    )
+
+    return EquityOrderResponse(
+        order_id=order_id,
+        symbol=sym,
+        side=req.side,
+        quantity=req.quantity,
+        account=req.account,
+        order_type=req.order_type,
+        limit_price=req.limit_price,
+        estimated_notional_usd=est_notional_live,
+        mark_price=mark_price_live,
+        dry_run=False,
+        status=status,
+        message=f"Order {order_id} submitted. Check the Robinhood app for fill status.",
     )
 
 

@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { RobinhoodHolding } from '@/lib/robinhood-api';
+
+const COLLAPSE_KEY = 'rv:robinhood:equity-holdings-collapsed';
 
 function stockHref(symbol: string): string {
   return `/stock/${encodeURIComponent(symbol)}?from=robinhood`;
@@ -66,6 +68,26 @@ export function HoldingsTable({ equities }: { equities: RobinhoodHolding[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('market_value');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [filter, setFilter] = useState('');
+  // Lazy init from localStorage so we don't trigger a render in useEffect.
+  // SSR sees `false`; client hydrates with the persisted value (acceptable
+  // brief mismatch on the chevron icon only).
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem(COLLAPSE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  // Persist on change.
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed]);
 
   const sorted = useMemo(() => {
     const q = filter.trim().toUpperCase();
@@ -89,31 +111,51 @@ export function HoldingsTable({ equities }: { equities: RobinhoodHolding[] }) {
   return (
     <div className="rv-card">
       <div className="rv-card-head" style={{ flexWrap: 'wrap', gap: 8 }}>
-        <h3>Equity holdings · {sorted.length}{filter ? ` of ${equities.length}` : ''}</h3>
+        <h3
+          onClick={() => setCollapsed((c) => !c)}
+          role="button"
+          aria-expanded={!collapsed}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setCollapsed((c) => !c);
+            }
+          }}
+          style={{ cursor: 'pointer', userSelect: 'none', margin: 0 }}
+          title={collapsed ? 'Click to expand' : 'Click to collapse'}
+        >
+          <span style={{ display: 'inline-block', width: 14, color: 'var(--ink-mute)' }}>
+            {collapsed ? '▶' : '▼'}
+          </span>
+          {' '}Equity holdings · {sorted.length}{filter ? ` of ${equities.length}` : ''}
+        </h3>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
-          <input
-            type="text"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="filter symbol…"
-            data-testid="holdings-filter"
-            style={{
-              fontSize: 11,
-              padding: '4px 8px',
-              background: 'var(--bg, #1E1E1E)',
-              border: '1px solid var(--line)',
-              borderRadius: 3,
-              color: 'var(--ink)',
-              fontFamily: "'JetBrains Mono', monospace",
-              width: 130,
-            }}
-          />
+          {!collapsed && (
+            <input
+              type="text"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="filter symbol…"
+              data-testid="holdings-filter"
+              style={{
+                fontSize: 11,
+                padding: '4px 8px',
+                background: 'var(--bg, #1E1E1E)',
+                border: '1px solid var(--line)',
+                borderRadius: 3,
+                color: 'var(--ink)',
+                fontFamily: "'JetBrains Mono', monospace",
+                width: 130,
+              }}
+            />
+          )}
           <span className="rv-sub" style={{ margin: 0 }}>
             live prices via yfinance · 60s TTL
           </span>
         </span>
       </div>
-      <div style={{ overflowX: 'auto' }}>
+      {!collapsed && <div style={{ overflowX: 'auto' }}>
         <table className="rv-table" style={{ minWidth: 640, width: '100%' }}>
           <thead>
             <tr>
@@ -186,7 +228,7 @@ export function HoldingsTable({ equities }: { equities: RobinhoodHolding[] }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </div>}
     </div>
   );
 }

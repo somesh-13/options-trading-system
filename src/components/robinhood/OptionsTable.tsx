@@ -1,7 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import type { RobinhoodOption } from '@/lib/robinhood-api';
+
+const COLLAPSE_KEY = 'rv:robinhood:option-legs-collapsed';
 
 function stockHref(symbol: string): string {
   return `/stock/${encodeURIComponent(symbol)}?from=robinhood`;
@@ -34,15 +37,50 @@ function groupByUnderlying(options: RobinhoodOption[]): Map<string, RobinhoodOpt
 
 export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
   const groups = [...groupByUnderlying(options).entries()].sort(([a], [b]) => a.localeCompare(b));
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem(COLLAPSE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed]);
+
   return (
     <div className="rv-card">
       <div className="rv-card-head">
-        <h3>Open option legs · {options.length}</h3>
+        <h3
+          onClick={() => setCollapsed((c) => !c)}
+          role="button"
+          aria-expanded={!collapsed}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setCollapsed((c) => !c);
+            }
+          }}
+          style={{ cursor: 'pointer', userSelect: 'none', margin: 0 }}
+          title={collapsed ? 'Click to expand' : 'Click to collapse'}
+        >
+          <span style={{ display: 'inline-block', width: 14, color: 'var(--ink-mute)' }}>
+            {collapsed ? '▶' : '▼'}
+          </span>
+          {' '}Open option legs · {options.length}
+        </h3>
         <span className="rv-sub" style={{ margin: 0 }}>
           grouped by underlying · from activity replay
         </span>
       </div>
-      <div style={{ overflowX: 'auto' }}>
+      {!collapsed && <div style={{ overflowX: 'auto' }}>
         <table className="rv-table" style={{ minWidth: 680, width: '100%' }}>
           <thead>
             <tr>
@@ -111,7 +149,7 @@ export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
             )}
           </tbody>
         </table>
-      </div>
+      </div>}
     </div>
   );
 }

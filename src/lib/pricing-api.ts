@@ -50,6 +50,11 @@ export interface ImpliedVolResponse {
 export interface MispricingData {
   ticker: string;
   spot_price: number;
+  // Day-change context — added so day-change chips on consuming pages can
+  // show real values instead of placeholders.
+  previous_close?: number;
+  change?: number;
+  change_percent?: number;
   historical_vol: number;
   implied_vol_atm: number;
   iv_hv_ratio: number;
@@ -427,6 +432,82 @@ export async function getOptionsContracts(
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || 'Contracts fetch failed');
+  }
+  return response.json();
+}
+
+// ---- yfinance-backed public option chain (used by /options-chain page) ----
+//
+// Distinct from `getOptionsChainSnapshot` below, which hits Alpaca via
+// /api/execution. These two endpoints take no auth, work for any ticker, and
+// serve the read-only chain table on /options-chain.
+
+export interface OptionExpirationMeta {
+  expiration: string;   // YYYY-MM-DD
+  dte: number;
+  atm_iv: number | null;
+  total_oi: number;
+}
+
+export interface OptionExpirationsResponse {
+  ticker: string;
+  spot: number | null;
+  expirations: OptionExpirationMeta[];
+}
+
+export interface OptionChainLeg {
+  contract_symbol: string | null;
+  strike: number | null;
+  bid: number | null;
+  ask: number | null;
+  last: number | null;
+  mid: number | null;
+  iv: number | null;
+  volume: number;
+  open_interest: number;
+  in_the_money: boolean | null;
+}
+
+export interface OptionChainResponse {
+  ticker: string;
+  expiration: string;
+  spot: number | null;
+  calls: OptionChainLeg[];
+  puts: OptionChainLeg[];
+}
+
+export async function getOptionExpirations(ticker: string): Promise<OptionExpirationsResponse> {
+  const response = await fetch(
+    `${PRICING_API_URL}/api/market/${encodeURIComponent(ticker)}/option-expirations`,
+    { cache: 'no-store' },
+  );
+  if (!response.ok) {
+    let detail = `${response.status} ${response.statusText}`;
+    try {
+      const body = await response.json();
+      if (body?.detail) detail = body.detail;
+    } catch { /* not JSON */ }
+    throw new Error(detail);
+  }
+  return response.json();
+}
+
+export async function getOptionChain(
+  ticker: string,
+  expiration: string,
+): Promise<OptionChainResponse> {
+  const params = new URLSearchParams({ expiration });
+  const response = await fetch(
+    `${PRICING_API_URL}/api/market/${encodeURIComponent(ticker)}/option-chain?${params}`,
+    { cache: 'no-store' },
+  );
+  if (!response.ok) {
+    let detail = `${response.status} ${response.statusText}`;
+    try {
+      const body = await response.json();
+      if (body?.detail) detail = body.detail;
+    } catch { /* not JSON */ }
+    throw new Error(detail);
   }
   return response.json();
 }

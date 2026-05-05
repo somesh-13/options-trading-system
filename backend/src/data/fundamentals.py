@@ -21,6 +21,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 import yfinance as yf
 
+from .sec_edgar import extract_sec_fundamentals
+
 log = logging.getLogger(__name__)
 
 # Candidate row names (yfinance sometimes renames between tickers). First hit wins.
@@ -164,6 +166,31 @@ def get_ticker_fundamentals(ticker: str) -> Dict[str, Any]:
     tk = yf.Ticker(key)
     sources: Dict[str, str] = {}
 
+    # SEC EDGAR is authoritative for the load-bearing DCF inputs (shares, debt,
+    # cash, revenue, capex). yfinance is the fallback and the source for
+    # enrichment fields SEC doesn't expose (analyst targets, P/E, beta, etc.).
+    sec_data: Dict[str, Any] = {}
+    try:
+        sec_data = extract_sec_fundamentals(key) or {}
+    except Exception as exc:
+        log.warning("SEC EDGAR lookup failed for %s: %s", key, exc)
+        sec_data = {}
+
+    def _pick(field: str, yf_val: Optional[float], yf_label: str) -> Optional[float]:
+        """Prefer SEC-provided value when finite, else yfinance. Records source."""
+        sec_val = sec_data.get(field)
+        if sec_val is not None:
+            try:
+                fv = float(sec_val)
+                if math.isfinite(fv):
+                    sources[field] = "sec_edgar"
+                    return fv
+            except (TypeError, ValueError):
+                pass
+        if yf_val is not None:
+            sources[field] = yf_label
+        return yf_val
+
     try:
         info: Dict[str, Any] = tk.info or {}
     except Exception:
@@ -182,50 +209,54 @@ def get_ticker_fundamentals(ticker: str) -> Dict[str, Any]:
     except Exception:
         balance = pd.DataFrame()
 
-    # Revenue
+    # Revenue — yfinance income_stmt is the fallback path; SEC TTM is preferred.
     rev_row = _first_row(income, _REVENUE_ROWS)
-    revenue = _latest_value(rev_row)
-    rev_hist = _history_series(rev_row)
-    if revenue is not None:
-        sources["revenue"] = "income_stmt"
-    else:
-        revenue = float(info["totalRevenue"]) if info.get("totalRevenue") else None
-        if revenue is not None:
-            sources["revenue"] = "info"
+    yf_revenue = _latest_value(rev_row)
+    yf_revenue_label = "income_stmt"
+    if yf_revenue is None and info.get("totalRevenue") is not None:
+        yf_revenue = float(info["totalRevenue"])
+        yf_revenue_label = "info"
+    revenue = _pick("revenue", yf_revenue, yf_revenue_label)
 
-    # Operating income + derived margin (from statements — much more accurate
-    # than info.operatingMargins, which can be an order of magnitude off for
-    # loss-making companies).
+    # Revenue history — prefer SEC annual 10-K series when ≥2 fiscal years are
+    # available; otherwise fall back to yfinance.
+    sec_rev_hist = sec_data.get("revenueHistory") or []
+    if len(sec_rev_hist) >= 2:
+        rev_hist = [(item["year"], float(item["revenue"])) for item in sec_rev_hist]
+    else:
+        rev_hist = _history_series(rev_row)
+
+    # Operating income + derived margin. yfinance income_stmt is more accurate
+    # than info.operatingMargins (which can be an order of magnitude off for
+    # loss-making companies); SEC TTM beats both.
     opinc_row = _first_row(income, _OPINC_ROWS)
-    op_income = _latest_value(opinc_row)
-    op_margin = None
-    if op_income is not None and revenue and revenue > 0:
-        op_margin = op_income / revenue
-        sources["operatingMargin"] = "income_stmt"
+    yf_op_income = _latest_value(opinc_row)
+    yf_op_margin: Optional[float] = None
+    yf_op_margin_label = "income_stmt"
+    if yf_op_income is not None and yf_revenue and yf_revenue > 0:
+        yf_op_margin = yf_op_income / yf_revenue
     elif info.get("operatingMargins") is not None:
         raw = float(info["operatingMargins"])
-        # yfinance occasionally returns an already-percent value. Sanity-clamp.
         if -1.5 < raw < 1.5:
-            op_margin = raw
-            sources["operatingMargin"] = "info"
-        else:
-            op_margin = None
+            yf_op_margin = raw
+            yf_op_margin_label = "info"
+    op_income = _pick("operatingIncome", yf_op_income, "income_stmt")
+    op_margin = _pick("operatingMargin", yf_op_margin, yf_op_margin_label)
 
     # Tax rate
     tax_row = _first_row(income, _TAX_ROWS)
     pretax_row = _first_row(income, _PRETAX_ROWS)
-    tax_rate = _safe_tax_rate(tax_row, pretax_row)
-    if tax_rate is not None:
-        sources["taxRate"] = "income_stmt"
+    yf_tax_rate = _safe_tax_rate(tax_row, pretax_row)
+    tax_rate = _pick("taxRate", yf_tax_rate, "income_stmt")
 
     # Revenue growth
     rev_cagr = _cagr(rev_hist)
     if rev_cagr is not None:
-        sources["revenueCagr"] = "income_stmt_multiyear"
+        sources["revenueCagr"] = "sec_edgar" if len(sec_rev_hist) >= 2 else "income_stmt_multiyear"
     rev_growth_1y: Optional[float] = None
     if len(rev_hist) >= 2 and rev_hist[-2][1] > 0:
         rev_growth_1y = (rev_hist[-1][1] - rev_hist[-2][1]) / rev_hist[-2][1]
-        sources["revenueGrowth1y"] = "income_stmt"
+        sources["revenueGrowth1y"] = "sec_edgar" if len(sec_rev_hist) >= 2 else "income_stmt"
     elif info.get("revenueGrowth") is not None:
         rev_growth_1y = float(info["revenueGrowth"])
         sources.setdefault("revenueGrowth1y", "info")
@@ -233,11 +264,10 @@ def get_ticker_fundamentals(ticker: str) -> Dict[str, Any]:
     # CAPEX (cashflow sign is negative for outflow; return absolute)
     capex_row = _first_row(cashflow, _CAPEX_ROWS)
     capex_latest = _latest_value(capex_row)
-    capex_abs = abs(capex_latest) if capex_latest is not None else None
-    if capex_abs is not None:
-        sources["capex"] = "cashflow"
+    yf_capex_abs = abs(capex_latest) if capex_latest is not None else None
+    capex_abs = _pick("capex", yf_capex_abs, "cashflow")
 
-    # Free Cash Flow
+    # Free Cash Flow (yfinance only — SEC doesn't expose a single FCF concept)
     fcf_row = _first_row(cashflow, _FCF_ROWS)
     fcf_ttm = _latest_value(fcf_row)
     if fcf_ttm is not None:
@@ -248,30 +278,29 @@ def get_ticker_fundamentals(ticker: str) -> Dict[str, Any]:
     total_debt_row = _first_row(balance, _TOTALDEBT_ROWS)
     cash_row = _first_row(balance, _CASH_ROWS)
 
-    total_debt = _latest_value(total_debt_row)
-    total_cash = _latest_value(cash_row)
-    if total_cash is None and info.get("totalCash") is not None:
-        total_cash = float(info["totalCash"])
+    yf_total_debt = _latest_value(total_debt_row)
+    yf_total_cash = _latest_value(cash_row)
+    if yf_total_cash is None and info.get("totalCash") is not None:
+        yf_total_cash = float(info["totalCash"])
 
-    net_debt = _latest_value(net_debt_row)
-    if net_debt is not None:
-        sources["netDebt"] = "balance_sheet"
-    elif total_debt is not None:
-        net_debt = total_debt - (total_cash or 0.0)
-        sources["netDebt"] = "balance_sheet_derived"
+    total_debt = _pick("totalDebt", yf_total_debt, "balance_sheet")
+    total_cash = _pick("totalCash", yf_total_cash, "balance_sheet")
 
-    if total_debt is not None:
-        sources["totalDebt"] = "balance_sheet"
+    yf_net_debt = _latest_value(net_debt_row)
+    if yf_net_debt is None and yf_total_debt is not None:
+        yf_net_debt = yf_total_debt - (yf_total_cash or 0.0)
+    yf_net_debt_label = "balance_sheet" if _latest_value(net_debt_row) is not None else "balance_sheet_derived"
+    net_debt = _pick("netDebt", yf_net_debt, yf_net_debt_label)
 
-    # Shares outstanding — prefer balance sheet "Ordinary Shares Number" (most
-    # recent reported); fall back to info.
+    # Shares outstanding — prefer SEC dei:EntityCommonStockSharesOutstanding,
+    # then yfinance balance-sheet, then info.
     shares_row = _first_row(balance, _SHARES_ROWS)
-    shares = _latest_value(shares_row)
-    if shares is not None:
-        sources["sharesOutstanding"] = "balance_sheet"
-    elif info.get("sharesOutstanding") is not None:
-        shares = float(info["sharesOutstanding"])
-        sources["sharesOutstanding"] = "info"
+    yf_shares = _latest_value(shares_row)
+    yf_shares_label = "balance_sheet"
+    if yf_shares is None and info.get("sharesOutstanding") is not None:
+        yf_shares = float(info["sharesOutstanding"])
+        yf_shares_label = "info"
+    shares = _pick("sharesOutstanding", yf_shares, yf_shares_label)
 
     # Current price
     current_price: Optional[float] = None
@@ -405,6 +434,7 @@ def get_ticker_fundamentals(ticker: str) -> Dict[str, Any]:
         "analystUpsidePct": analyst_upside_pct,
         "sources": sources,
         "asOf": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "asOfFiling": sec_data.get("asOfFiling"),
     }
 
     _cache[key] = (now, result)

@@ -104,6 +104,40 @@ def ensure_schema() -> None:
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_analytics_run_created ON analytics_report_run(created_at DESC)"
     )
+
+    # Per-ticker investor-relations feed: news headlines + SEC filings scraped
+    # by data.ir_scraper, classified BULLISH/BEARISH/NEUTRAL/INFORMATIVE by
+    # data.ir_classifier (Gemini Flash with lexicon fallback). Re-scrape is
+    # idempotent via item_hash; classification only runs when thesis IS NULL.
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ir_filing (
+            item_hash       TEXT PRIMARY KEY,
+            ticker          TEXT NOT NULL,
+            source          TEXT NOT NULL,
+            item_type       TEXT,
+            title           TEXT NOT NULL,
+            publisher       TEXT,
+            link            TEXT,
+            published_at    TEXT,
+            body_excerpt    TEXT,
+            thesis          TEXT,
+            confidence      REAL,
+            rationale       TEXT,
+            classifier      TEXT,
+            classified_at   TEXT,
+            fetched_at      TEXT NOT NULL DEFAULT (datetime('now')),
+            raw_json        TEXT
+        )
+        """
+    )
+    conn.executescript(
+        """
+        CREATE INDEX IF NOT EXISTS idx_ir_ticker_published ON ir_filing(ticker, published_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_ir_thesis           ON ir_filing(thesis);
+        CREATE INDEX IF NOT EXISTS idx_ir_fetched          ON ir_filing(fetched_at DESC);
+        """
+    )
     conn.commit()
 
 
@@ -193,3 +227,148 @@ def write_live_snapshot(
     )
     conn.commit()
     return int(cur.lastrowid or 0)
+
+
+# ---------------------------------------------------------------------------
+# IR filing helpers
+# ---------------------------------------------------------------------------
+
+
+def upsert_ir_filing(row: dict) -> bool:
+    """Insert an IR filing row if its item_hash is new. Returns True when a
+    new row was inserted (used to count `new_items` in the refresh response).
+    Existing rows are left untouched so previously assigned thesis labels are
+    preserved across re-scrapes.
+    """
+    conn = get_conn()
+    cur = conn.execute(
+        """
+        INSERT OR IGNORE INTO ir_filing (
+            item_hash, ticker, source, item_type, title, publisher, link,
+            published_at, body_excerpt, thesis, confidence, rationale,
+            classifier, classified_at, raw_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            row["item_hash"],
+            row["ticker"],
+            row["source"],
+            row.get("item_type"),
+            row["title"],
+            row.get("publisher"),
+            row.get("link"),
+            row.get("published_at"),
+            row.get("body_excerpt"),
+            row.get("thesis"),
+            row.get("confidence"),
+            row.get("rationale"),
+            row.get("classifier"),
+            row.get("classified_at"),
+            row.get("raw_json"),
+        ),
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def get_ir_filings(ticker: str, limit: int = 25) -> list:
+    """Latest IR rows for a ticker. Most-recent first; NULL `published_at` is
+    sorted last so undated EDGAR entries don't dominate the top of the panel.
+    """
+    conn = get_conn()
+    cur = conn.execute(
+        """
+        SELECT * FROM ir_filing
+        WHERE ticker = ?
+        ORDER BY (published_at IS NULL), published_at DESC, fetched_at DESC
+        LIMIT ?
+        """,
+        (ticker.upper(), limit),
+    )
+    return cur.fetchall()
+
+
+def get_unclassified_ir_filings(
+    ticker: Optional[str] = None,
+    limit: int = 50,
+) -> list:
+    """Return rows whose thesis is still NULL — caller is the classifier loop."""
+    conn = get_conn()
+    if ticker:
+        cur = conn.execute(
+            """
+            SELECT * FROM ir_filing
+            WHERE thesis IS NULL AND ticker = ?
+            ORDER BY fetched_at DESC
+            LIMIT ?
+            """,
+            (ticker.upper(), limit),
+        )
+    else:
+        cur = conn.execute(
+            """
+            SELECT * FROM ir_filing
+            WHERE thesis IS NULL
+            ORDER BY fetched_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+    return cur.fetchall()
+
+
+def update_ir_classification(
+    item_hash: str,
+    thesis: str,
+    confidence: float,
+    rationale: str,
+    classifier: str,
+) -> None:
+    """Persist a classifier verdict on a single IR row."""
+    from datetime import datetime, timezone as _tz
+
+    conn = get_conn()
+    classified_at = datetime.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    conn.execute(
+        """
+        UPDATE ir_filing
+        SET thesis = ?, confidence = ?, rationale = ?,
+            classifier = ?, classified_at = ?
+        WHERE item_hash = ?
+        """,
+        (thesis, confidence, rationale, classifier, classified_at, item_hash),
+    )
+    conn.commit()
+
+
+def count_ir_thesis(ticker: str) -> dict:
+    """Return {'BULLISH': n, 'BEARISH': n, ...} counts plus a 'TOTAL' key."""
+    conn = get_conn()
+    rows = conn.execute(
+        """
+        SELECT thesis, COUNT(*) AS n
+        FROM ir_filing
+        WHERE ticker = ?
+        GROUP BY thesis
+        """,
+        (ticker.upper(),),
+    ).fetchall()
+    out = {"BULLISH": 0, "BEARISH": 0, "NEUTRAL": 0, "INFORMATIVE": 0}
+    total = 0
+    for r in rows:
+        total += int(r["n"])
+        label = r["thesis"]
+        if label in out:
+            out[label] = int(r["n"])
+    out["TOTAL"] = total
+    return out
+
+
+def latest_ir_fetched_at(ticker: str) -> Optional[str]:
+    """Most recent `fetched_at` for any row of this ticker (None if empty)."""
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT MAX(fetched_at) AS f FROM ir_filing WHERE ticker = ?",
+        (ticker.upper(),),
+    ).fetchone()
+    return row["f"] if row and row["f"] else None

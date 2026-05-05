@@ -188,7 +188,7 @@ export default function AutoEnginePage() {
         </span>
       </div>
 
-      <div className="rv-grid-2" style={{ gridTemplateColumns: '320px 1fr' }}>
+      <div className="rv-engine-grid">
         <Guardrails />
         <EventStream />
       </div>

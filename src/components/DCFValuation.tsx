@@ -5,7 +5,11 @@ import type { Fundamentals } from '@/app/stock/[ticker]/StockDetailClient';
 
 interface DCFValuationProps {
   ticker: string;
-  currentPrice: number;
+  // Allow null / 0 / NaN here — the parent's API call can transiently return
+  // a bad price (yfinance flakiness). The component renders a "—" placeholder
+  // and hides the vs-market delta in that case rather than displaying "$0.00",
+  // which a user reads as "the stock is worthless."
+  currentPrice: number | null | undefined;
   companyName: string;
   fundamentals?: Fundamentals;
 }
@@ -57,6 +61,7 @@ interface DeepFundamentals {
   analystUpsidePct?: number | null;
   sources?: Record<string, string>;
   asOf?: string;
+  asOfFiling?: string | null;
 }
 
 type AccentVar = 'var(--green)' | 'var(--gold)' | 'var(--pink)' | 'var(--blue)' | 'var(--purple)';
@@ -300,13 +305,33 @@ function deriveDefaults(
       ? clamp(deep.taxRate * 100, 0, 40)
       : 21;
 
+  // Calibrate the capex slider so that the model's Year-0 FCF lines up with
+  // the actual TTM free-cash-flow yfinance reports. The simple formula used in
+  // results (FCF = NOPAT − capex) ignores D&A and working-capital movements,
+  // so plugging in *gross* capex tends to produce a wildly negative FCF for
+  // capex-heavy businesses (semis, REITs, infra) — and a clamped $0 fair
+  // price downstream.
+  //
+  // Backsolve instead:  capex_effective = NOPAT − FCF_actual
+  // This is the capex value that makes the model honest at t=0; the user can
+  // still nudge it for sensitivity analysis. Falls back to gross capex (then
+  // 10% of revenue) when freeCashFlow is missing.
+  const fcfAbs = deep?.freeCashFlow ?? null;
   const capexAbs = deep?.capex ?? null;
-  const capexM =
-    capexAbs != null
-      ? Math.round(capexAbs / 1_000_000)
-      : revenueM > 0
-        ? Math.round(revenueM * 0.1)
-        : 50;
+  const taxRate = taxPct / 100;
+  const opMargin = opMarginPct / 100;
+  const nopatM = revenueM * opMargin * (1 - taxRate);
+  const fcfM = fcfAbs != null ? fcfAbs / 1_000_000 : null;
+  let capexM: number;
+  if (fcfM != null && Number.isFinite(fcfM)) {
+    capexM = Math.round(nopatM - fcfM);
+  } else if (capexAbs != null) {
+    capexM = Math.round(capexAbs / 1_000_000);
+  } else if (revenueM > 0) {
+    capexM = Math.round(revenueM * 0.1);
+  } else {
+    capexM = 50;
+  }
 
   const netDebtAbs = deep?.netDebt ?? fundamentals?.netDebt ?? null;
   const netDebtM = netDebtAbs != null ? clamp(netDebtAbs / 1_000_000, -100_000, 200_000) : 0;
@@ -443,10 +468,16 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
     const btcTreasuryM = defaults.hasBtc ? (btcHoldings * btcPrice) / 1_000_000 : 0;
     const equityValue = enterpriseValue - netDebtM + btcTreasuryM;
     const fairPrice = sharesM > 0 ? equityValue / sharesM : 0;
-    const deltaPercent = currentPrice ? ((fairPrice - currentPrice) / currentPrice) * 100 : 0;
+    const validPrice =
+      typeof currentPrice === 'number' && Number.isFinite(currentPrice) && currentPrice > 0;
+    const deltaPercent = validPrice ? ((fairPrice - (currentPrice as number)) / (currentPrice as number)) * 100 : 0;
 
+    // Don't clamp negative fair prices to 0 — that hides the model's actual
+    // verdict ("on these inputs the cash flows don't justify any equity
+    // value") behind a misleading "$0.00". Display honestly so the user can
+    // see what's going on and adjust the inputs.
     return {
-      fairPrice: Math.max(0, fairPrice),
+      fairPrice,
       deltaPercent,
       revenues,
       opIncome: opIncomeArr,
@@ -520,6 +551,11 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
     return () => ro.disconnect();
   }, [results]);
 
+  // True only when we got a usable current price from the parent — see the
+  // DCFValuationProps comment. When false, the "vs market" delta badge is
+  // hidden entirely instead of showing a misleading "$0.00".
+  const hasPrice =
+    typeof currentPrice === 'number' && Number.isFinite(currentPrice) && currentPrice > 0;
   const isPositive = results.deltaPercent >= 0;
   const deltaColor = isPositive ? 'var(--green)' : 'var(--pink)';
   const deltaBorder = isPositive ? 'rgba(0,200,5,.35)' : 'rgba(255,0,110,.35)';
@@ -611,11 +647,19 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
           >
             {deepLoading && <span>⟳</span>}
             {deepLoading
-              ? 'fetching Yahoo Finance fundamentals…'
+              ? 'fetching fundamentals…'
               : deepError
-                ? `Yahoo Finance fetch failed (${deepError}) — using fallback defaults`
+                ? `fundamentals fetch failed (${deepError}) — using defaults`
                 : deep
-                  ? `✓ Yahoo Finance · ${Object.keys(deep.sources ?? {}).length} fields · ${deep.asOf ?? ''}`
+                  ? (() => {
+                      const srcs = deep.sources ?? {};
+                      const total = Object.keys(srcs).length;
+                      const fromSec = Object.values(srcs).filter(v => v === 'sec_edgar').length;
+                      const filing = deep.asOfFiling ? ` · 10-K ${deep.asOfFiling}` : '';
+                      return fromSec > 0
+                        ? `✓ SEC EDGAR (${fromSec}) + Yahoo (${total - fromSec}) · ${total} fields${filing} · ${deep.asOf ?? ''}`
+                        : `✓ Yahoo Finance · ${total} fields · ${deep.asOf ?? ''}`;
+                    })()
                   : 'using info-based defaults'}
           </div>
         </div>
@@ -626,11 +670,12 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: 22,
               fontWeight: 700,
-              color: 'var(--blue)',
+              color: hasPrice ? 'var(--blue)' : 'var(--ink-mute)',
               marginTop: 2,
             }}
+            title={hasPrice ? undefined : 'Live price unavailable — try refreshing.'}
           >
-            ${currentPrice.toFixed(2)}
+            {hasPrice ? `$${(currentPrice as number).toFixed(2)}` : '—'}
           </div>
         </div>
       </div>
@@ -978,40 +1023,90 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
               ESTIMATED FAIR SHARE PRICE
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <span style={{ fontSize: 22, color: 'var(--green)', fontWeight: 700 }}>$</span>
+              {results.fairPrice < 0 && (
+                <span
+                  style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 'clamp(40px, 14vw, 72px)',
+                    fontWeight: 700,
+                    color: 'var(--pink)',
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1,
+                  }}
+                >
+                  −
+                </span>
+              )}
+              <span
+                style={{
+                  fontSize: 22,
+                  color: results.fairPrice < 0 ? 'var(--pink)' : 'var(--green)',
+                  fontWeight: 700,
+                }}
+              >
+                $
+              </span>
               <span
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: 'clamp(40px, 14vw, 72px)',
                   fontWeight: 700,
-                  color: 'var(--ink)',
+                  color: results.fairPrice < 0 ? 'var(--pink)' : 'var(--ink)',
                   letterSpacing: '-0.02em',
                   lineHeight: 1,
                   wordBreak: 'break-word',
                 }}
               >
-                {results.fairPrice.toFixed(2)}
+                {Math.abs(results.fairPrice).toFixed(2)}
               </span>
             </div>
-            <div
-              style={{
-                marginTop: 14,
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: 12,
-                padding: '4px 12px',
-                borderRadius: 999,
-                border: `1px solid ${deltaBorder}`,
-                background: deltaBg,
-                color: deltaColor,
-                fontWeight: 600,
-                display: 'inline-flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                textAlign: 'center',
-              }}
-            >
-              {isPositive ? '▲' : '▼'} {Math.abs(results.deltaPercent).toFixed(1)}% vs market (${currentPrice.toFixed(2)})
-            </div>
+            {results.fairPrice < 0 && (
+              <div
+                className="rv-sub"
+                style={{
+                  marginTop: 6,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 11,
+                  color: 'var(--pink)',
+                  textAlign: 'center',
+                  maxWidth: 360,
+                }}
+              >
+                model says discounted FCF doesn&apos;t cover net debt — adjust capex / margin / growth to test
+              </div>
+            )}
+            {hasPrice ? (
+              <div
+                style={{
+                  marginTop: 14,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 12,
+                  padding: '4px 12px',
+                  borderRadius: 999,
+                  border: `1px solid ${deltaBorder}`,
+                  background: deltaBg,
+                  color: deltaColor,
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                {isPositive ? '▲' : '▼'} {Math.abs(results.deltaPercent).toFixed(1)}% vs market (${(currentPrice as number).toFixed(2)})
+              </div>
+            ) : (
+              <div
+                className="rv-sub"
+                style={{
+                  marginTop: 14,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 11,
+                }}
+              >
+                live market price unavailable — refresh the page to retry
+              </div>
+            )}
           </div>
 
           {/* Chart */}

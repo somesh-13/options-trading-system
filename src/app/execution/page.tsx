@@ -1,5 +1,10 @@
 'use client';
 
+// Execution = Alpaca paper-trading (stocks + Alpaca options chain).
+// For the live yfinance options chain that ties into Robinhood orders, see
+// /options-chain. The two pages are intentionally separate because they wrap
+// different brokers and chain data sources.
+
 import { useState, useEffect, useCallback } from 'react';
 import { parseOCC, formatOCCReadable } from '@/lib/utils';
 import { PRICING_API_URL as API_URL } from '@/lib/pricing-api';

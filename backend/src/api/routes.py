@@ -5,7 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -70,10 +72,17 @@ from api.models import (
     EquityOrderRequest,
     EquityOrderResponse,
     EQUITY_ORDER_NOTIONAL_CAP_USD,
+    OptionOrderRequest,
+    OptionOrderResponse,
+    OPTION_ORDER_NOTIONAL_CAP_USD,
     AnalyticsRunCreateRequest,
     AnalyticsRunCreateResponse,
     AnalyticsRunMeta,
     AnalyticsRunFull,
+    IRFilingItem,
+    IRFilingListResponse,
+    IRFilingRefreshResponse,
+    IRFilingCountsResponse,
 )
 
 # Robinhood activity ingestion + portfolio derivation.
@@ -95,6 +104,7 @@ from engine.executor import get_engine
 from data.ir_scraper import aggregate_ir_data
 from data.nlp_extractor import analyze_news_batch
 from data.bayesian_update import bayesian_update_for_ticker
+from data.ir_ingest import refresh_ir_for_ticker
 
 # Phase 3: Backtesting
 from backtest.engine import run_backtest, BacktestConfig
@@ -521,11 +531,18 @@ def get_current_ticker_price(ticker: str):
 
 @app.get("/api/market/{ticker}/mispricing")
 def get_ticker_mispricing(ticker: str):
-    """Detect IV vs HV mispricing for any ticker."""
+    """Detect IV vs HV mispricing for any ticker.
+
+    Returns 200 with `{ticker, error}` when yfinance can't price the symbol
+    (delisted ADRs like FRCB, sanctioned tickers like OGZPY/SBRCY, alt-class
+    shares like BRK.A) so the browser console doesn't log a 500 for every
+    bad ticker in the Dashboard's per-position fan-out. Callers should check
+    for the `error` field before reading other keys.
+    """
     try:
         return detect_mispricing(ticker.upper())
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Mispricing detection failed: {str(e)}")
+        return {"ticker": ticker.upper(), "error": f"Mispricing unavailable: {str(e)}"}
 
 
 @app.get("/api/market/{ticker}/detail")
@@ -586,6 +603,156 @@ def get_hv_confidence(ticker: str, window: int = 30, confidence: float = 0.95):
         return hv_with_confidence(ticker.upper(), window=window, confidence=confidence)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"HV confidence calculation failed: {str(e)}")
+
+
+# =============================================
+# Public option chain (yfinance-backed) — used by the /options-chain page.
+# Distinct from /api/execution/options/chain/{underlying} which is Alpaca-
+# backed and behind the trading paywall. This one is read-only public data.
+# =============================================
+
+@app.get("/api/market/{ticker}/option-expirations")
+def get_option_expirations(ticker: str):
+    """Available expiration dates for a ticker, with ATM IV + total OI summary.
+
+    Powers the horizontal expiration strip on /options-chain. yfinance returns
+    a list of YYYY-MM-DD strings; we enrich each with DTE, an ATM IV proxy
+    (the call closest to spot), and total open interest across both legs so
+    the user can see at a glance which expiries are liquid.
+    """
+    import yfinance as yf
+    from datetime import date as _date
+
+    sym = ticker.upper()
+    try:
+        t = yf.Ticker(sym)
+        expiries = list(t.options or [])
+        if not expiries:
+            return {"ticker": sym, "spot": None, "expirations": []}
+
+        spot_hist = t.history(period="1d")
+        spot = float(spot_hist["Close"].iloc[-1]) if not spot_hist.empty else None
+
+        out: List[Dict[str, Any]] = []
+        today = _date.today()
+        for exp_str in expiries:
+            try:
+                exp_d = _date.fromisoformat(exp_str)
+            except ValueError:
+                continue
+            dte = (exp_d - today).days
+            atm_iv: Optional[float] = None
+            total_oi = 0
+            try:
+                chain = t.option_chain(exp_str)
+                # ATM IV from the call whose strike is closest to spot.
+                if spot is not None and not chain.calls.empty:
+                    closest = chain.calls.iloc[
+                        (chain.calls["strike"] - spot).abs().argsort().iloc[0]
+                    ]
+                    iv = closest.get("impliedVolatility")
+                    if iv is not None and not pd.isna(iv):
+                        atm_iv = float(iv)
+                for leg in (chain.calls, chain.puts):
+                    if "openInterest" in leg.columns:
+                        total_oi += int(leg["openInterest"].fillna(0).sum())
+            except Exception:
+                pass
+            out.append({
+                "expiration": exp_str,
+                "dte": dte,
+                "atm_iv": round(atm_iv, 4) if atm_iv is not None else None,
+                "total_oi": total_oi,
+            })
+        return {"ticker": sym, "spot": spot, "expirations": out}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Option expirations fetch failed for {sym}: {str(e)}",
+        )
+
+
+@app.get("/api/market/{ticker}/option-chain")
+def get_market_option_chain(ticker: str, expiration: str):
+    """Per-expiration option chain (calls + puts) for a single ticker.
+
+    `expiration` must be YYYY-MM-DD and must appear in
+    /api/market/{ticker}/option-expirations.
+    """
+    import yfinance as yf
+    from datetime import date as _date
+
+    sym = ticker.upper()
+    try:
+        _date.fromisoformat(expiration)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="expiration must be YYYY-MM-DD")
+    try:
+        t = yf.Ticker(sym)
+        spot_hist = t.history(period="1d")
+        spot = float(spot_hist["Close"].iloc[-1]) if not spot_hist.empty else None
+        if expiration not in (t.options or []):
+            raise HTTPException(
+                status_code=404,
+                detail=f"Expiration {expiration} not available for {sym}",
+            )
+        chain = t.option_chain(expiration)
+
+        def _row(r) -> Dict[str, Any]:
+            def _f(v):
+                try:
+                    if v is None or pd.isna(v):
+                        return None
+                    return float(v)
+                except (TypeError, ValueError):
+                    return None
+
+            def _i(v):
+                try:
+                    if v is None or pd.isna(v):
+                        return 0
+                    return int(v)
+                except (TypeError, ValueError):
+                    return 0
+
+            bid = _f(r.get("bid"))
+            ask = _f(r.get("ask"))
+            mid: Optional[float] = None
+            if bid is not None and ask is not None and bid > 0 and ask > 0:
+                mid = round((bid + ask) / 2, 4)
+            return {
+                "contract_symbol": r.get("contractSymbol"),
+                "strike": _f(r.get("strike")),
+                "bid": bid,
+                "ask": ask,
+                "last": _f(r.get("lastPrice")),
+                "mid": mid,
+                "iv": _f(r.get("impliedVolatility")),
+                "volume": _i(r.get("volume")),
+                "open_interest": _i(r.get("openInterest")),
+                "in_the_money": bool(r.get("inTheMoney")) if r.get("inTheMoney") is not None else None,
+            }
+
+        calls = [_row(r) for _, r in chain.calls.iterrows()]
+        puts = [_row(r) for _, r in chain.puts.iterrows()]
+        # Sort ascending by strike for the table render.
+        calls.sort(key=lambda x: (x["strike"] is None, x["strike"]))
+        puts.sort(key=lambda x: (x["strike"] is None, x["strike"]))
+
+        return {
+            "ticker": sym,
+            "expiration": expiration,
+            "spot": spot,
+            "calls": calls,
+            "puts": puts,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Option chain fetch failed for {sym} {expiration}: {str(e)}",
+        )
 
 
 @app.post("/api/risk/stress-test", response_model=StressTestResponse)
@@ -684,6 +851,78 @@ def get_ticker_news(ticker: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"News fetch failed: {str(e)}")
+
+
+# =============================================
+# Investor-relations feed (per-ticker, thesis-tagged)
+# =============================================
+
+def _ir_row_to_item(row) -> IRFilingItem:
+    """sqlite Row → IRFilingItem (used by the GET endpoint)."""
+    return IRFilingItem(
+        item_hash=row["item_hash"],
+        ticker=row["ticker"],
+        source=row["source"],
+        item_type=row["item_type"],
+        title=row["title"],
+        publisher=row["publisher"],
+        link=row["link"],
+        published_at=row["published_at"],
+        thesis=row["thesis"],
+        confidence=row["confidence"],
+        rationale=row["rationale"],
+        classifier=row["classifier"],
+        fetched_at=row["fetched_at"],
+    )
+
+
+@app.get("/api/ir/{ticker}", response_model=IRFilingListResponse)
+def get_ir_filings(ticker: str, limit: int = 25):
+    """Latest IR items for a ticker, with BULLISH/BEARISH/NEUTRAL/INFORMATIVE
+    counts. If the DB has nothing for this ticker yet we run one synchronous
+    refresh so the cold-start UX is 'loading … data' rather than 'loading …
+    empty'."""
+    ticker_u = ticker.upper()
+    rows = rh_db.get_ir_filings(ticker_u, limit=limit)
+    if not rows:
+        try:
+            refresh_ir_for_ticker(ticker_u, force_reclassify=False)
+        except Exception:
+            # Refresh is best-effort on cold-start; UI shows empty state.
+            logging.getLogger(__name__).exception(
+                "Cold-start IR refresh failed for %s", ticker_u
+            )
+        rows = rh_db.get_ir_filings(ticker_u, limit=limit)
+
+    counts = rh_db.count_ir_thesis(ticker_u)
+    return IRFilingListResponse(
+        ticker=ticker_u,
+        items=[_ir_row_to_item(r) for r in rows],
+        counts=counts,
+        last_refreshed_at=rh_db.latest_ir_fetched_at(ticker_u),
+    )
+
+
+@app.post("/api/ir/{ticker}/refresh", response_model=IRFilingRefreshResponse)
+def refresh_ir_endpoint(ticker: str, force_reclassify: bool = False):
+    """Re-scrape Yahoo News + SEC EDGAR for this ticker, upsert new items,
+    and classify any NULL-thesis rows. Pass `force_reclassify=true` to also
+    re-run the classifier on already-labelled rows (e.g. after a prompt change).
+    """
+    result = refresh_ir_for_ticker(ticker.upper(), force_reclassify=force_reclassify)
+    return IRFilingRefreshResponse(**result)  # type: ignore[arg-type]
+
+
+@app.get("/api/ir/{ticker}/counts", response_model=IRFilingCountsResponse)
+def get_ir_counts(ticker: str):
+    """Just the thesis counts — used for badge rendering elsewhere in the UI."""
+    ticker_u = ticker.upper()
+    counts = rh_db.count_ir_thesis(ticker_u)
+    return IRFilingCountsResponse(
+        ticker=ticker_u,
+        counts={k: v for k, v in counts.items() if k != "TOTAL"},
+        total=int(counts.get("TOTAL", 0)),
+    )
 
 
 # =============================================
@@ -1795,6 +2034,36 @@ def robinhood_hedge_ratio(account: str = "all", target_delta: float = 0.0):
         raise HTTPException(status_code=500, detail=f"Hedge ratio failed: {exc}")
 
 
+@app.get("/api/robinhood/analytics/hedge-ratio-by-underlying")
+def robinhood_hedge_ratio_by_underlying(account: str = "all", target_delta: float = 0.0):
+    try:
+        return rh_analytics.hedge_ratio_by_underlying_for_account(
+            account, target_delta=target_delta,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Per-underlying hedge ratio failed: {exc}")
+
+
+@app.get("/api/robinhood/analytics/delta-gamma-hedge")
+def robinhood_delta_gamma_hedge(
+    account: str = "all",
+    underlying: Optional[str] = None,
+    hedge_dte: int = 30,
+    hedge_type: str = "call",
+    top_n: int = 10,
+):
+    try:
+        return rh_analytics.delta_gamma_hedge_for_account(
+            account,
+            underlying=underlying,
+            hedge_dte=hedge_dte,
+            hedge_type=hedge_type,
+            top_n=top_n,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Delta-gamma hedge failed: {exc}")
+
+
 @app.get("/api/robinhood/analytics/rebalance-check")
 def robinhood_rebalance_check(
     account: str = "all",
@@ -2296,6 +2565,260 @@ def robinhood_equity_order(req: EquityOrderRequest):
         limit_price=req.limit_price,
         estimated_notional_usd=est_notional_live,
         mark_price=mark_price_live,
+        dry_run=False,
+        status=status,
+        message=f"Order {order_id} submitted. Check the Robinhood app for fill status.",
+    )
+
+
+@app.post("/api/robinhood/options/order", response_model=OptionOrderResponse)
+def robinhood_options_order(req: OptionOrderRequest):
+    """Place or simulate a single-leg option order via Robinhood.
+
+    Mirrors equity order safety: dry_run default, confirm gate, $200 notional cap
+    (limit_price * 100 * qty), brokerage-account-only (IRAs typically lack
+    options permission), real-order rejection parsing.
+    """
+    import logging as _logging
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    from brokers import robinhood_api as rh_api
+
+    logger = _logging.getLogger("option_order")
+
+    underlying = req.underlying.upper().strip()
+    attempt_ts = datetime.now(timezone.utc).isoformat()
+
+    # Notional cap: 1 contract = 100 shares; price is per-share.
+    estimated_notional = round(req.limit_price * 100 * req.quantity, 4)
+    if estimated_notional > OPTION_ORDER_NOTIONAL_CAP_USD:
+        logger.warning(
+            "option_order REJECTED notional_cap",
+            extra={
+                "ts": attempt_ts, "underlying": underlying,
+                "strike": req.strike, "expiration": req.expiration,
+                "option_type": req.option_type, "side": req.side,
+                "quantity": req.quantity, "limit_price": req.limit_price,
+                "estimated_notional": estimated_notional,
+                "cap": OPTION_ORDER_NOTIONAL_CAP_USD, "dry_run": req.dry_run,
+            },
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"estimated_notional ${estimated_notional:.2f} exceeds per-order cap of "
+                f"${OPTION_ORDER_NOTIONAL_CAP_USD:.2f}. Reduce quantity or limit price."
+            ),
+        )
+
+    # Dry-run path: simulate only.
+    if req.dry_run:
+        stub_id = f"DRY-RUN-{str(_uuid.uuid4()).upper()[:16]}"
+        logger.info(
+            "option_order DRY_RUN",
+            extra={
+                "ts": attempt_ts, "underlying": underlying,
+                "strike": req.strike, "expiration": req.expiration,
+                "option_type": req.option_type, "side": req.side,
+                "position_effect": req.position_effect,
+                "quantity": req.quantity, "limit_price": req.limit_price,
+                "estimated_notional": estimated_notional, "order_id": stub_id,
+            },
+        )
+        return OptionOrderResponse(
+            order_id=stub_id,
+            underlying=underlying,
+            expiration=req.expiration,
+            strike=req.strike,
+            option_type=req.option_type,
+            side=req.side,
+            position_effect=req.position_effect,
+            quantity=req.quantity,
+            limit_price=req.limit_price,
+            estimated_notional_usd=estimated_notional,
+            account=req.account,
+            dry_run=True,
+            status="simulated",
+            message=(
+                f"DRY RUN — no real order was placed. "
+                f"Notional ${estimated_notional:.2f} ({req.quantity} contract(s) "
+                f"@ ${req.limit_price:.2f}/share)."
+            ),
+        )
+
+    # Live order path
+    if not req.confirm:
+        logger.warning(
+            "option_order REJECTED no_confirm",
+            extra={"ts": attempt_ts, "underlying": underlying, "dry_run": False},
+        )
+        raise HTTPException(status_code=400, detail="confirm flag required for live orders")
+
+    if not rh_api._is_configured():
+        raise HTTPException(status_code=503, detail="Robinhood credentials not configured")
+    if not rh_api.login():
+        raise HTTPException(status_code=503, detail="Robinhood login failed")
+
+    acct_num, acct_warn = rh_api._account_number_for_tag(req.account)
+    if acct_num is None:
+        raise HTTPException(status_code=503, detail=f"Could not resolve account_number: {acct_warn}")
+    if acct_warn:
+        logger.warning("option_order account_number_fallback", extra={"ts": attempt_ts, "warn": acct_warn})
+
+    # Map (side, position_effect) -> (creditOrDebit, robin_stocks function).
+    # buy → debit; sell → credit. position_effect is passed through.
+    credit_or_debit = "debit" if req.side == "buy" else "credit"
+
+    import robin_stocks.robinhood as rh
+
+    # Preflight: confirm the contract actually exists on Robinhood before
+    # placing the order. robin_stocks calls id_for_option() internally, and
+    # when the lookup fails it returns None, which produces a malformed
+    # option URL — Robinhood then rejects with the cryptic
+    #   {'legs': [{'option': ['Invalid hyperlink - Incorrect URL match.']}]}
+    # We catch that case here and surface a useful 422 instead.
+    try:
+        option_id = rh.helper.id_for_option(
+            underlying, req.expiration, req.strike, req.option_type,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error(
+            "option_order PREFLIGHT_LOOKUP_ERROR",
+            extra={
+                "ts": attempt_ts, "underlying": underlying,
+                "strike": req.strike, "expiration": req.expiration,
+                "option_type": req.option_type, "error": str(exc),
+            },
+        )
+        raise HTTPException(status_code=502, detail=f"Option contract lookup failed: {exc}")
+
+    if not option_id:
+        logger.warning(
+            "option_order PREFLIGHT_NO_CONTRACT",
+            extra={
+                "ts": attempt_ts, "underlying": underlying,
+                "strike": req.strike, "expiration": req.expiration,
+                "option_type": req.option_type, "side": req.side,
+            },
+        )
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"No tradable {req.option_type.upper()} contract found for "
+                f"{underlying} ${req.strike} exp {req.expiration}. "
+                f"Strike or expiration likely doesn't exist on this underlying — "
+                f"pick a strike from the chain."
+            ),
+        )
+
+    try:
+        if req.side == "buy":
+            result = rh.orders.order_buy_option_limit(
+                positionEffect=req.position_effect,
+                creditOrDebit=credit_or_debit,
+                price=req.limit_price,
+                symbol=underlying,
+                quantity=req.quantity,
+                expirationDate=req.expiration,
+                strike=req.strike,
+                optionType=req.option_type,
+                account_number=acct_num,
+            )
+        else:
+            result = rh.orders.order_sell_option_limit(
+                positionEffect=req.position_effect,
+                creditOrDebit=credit_or_debit,
+                price=req.limit_price,
+                symbol=underlying,
+                quantity=req.quantity,
+                expirationDate=req.expiration,
+                strike=req.strike,
+                optionType=req.option_type,
+                account_number=acct_num,
+            )
+    except Exception as exc:  # noqa: BLE001
+        logger.error(
+            "option_order LIVE_ERROR",
+            extra={
+                "ts": attempt_ts, "underlying": underlying,
+                "strike": req.strike, "expiration": req.expiration,
+                "option_type": req.option_type, "side": req.side,
+                "position_effect": req.position_effect,
+                "quantity": req.quantity, "limit_price": req.limit_price,
+                "error": str(exc),
+            },
+        )
+        raise HTTPException(status_code=500, detail=f"Order placement failed: {exc}")
+
+    if not isinstance(result, dict) or not result.get("id"):
+        error_msg = "Order rejected by Robinhood (no order id returned)"
+        if isinstance(result, dict):
+            if result.get("non_field_errors"):
+                error_msg = "; ".join(str(e) for e in result["non_field_errors"])
+            elif result.get("detail"):
+                error_msg = str(result["detail"])
+            elif result.get("reject_reason"):
+                error_msg = f"reject_reason: {result['reject_reason']}"
+            elif (
+                isinstance(result.get("legs"), list)
+                and result["legs"]
+                and isinstance(result["legs"][0], dict)
+                and "option" in result["legs"][0]
+            ):
+                # Robinhood DRF "Invalid hyperlink" — option contract URL
+                # didn't match. The preflight should have caught this; if
+                # we land here the chain shifted between lookup and submit.
+                error_msg = (
+                    f"Robinhood rejected the contract URL for "
+                    f"{underlying} ${req.strike} {req.option_type.upper()} "
+                    f"{req.expiration}. The contract may have been delisted "
+                    f"or the strike doesn't exist — re-pick from the chain."
+                )
+            else:
+                error_msg = f"Unexpected response: {result}"
+        elif result is None:
+            error_msg = "Robinhood returned no response (rate-limited or timeout)"
+
+        logger.error(
+            "option_order LIVE_REJECTED",
+            extra={
+                "ts": attempt_ts, "underlying": underlying,
+                "strike": req.strike, "expiration": req.expiration,
+                "option_type": req.option_type, "side": req.side,
+                "quantity": req.quantity, "limit_price": req.limit_price,
+                "raw_response": result, "error": error_msg,
+            },
+        )
+        raise HTTPException(status_code=422, detail=f"Order rejected: {error_msg}")
+
+    order_id = str(result["id"])
+    status = result.get("state") or "submitted"
+
+    logger.info(
+        "option_order LIVE_PLACED",
+        extra={
+            "ts": attempt_ts, "underlying": underlying,
+            "strike": req.strike, "expiration": req.expiration,
+            "option_type": req.option_type, "side": req.side,
+            "position_effect": req.position_effect,
+            "quantity": req.quantity, "limit_price": req.limit_price,
+            "order_id": order_id, "status": status,
+            "acct_num": acct_num, "raw_response": result,
+        },
+    )
+
+    return OptionOrderResponse(
+        order_id=order_id,
+        underlying=underlying,
+        expiration=req.expiration,
+        strike=req.strike,
+        option_type=req.option_type,
+        side=req.side,
+        position_effect=req.position_effect,
+        quantity=req.quantity,
+        limit_price=req.limit_price,
+        estimated_notional_usd=estimated_notional,
+        account=req.account,
         dry_run=False,
         status=status,
         message=f"Order {order_id} submitted. Check the Robinhood app for fill status.",

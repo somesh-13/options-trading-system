@@ -499,6 +499,10 @@ CRYPTO_ORDER_NOTIONAL_CAP_USD: float = 50.0
 # Hard cap for equity orders: ~10 shares of a mid-priced stock at test time.
 EQUITY_ORDER_NOTIONAL_CAP_USD: float = 200.0
 
+# Hard cap for options orders. Options notional = limit_price * 100 * contracts.
+# $200 cap allows e.g. 1 contract @ $2.00, 2 contracts @ $1.00, 4 @ $0.50.
+OPTION_ORDER_NOTIONAL_CAP_USD: float = 200.0
+
 
 class CryptoOrderRequest(BaseModel):
     """Request to place (or simulate) a crypto order via Robinhood.
@@ -561,6 +565,50 @@ class EquityOrderResponse(BaseModel):
     message: Optional[str] = None
 
 
+class OptionOrderRequest(BaseModel):
+    """Request to place (or simulate) a single-leg option order via Robinhood.
+
+    SAFETY:
+      - dry_run defaults to True. Live orders require confirm=True.
+      - Notional (limit_price * 100 * quantity) must be <= OPTION_ORDER_NOTIONAL_CAP_USD.
+      - account: 'brokerage' (individual margin) or 'roth_ira' (Robinhood Retirement,
+        Level 2 strategies — covered calls, cash-secured puts).
+      - Robinhood single-leg options are limit-only. limit_price is required.
+    """
+    underlying: str = Field(..., description="Underlying ticker, e.g. 'PATH'")
+    expiration: str = Field(..., description="Expiration in YYYY-MM-DD")
+    strike: float = Field(..., gt=0, description="Strike price")
+    option_type: Literal["call", "put"] = Field(..., description="call or put")
+    side: Literal["buy", "sell"] = Field(..., description="buy or sell premium")
+    position_effect: Literal["open", "close"] = Field("open", description="open or close")
+    quantity: int = Field(..., ge=1, description="Number of contracts (1 contract = 100 shares)")
+    limit_price: float = Field(..., gt=0, description="Limit price per share (not per contract)")
+    account: Literal["brokerage", "roth_ira"] = Field(
+        "brokerage",
+        description="brokerage = individual margin; roth_ira = Robinhood Retirement (Level 2 only)",
+    )
+    dry_run: bool = Field(True, description="When True, simulate only — do NOT place real orders")
+    confirm: bool = Field(False, description="Must be True for live orders")
+
+
+class OptionOrderResponse(BaseModel):
+    """Response from an option order attempt."""
+    order_id: str
+    underlying: str
+    expiration: str
+    strike: float
+    option_type: str
+    side: str
+    position_effect: str
+    quantity: int
+    limit_price: float
+    estimated_notional_usd: float
+    account: str
+    dry_run: bool
+    status: str
+    message: Optional[str] = None
+
+
 # === Analytics Report Run Models ===
 
 class AnalyticsRunCreateRequest(BaseModel):
@@ -594,3 +642,46 @@ class AnalyticsRunFull(BaseModel):
     ticker_count: Optional[int] = None
     payload: Any
     notes: Optional[str] = None
+
+
+# === IR (Investor Relations) Models ===
+
+class IRFilingItem(BaseModel):
+    """A single IR row — news article or SEC filing — with thesis classification."""
+    item_hash: str
+    ticker: str
+    source: str  # 'yahoo_news' | 'sec_edgar'
+    item_type: Optional[str] = None
+    title: str
+    publisher: Optional[str] = None
+    link: Optional[str] = None
+    published_at: Optional[str] = None
+    thesis: Optional[Literal["BULLISH", "BEARISH", "NEUTRAL", "INFORMATIVE"]] = None
+    confidence: Optional[float] = None
+    rationale: Optional[str] = None
+    classifier: Optional[str] = None
+    fetched_at: str
+
+
+class IRFilingListResponse(BaseModel):
+    """GET /api/ir/{ticker} — most recent items + thesis counts."""
+    ticker: str
+    items: List[IRFilingItem]
+    counts: Dict[str, int]  # {"BULLISH":3,"BEARISH":1,"NEUTRAL":2,"INFORMATIVE":5,"TOTAL":11}
+    last_refreshed_at: Optional[str] = None
+
+
+class IRFilingRefreshResponse(BaseModel):
+    """POST /api/ir/{ticker}/refresh — counts of what changed."""
+    ticker: str
+    new_items: int
+    classified: int
+    total: int
+    errors: List[str] = []
+
+
+class IRFilingCountsResponse(BaseModel):
+    """GET /api/ir/{ticker}/counts — badge data only (no row payload)."""
+    ticker: str
+    counts: Dict[str, int]
+    total: int

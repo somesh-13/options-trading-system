@@ -804,6 +804,586 @@ def backtest_wheel_ticker(
     )
 
 
+def backtest_continuous_cc_ticker(
+    ticker: str,
+    df: pd.DataFrame,
+    *,
+    cost_basis: float,
+    contracts: int = 1,
+    dte_target: int = 35,
+    delta_target: float = 0.30,
+    manage: bool = True,
+    double_threshold: float = 2.0,
+    r: float = 0.04,
+    skip_below_basis: bool = True,
+    entry_gate: str = "always",  # "always" | "keltner_top"
+    iv_hv_gate: float = 1.3,
+) -> TickerResult:
+    """Continuous covered-call writer on N×100-share lots already owned.
+
+    Strategy:
+      Always try to have a CC open against the lot. Entry = `dte_target` DTE,
+      strike chosen for `delta_target` (default 0.30). Entry skipped if
+      `strike <= cost_basis` (would lock in a share-leg loss).
+
+      manage=True (user's spec):
+        - Daily MTM the short call. Track running peak option price.
+        - If peak / entry_premium >= double_threshold, flag "ride_to_expiry"
+          for this cycle (no more rolls — let assignment happen).
+        - At expiry:
+            ITM + ride flag set:  assigned at strike, share gain locked,
+                                  shares called away, BACKTEST ENDS.
+            ITM + no ride flag:   try to roll for net credit (close current
+                                  at mtm, open a fresh 35-DTE 0.30Δ call).
+                                  If new_premium - mtm <= 0, take assignment
+                                  instead. ride flag carries over if peak
+                                  on the new cycle eventually doubles.
+            OTM:                  keep full credit, open next cycle next bar.
+
+      manage=False (baseline):
+        - At expiry ITM:  assigned, shares called away, BACKTEST ENDS.
+        - At expiry OTM: keep full credit, open next.
+
+    Output mirrors wheel_ticker's `wheel` dict shape so the two strategies
+    compare apples-to-apples.
+
+    `contracts` multiplies dollar P&L (each contract = 100 shares of cost
+    basis collateral). Capital deployed = contracts × 100 × cost_basis.
+
+    `entry_gate`:
+        "always"      — open a new cycle whenever the prior one closes
+                        (default; what 'continuous' means).
+        "keltner_top" — only open when keltner_position=='TOP' AND
+                        iv_hv > iv_hv_gate. Stays FLAT through other bars.
+                        Mirrors the gated entry rule of the original
+                        `backtest_ticker` function.
+    """
+    needed_cols = ["hv_30", "iv_synth"]
+    if entry_gate == "keltner_top":
+        needed_cols.append("keltner_position")
+    df = df.dropna(subset=needed_cols).copy()
+    trades: List[Trade] = []
+    open_trade: Optional[Trade] = None
+    open_expiry: Optional[date] = None
+    peak_premium = 0.0
+    ride_flag = False
+    cumulative_credit = 0.0  # cycle-net credit (entry - exits across rolls)
+    premium_total_usd = 0.0
+    realized_share_pnl_usd = 0.0
+    cycles_opened = 0
+    cycles_expired_otm = 0
+    cycles_rolled = 0
+    cycles_assigned = 0
+    cycles_skipped_below_basis = 0
+    shares_alive = True
+    final_spot = 0.0
+    equity_curve: list = []  # (iso_date, equity_usd) — daily MTM
+
+    bars = list(df.itertuples())
+    if not bars:
+        return TickerResult(
+            ticker=ticker, strategy="managed_cc" if manage else "unmanaged_cc",
+            bar_count=0, keltner_top_bars=0, keltner_bottom_bars=0,
+            gate_fires=0, fired_no_position=0, fired_capped=0,
+            trade_count=0, wins=0, losses=0, exercised_count=0,
+            total_pnl_usd=0.0, avg_pnl_per_trade=0.0, avg_holding_days=0.0,
+            win_rate=0.0, total_opp_cost_usd=0.0, final_share_inventory=100 * contracts,
+            wheel={"premium_total_usd": 0.0, "equity_curve": []},
+        )
+
+    contract_mult = 100.0 * contracts
+
+    def _open_cycle(bar_date: date, spot: float, iv_now: float) -> Optional[Trade]:
+        """Try to open a new CC. Returns the trade or None if skipped."""
+        nonlocal cycles_skipped_below_basis
+        strike = pick_strike_for_delta(spot, iv_now, dte_target, delta_target, r)
+        if skip_below_basis and strike <= cost_basis:
+            cycles_skipped_below_basis += 1
+            return None
+        T = dte_target / 365.0
+        prem = bs_call(spot, strike, T, r, iv_now)
+        if prem <= 0.01:
+            return None
+        return Trade(
+            ticker=ticker,
+            strategy="managed_cc" if manage else "unmanaged_cc",
+            entry_date=bar_date.isoformat(),
+            entry_time=market_close_iso(bar_date),
+            entry_spot=spot, strike=strike, entry_dte=dte_target,
+            entry_iv=iv_now, entry_premium=prem,
+            entry_delta=bs_call_delta(spot, strike, T, r, iv_now),
+        )
+
+    for i, bar in enumerate(bars):
+        bar_date = bar.Index.date()
+        spot = float(bar.close)
+        iv_now = float(bar.iv_synth)
+        final_spot = spot
+
+        try:
+            if not shares_alive:
+                continue  # keep stamping equity post-assignment
+
+            # 1) Open a cycle if we have none.
+            if open_trade is None:
+                gate_ok = True
+                if entry_gate == "keltner_top":
+                    kpos = getattr(bar, "keltner_position", None)
+                    ivhv = float(getattr(bar, "iv_hv", 0.0) or 0.0)
+                    gate_ok = (kpos == "TOP") and (ivhv > iv_hv_gate)
+                if not gate_ok:
+                    continue
+                t = _open_cycle(bar_date, spot, iv_now)
+                if t is not None:
+                    open_trade = t
+                    open_expiry = bar_date + timedelta(days=dte_target)
+                    peak_premium = t.entry_premium
+                    cumulative_credit = t.entry_premium
+                    cycles_opened += 1
+                continue
+
+            assert open_expiry is not None
+
+            # 2) Daily MTM + peak tracking.
+            days_held = (bar_date - date.fromisoformat(open_trade.entry_date)).days
+            dte_now = (open_expiry - bar_date).days
+            T_now = max(dte_now, 0) / 365.0
+            if dte_now > 0:
+                mtm = bs_call(spot, open_trade.strike, T_now, r, iv_now)
+            else:
+                mtm = max(spot - open_trade.strike, 0.0)
+            if manage and mtm > peak_premium:
+                peak_premium = mtm
+                if peak_premium >= double_threshold * open_trade.entry_premium:
+                    ride_flag = True
+
+            # 3) Handle expiry.
+            if dte_now <= 0:
+                itm = spot > open_trade.strike
+                if itm:
+                    if (not manage) or ride_flag:
+                        # Assignment: shares called away at strike.
+                        share_pnl = (open_trade.strike - cost_basis) * contract_mult
+                        realized_share_pnl_usd += share_pnl
+                        # Cycle-net credit was already collected via cumulative_credit
+                        # (entry - any prior roll exit costs). Final exit_premium = 0.
+                        premium_total_usd += cumulative_credit * contract_mult
+                        open_trade.exit_date = bar_date.isoformat()
+                        open_trade.exit_time = market_close_iso(bar_date)
+                        open_trade.exit_spot = spot
+                        open_trade.exit_premium = 0.0
+                        open_trade.exit_reason = "ASSIGNED_RIDE" if ride_flag else "ASSIGNED_OTM_END"
+                        open_trade.days_held = days_held
+                        open_trade.pnl_usd = open_trade.entry_premium * contract_mult
+                        open_trade.assigned = True
+                        trades.append(open_trade)
+                        cycles_assigned += 1
+                        open_trade = None
+                        open_expiry = None
+                        shares_alive = False
+                    else:
+                        # Roll for net credit.
+                        new_t = _open_cycle(bar_date, spot, iv_now)
+                        if new_t is None or (new_t.entry_premium - mtm) <= 0:
+                            # Can't roll for credit → take assignment.
+                            share_pnl = (open_trade.strike - cost_basis) * contract_mult
+                            realized_share_pnl_usd += share_pnl
+                            premium_total_usd += (cumulative_credit - mtm) * contract_mult
+                            open_trade.exit_date = bar_date.isoformat()
+                            open_trade.exit_time = market_close_iso(bar_date)
+                            open_trade.exit_spot = spot
+                            open_trade.exit_premium = mtm
+                            open_trade.exit_reason = "ASSIGNED_NO_CREDIT"
+                            open_trade.days_held = days_held
+                            open_trade.pnl_usd = (open_trade.entry_premium - mtm) * contract_mult
+                            open_trade.assigned = True
+                            trades.append(open_trade)
+                            cycles_assigned += 1
+                            open_trade = None
+                            open_expiry = None
+                            shares_alive = False
+                        else:
+                            # Roll: close current at mtm (debit), open new at credit.
+                            cumulative_credit = cumulative_credit - mtm + new_t.entry_premium
+                            open_trade.exit_date = bar_date.isoformat()
+                            open_trade.exit_time = market_close_iso(bar_date)
+                            open_trade.exit_spot = spot
+                            open_trade.exit_premium = mtm
+                            open_trade.exit_reason = "ROLLED"
+                            open_trade.days_held = days_held
+                            open_trade.pnl_usd = (open_trade.entry_premium - mtm) * contract_mult
+                            trades.append(open_trade)
+                            cycles_rolled += 1
+                            # Continue with the new trade — peak/ride reset for the new strike.
+                            open_trade = new_t
+                            open_expiry = bar_date + timedelta(days=dte_target)
+                            peak_premium = new_t.entry_premium
+                            cycles_opened += 1
+                else:
+                    # OTM at expiry: keep full credit, open next bar.
+                    premium_total_usd += cumulative_credit * contract_mult
+                    open_trade.exit_date = bar_date.isoformat()
+                    open_trade.exit_time = market_close_iso(bar_date)
+                    open_trade.exit_spot = spot
+                    open_trade.exit_premium = 0.0
+                    open_trade.exit_reason = "EXPIRED_OTM"
+                    open_trade.days_held = days_held
+                    open_trade.pnl_usd = open_trade.entry_premium * contract_mult
+                    open_trade.assigned = False
+                    trades.append(open_trade)
+                    cycles_expired_otm += 1
+                    open_trade = None
+                    open_expiry = None
+                    peak_premium = 0.0
+                    ride_flag = False
+                    cumulative_credit = 0.0
+        finally:
+            # Stamp end-of-bar equity (mark-to-market the wheel-overlay P&L).
+            #   premium_realized = closed-cycle net + open-cycle (credit - mtm)
+            #   share_value      = (spot - cost_basis) * contracts × 100  while alive
+            #   realized_share_pnl_usd locked at assignment, share_value=0 thereafter
+            if shares_alive and open_trade is not None and open_expiry is not None:
+                _dte = max((open_expiry - bar_date).days, 0)
+                _T = _dte / 365.0
+                _mtm = bs_call(spot, open_trade.strike, _T, r, iv_now) if _dte > 0 \
+                    else max(spot - open_trade.strike, 0.0)
+                _prem_marked = premium_total_usd + (cumulative_credit - _mtm) * contract_mult
+                _share_val = (spot - cost_basis) * contract_mult
+            elif shares_alive:
+                _prem_marked = premium_total_usd
+                _share_val = (spot - cost_basis) * contract_mult
+            else:
+                _prem_marked = premium_total_usd
+                _share_val = 0.0
+            equity_curve.append((bar_date.isoformat(),
+                                 _prem_marked + realized_share_pnl_usd + _share_val))
+
+    # End-of-window: close any open trade at last spot.
+    if open_trade is not None and open_expiry is not None and bars:
+        last = bars[-1]
+        bar_date = last.Index.date()
+        spot = float(last.close)
+        iv_now = float(last.iv_synth)
+        days_held = (bar_date - date.fromisoformat(open_trade.entry_date)).days
+        dte_now = max(0, (open_expiry - bar_date).days)
+        if dte_now > 0:
+            mtm = bs_call(spot, open_trade.strike, dte_now / 365.0, r, iv_now)
+        else:
+            mtm = max(spot - open_trade.strike, 0.0)
+        # Pretend we close the open call at mtm at the cutoff. Net credit so far
+        # minus mtm is realized cash on the option leg. Shares stay alive.
+        premium_total_usd += (cumulative_credit - mtm) * contract_mult
+        open_trade.exit_date = bar_date.isoformat()
+        open_trade.exit_time = market_close_iso(bar_date)
+        open_trade.exit_spot = spot
+        open_trade.exit_premium = mtm
+        open_trade.exit_reason = "EOD_OPEN"
+        open_trade.days_held = days_held
+        open_trade.pnl_usd = (open_trade.entry_premium - mtm) * contract_mult
+        open_trade.assigned = False
+        trades.append(open_trade)
+
+    # Mark-to-market remaining shares against final close.
+    if shares_alive:
+        unrealized_share_pnl_usd = (final_spot - cost_basis) * contract_mult
+        final_share_inventory = int(100 * contracts)
+    else:
+        unrealized_share_pnl_usd = 0.0
+        final_share_inventory = 0
+
+    max_capital_usd = cost_basis * contract_mult
+    total_return_usd = premium_total_usd + realized_share_pnl_usd + unrealized_share_pnl_usd
+    return_pct = (total_return_usd / max_capital_usd) if max_capital_usd > 0 else 0.0
+
+    # Drawdown from the daily equity curve.
+    max_drawdown_usd = 0.0
+    peak = float("-inf")
+    for _, eq in equity_curve:
+        if eq > peak:
+            peak = eq
+        dd = peak - eq
+        if dd > max_drawdown_usd:
+            max_drawdown_usd = dd
+    max_drawdown_pct = (max_drawdown_usd / max_capital_usd * 100) if max_capital_usd > 0 else 0.0
+
+    wins = sum(1 for t in trades if (t.pnl_usd or 0) > 0)
+    losses = sum(1 for t in trades if (t.pnl_usd or 0) <= 0)
+    avg_pnl = (sum((t.pnl_usd or 0.0) for t in trades) / len(trades)) if trades else 0.0
+    avg_days = (sum((t.days_held or 0) for t in trades) / len(trades)) if trades else 0.0
+    win_rate = (wins / len(trades)) if trades else 0.0
+
+    return TickerResult(
+        ticker=ticker,
+        strategy="managed_cc" if manage else "unmanaged_cc",
+        bar_count=len(df),
+        keltner_top_bars=0,
+        keltner_bottom_bars=0,
+        gate_fires=cycles_opened,
+        fired_no_position=0,
+        fired_capped=cycles_skipped_below_basis,
+        trade_count=len(trades),
+        wins=wins,
+        losses=losses,
+        exercised_count=cycles_assigned,
+        total_pnl_usd=round(premium_total_usd, 2),
+        avg_pnl_per_trade=round(avg_pnl, 2),
+        avg_holding_days=round(avg_days, 1),
+        win_rate=round(win_rate, 3),
+        total_opp_cost_usd=0.0,
+        final_share_inventory=final_share_inventory,
+        trades=[asdict(t) for t in trades],
+        wheel={
+            "mode": "managed" if manage else "unmanaged",
+            "contracts": contracts,
+            "cost_basis": round(cost_basis, 4),
+            "cycles_opened": cycles_opened,
+            "cycles_expired_otm": cycles_expired_otm,
+            "cycles_rolled": cycles_rolled,
+            "cycles_assigned": cycles_assigned,
+            "cycles_skipped_below_basis": cycles_skipped_below_basis,
+            "premium_total_usd": round(premium_total_usd, 2),
+            "realized_share_pnl_usd": round(realized_share_pnl_usd, 2),
+            "unrealized_share_pnl_usd": round(unrealized_share_pnl_usd, 2),
+            "final_spot": round(final_spot, 2),
+            "max_capital_usd": round(max_capital_usd, 2),
+            "total_return_usd": round(total_return_usd, 2),
+            "return_pct_of_max_cap": round(return_pct * 100, 2),
+            "max_drawdown_usd": round(max_drawdown_usd, 2),
+            "max_drawdown_pct_of_max_cap": round(max_drawdown_pct, 2),
+            "equity_curve": [[d, round(e, 2)] for d, e in equity_curve],
+        },
+    )
+
+
+def backtest_continuous_csp_ticker(
+    ticker: str,
+    df: pd.DataFrame,
+    *,
+    dte_target: int = 35,
+    delta_target: float = -0.30,
+    r: float = 0.04,
+    max_simultaneous: int = 1,
+    entry_gate: str = "always",  # "always" | "keltner_bottom"
+    iv_hv_gate: float = 1.3,
+) -> TickerResult:
+    """Continuous cash-secured-put writer.
+
+    Always tries to have one CSP open. At entry: short put at `dte_target` DTE,
+    strike chosen for `delta_target` (default -0.30). Hold to expiry.
+
+      ITM at expiry:  assigned (buy 100 shares at strike). Premium kept.
+                      Backtest stops opening new CSPs after assignment
+                      (capital tied up in shares).
+      OTM at expiry:  premium kept, open next cycle next bar.
+
+    Capital deployed = strike × 100 while a put is open, plus 100 × strike of
+    cost basis after assignment. `max_capital_usd` is the peak.
+
+    `max_simultaneous` reserved for future use (1 today). Output mirrors
+    wheel_ticker's `wheel` dict for direct comparability.
+
+    `entry_gate`:
+        "always"          — open a new cycle whenever the prior one closes.
+        "keltner_bottom"  — only open when keltner_position=='BOTTOM' AND
+                            iv_hv > iv_hv_gate. Stays FLAT through other bars.
+                            Standard wheel rule: sell puts on oversold dips.
+    """
+    needed_cols = ["hv_30", "iv_synth"]
+    if entry_gate == "keltner_bottom":
+        needed_cols.append("keltner_position")
+    df = df.dropna(subset=needed_cols).copy()
+    trades: List[Trade] = []
+    open_trade: Optional[Trade] = None
+    open_expiry: Optional[date] = None
+    shares = 0
+    share_cost_total = 0.0
+    realized_share_pnl = 0.0
+    premium_total_usd = 0.0
+    cycles_opened = 0
+    cycles_expired_otm = 0
+    cycles_assigned = 0
+    max_capital = 0.0
+    final_spot = 0.0
+    equity_curve: list = []
+
+    bars = list(df.itertuples())
+    if not bars:
+        return TickerResult(
+            ticker=ticker, strategy="continuous_csp",
+            bar_count=0, keltner_top_bars=0, keltner_bottom_bars=0,
+            gate_fires=0, fired_no_position=0, fired_capped=0,
+            trade_count=0, wins=0, losses=0, exercised_count=0,
+            total_pnl_usd=0.0, avg_pnl_per_trade=0.0, avg_holding_days=0.0,
+            win_rate=0.0, total_opp_cost_usd=0.0, final_share_inventory=0,
+            wheel={"premium_total_usd": 0.0, "dte_target": dte_target, "equity_curve": []},
+        )
+
+    for bar in bars:
+        bar_date = bar.Index.date()
+        spot = float(bar.close)
+        iv_now = float(bar.iv_synth)
+        final_spot = spot
+
+        # 1) Settle expiry first.
+        if open_trade is not None and open_expiry is not None and bar_date >= open_expiry:
+            days_held = (bar_date - date.fromisoformat(open_trade.entry_date)).days
+            assigned = spot < open_trade.strike
+            premium_total_usd += open_trade.entry_premium * 100.0
+            if assigned:
+                shares += 100
+                share_cost_total += open_trade.strike * 100.0
+                cycles_assigned += 1
+                reason = "ASSIGNED"
+            else:
+                cycles_expired_otm += 1
+                reason = "EXPIRED_OTM"
+            open_trade.exit_date = bar_date.isoformat()
+            open_trade.exit_time = market_close_iso(bar_date)
+            open_trade.exit_spot = spot
+            open_trade.exit_premium = 0.0
+            open_trade.exit_reason = reason
+            open_trade.days_held = days_held
+            open_trade.pnl_usd = open_trade.entry_premium * 100.0
+            open_trade.assigned = assigned
+            open_trade.shares_after = shares
+            trades.append(open_trade)
+            open_trade = None
+            open_expiry = None
+
+        # 2) Open a new CSP if no open and we still have CSP capacity (no shares).
+        if open_trade is None and shares == 0:
+            gate_ok = True
+            if entry_gate == "keltner_bottom":
+                kpos = getattr(bar, "keltner_position", None)
+                ivhv = float(getattr(bar, "iv_hv", 0.0) or 0.0)
+                gate_ok = (kpos == "BOTTOM") and (ivhv > iv_hv_gate)
+            if gate_ok:
+                strike = pick_put_strike_for_delta(spot, iv_now, dte_target, delta_target, r)
+                T = dte_target / 365.0
+                prem = bs_put(spot, strike, T, r, iv_now)
+                if prem > 0.01 and strike > 0:
+                    open_trade = Trade(
+                        ticker=ticker, strategy="continuous_csp",
+                        entry_date=bar_date.isoformat(),
+                        entry_time=market_close_iso(bar_date),
+                        entry_spot=spot, strike=strike, entry_dte=dte_target,
+                        entry_iv=iv_now, entry_premium=prem,
+                        entry_delta=bs_put_delta(spot, strike, T, r, iv_now),
+                    )
+                    open_expiry = bar_date + timedelta(days=dte_target)
+                    cycles_opened += 1
+
+        # 3) Capital deployed today.
+        cap = (open_trade.strike * 100.0) if open_trade is not None else 0.0
+        cap += share_cost_total
+        if cap > max_capital:
+            max_capital = cap
+
+        # 4) Stamp daily equity (mark-to-market the wheel-overlay P&L).
+        #    open put: short — its mark is a liability against us.
+        #    shares (assigned): mark to current spot vs avg basis.
+        if open_trade is not None and open_expiry is not None:
+            _dte = max((open_expiry - bar_date).days, 0)
+            _T = _dte / 365.0
+            _put_mtm = bs_put(spot, open_trade.strike, _T, r, iv_now) if _dte > 0 \
+                else max(open_trade.strike - spot, 0.0)
+            _open_mark = (open_trade.entry_premium - _put_mtm) * 100.0
+        else:
+            _open_mark = 0.0
+        if shares > 0:
+            _avg_basis = share_cost_total / shares
+            _share_val = (spot - _avg_basis) * shares
+        else:
+            _share_val = 0.0
+        equity_curve.append((bar_date.isoformat(),
+                             premium_total_usd + _open_mark + realized_share_pnl + _share_val))
+
+    # End-of-window: close any open CSP at last mark.
+    if open_trade is not None and open_expiry is not None and bars:
+        last = bars[-1]
+        bar_date = last.Index.date()
+        spot = float(last.close)
+        iv_now = float(last.iv_synth)
+        days_held = (bar_date - date.fromisoformat(open_trade.entry_date)).days
+        dte_now = max(0, (open_expiry - bar_date).days)
+        mtm = bs_put(spot, open_trade.strike, dte_now / 365.0, r, iv_now) if dte_now > 0 else max(open_trade.strike - spot, 0.0)
+        pnl = (open_trade.entry_premium - mtm) * 100.0
+        premium_total_usd += pnl
+        open_trade.exit_date = bar_date.isoformat()
+        open_trade.exit_time = market_close_iso(bar_date)
+        open_trade.exit_spot = spot
+        open_trade.exit_premium = mtm
+        open_trade.exit_reason = "EOD_OPEN"
+        open_trade.days_held = days_held
+        open_trade.pnl_usd = pnl
+        open_trade.assigned = False
+        trades.append(open_trade)
+
+    # Mark assigned shares to final close.
+    avg_basis = (share_cost_total / shares) if shares > 0 else 0.0
+    unrealized_share_pnl = (final_spot - avg_basis) * shares if shares > 0 else 0.0
+    total_return_usd = premium_total_usd + realized_share_pnl + unrealized_share_pnl
+    return_pct = (total_return_usd / max_capital) if max_capital > 0 else 0.0
+
+    # Drawdown from the daily equity curve.
+    max_drawdown_usd = 0.0
+    peak = float("-inf")
+    for _, eq in equity_curve:
+        if eq > peak:
+            peak = eq
+        dd = peak - eq
+        if dd > max_drawdown_usd:
+            max_drawdown_usd = dd
+    max_drawdown_pct = (max_drawdown_usd / max_capital * 100) if max_capital > 0 else 0.0
+
+    wins = sum(1 for t in trades if (t.pnl_usd or 0) > 0)
+    losses = sum(1 for t in trades if (t.pnl_usd or 0) <= 0)
+    avg_pnl = (sum((t.pnl_usd or 0.0) for t in trades) / len(trades)) if trades else 0.0
+    avg_days = (sum((t.days_held or 0) for t in trades) / len(trades)) if trades else 0.0
+    win_rate = (wins / len(trades)) if trades else 0.0
+
+    return TickerResult(
+        ticker=ticker,
+        strategy="continuous_csp",
+        bar_count=len(df),
+        keltner_top_bars=0,
+        keltner_bottom_bars=0,
+        gate_fires=cycles_opened,
+        fired_no_position=0,
+        fired_capped=0,
+        trade_count=len(trades),
+        wins=wins,
+        losses=losses,
+        exercised_count=cycles_assigned,
+        total_pnl_usd=round(premium_total_usd, 2),
+        avg_pnl_per_trade=round(avg_pnl, 2),
+        avg_holding_days=round(avg_days, 1),
+        win_rate=round(win_rate, 3),
+        total_opp_cost_usd=0.0,
+        final_share_inventory=shares,
+        trades=[asdict(t) for t in trades],
+        wheel={
+            "leg": "csp",
+            "dte_target": dte_target,
+            "delta_target": delta_target,
+            "cycles_opened": cycles_opened,
+            "cycles_expired_otm": cycles_expired_otm,
+            "cycles_assigned": cycles_assigned,
+            "premium_total_usd": round(premium_total_usd, 2),
+            "realized_share_pnl_usd": round(realized_share_pnl, 2),
+            "unrealized_share_pnl_usd": round(unrealized_share_pnl, 2),
+            "final_spot": round(final_spot, 2),
+            "avg_cost_basis": round(avg_basis, 2),
+            "max_capital_usd": round(max_capital, 2),
+            "total_return_usd": round(total_return_usd, 2),
+            "return_pct_of_max_cap": round(return_pct * 100, 2),
+            "max_drawdown_usd": round(max_drawdown_usd, 2),
+            "max_drawdown_pct_of_max_cap": round(max_drawdown_pct, 2),
+            "equity_curve": [[d, round(e, 2)] for d, e in equity_curve],
+        },
+    )
+
+
 TIMEFRAME_SPECS = {
     # bars_per_year used for HV annualization; hv_window in bars
     "daily":  {"bars_per_year": 252, "hv_window": 30},

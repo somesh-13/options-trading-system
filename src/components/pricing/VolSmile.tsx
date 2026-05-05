@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import type { VolSurfaceData } from '@/lib/pricing-api';
 
 type VolSmileProps = {
@@ -37,6 +38,13 @@ function nearestIndex(arr: number[], target: number): number {
 }
 
 export function VolSmile({ surface, selectedStrike, selectedExpiration }: VolSmileProps) {
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  // hover.strikeIdx is the strike column closest to the mouse;
+  // hover.px / hover.py are SVG-local coords used to position the tooltip.
+  const [hover, setHover] = useState<{ strikeIdx: number; px: number; py: number } | null>(
+    null,
+  );
+
   if (!surface || !surface.iv_matrix.length) {
     return (
       <div
@@ -110,8 +118,67 @@ export function VolSmile({ surface, selectedStrike, selectedExpiration }: VolSmi
 
   const selIv = selExpIdx >= 0 && selStrikeIdx >= 0 ? iv_matrix[selExpIdx][selStrikeIdx] : null;
 
+  // Convert a client-space mouse event into SVG viewBox coords. We need
+  // viewBox coords (not pixel coords) because the SVG is responsively sized
+  // via width="100%" while keeping a fixed viewBox.
+  function svgCoordsFromEvent(e: React.MouseEvent<SVGRectElement>): { vx: number; vy: number } | null {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    const vx = ((e.clientX - rect.left) / rect.width) * W;
+    const vy = ((e.clientY - rect.top) / rect.height) * H;
+    return { vx, vy };
+  }
+
+  function handleMove(e: React.MouseEvent<SVGRectElement>) {
+    const c = svgCoordsFromEvent(e);
+    if (!c) return;
+    // Snap to the nearest strike by viewBox-x position (so the guide tracks
+    // the actual data points, not arbitrary pixel positions).
+    let bestIdx = 0;
+    let bestDiff = Infinity;
+    for (let j = 0; j < strikes.length; j++) {
+      const d = Math.abs(x(strikes[j]) - c.vx);
+      if (d < bestDiff) {
+        bestDiff = d;
+        bestIdx = j;
+      }
+    }
+    setHover({ strikeIdx: bestIdx, px: c.vx, py: c.vy });
+  }
+
+  // Tooltip placement: prefer right of cursor, but flip left near the
+  // right edge so it never clips the legend column.
+  const TT_W = 132;
+  const TT_LINE_H = 12;
+  let ttRows: { color: string; label: string; iv: number; dim: boolean }[] = [];
+  let ttX = 0;
+  let ttY = 0;
+  let ttH = 0;
+  if (hover) {
+    ttRows = expirations
+      .map((d, i) => {
+        const iv = iv_matrix[i]?.[hover.strikeIdx];
+        if (iv == null) return null;
+        const isSel = i === selExpIdx;
+        const color = isSel ? 'var(--gold)' : OTHER_COLORS[i % OTHER_COLORS.length];
+        return { color, label: d, iv, dim: !isSel };
+      })
+      .filter((r): r is { color: string; label: string; iv: number; dim: boolean } => r != null);
+    ttH = 18 + ttRows.length * TT_LINE_H + 14;
+    const guideX = x(strikes[hover.strikeIdx]);
+    ttX = guideX + 8;
+    if (ttX + TT_W > M.left + PLOT_W) ttX = guideX - TT_W - 8;
+    ttY = Math.min(Math.max(hover.py - ttH / 2, M.top), M.top + PLOT_H - ttH);
+  }
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block' }}>
+    <svg
+      ref={svgRef}
+      viewBox={`0 0 ${W} ${H}`}
+      width="100%"
+      style={{ display: 'block' }}
+    >
       <g stroke="rgba(255,255,255,0.05)" strokeWidth={1}>
         {yTicks.map((tv, i) => (
           <line key={`gy-${i}`} x1={M.left} x2={M.left + PLOT_W} y1={y(tv)} y2={y(tv)} />
@@ -241,6 +308,98 @@ export function VolSmile({ surface, selectedStrike, selectedExpiration }: VolSmi
           );
         })}
       </g>
+
+      {/* Hover capture: invisible rect over the plot area. SVG has no
+          native mousemove tracking, so we render a transparent rect just
+          for events. */}
+      <rect
+        x={M.left}
+        y={M.top}
+        width={PLOT_W}
+        height={PLOT_H}
+        fill="transparent"
+        onMouseMove={handleMove}
+        onMouseLeave={() => setHover(null)}
+        style={{ cursor: 'crosshair' }}
+      />
+
+      {hover && (
+        <g pointerEvents="none">
+          {/* Vertical guide at the snapped strike */}
+          <line
+            x1={x(strikes[hover.strikeIdx])}
+            x2={x(strikes[hover.strikeIdx])}
+            y1={M.top}
+            y2={M.top + PLOT_H}
+            stroke="var(--ink-dim)"
+            strokeWidth={1}
+            strokeDasharray="2 3"
+            opacity={0.7}
+          />
+          {/* Dot per expiration where its line crosses the guide */}
+          {ttRows.map((r, idx) => {
+            const expIdx = expirations.indexOf(r.label);
+            const iv = iv_matrix[expIdx]?.[hover.strikeIdx];
+            if (iv == null) return null;
+            return (
+              <circle
+                key={`hd-${idx}`}
+                cx={x(strikes[hover.strikeIdx])}
+                cy={y(iv)}
+                r={r.dim ? 2.5 : 3.5}
+                fill={r.color}
+                stroke="var(--bg, #1E1E1E)"
+                strokeWidth={1}
+              />
+            );
+          })}
+          {/* Tooltip */}
+          <g transform={`translate(${ttX.toFixed(1)}, ${ttY.toFixed(1)})`}>
+            <rect
+              width={TT_W}
+              height={ttH}
+              rx={3}
+              fill="rgba(20,21,25,0.96)"
+              stroke="var(--line)"
+            />
+            <text
+              x={8}
+              y={13}
+              fontFamily="'JetBrains Mono', monospace"
+              fontSize={10}
+              fill="var(--ink)"
+              fontWeight={700}
+            >
+              ${strikes[hover.strikeIdx].toFixed(2)} strike
+            </text>
+            {ttRows.map((r, i) => (
+              <g key={`ttr-${i}`} transform={`translate(8, ${22 + i * TT_LINE_H})`}>
+                <circle cx={3} cy={-2} r={2.5} fill={r.color} />
+                <text
+                  x={10}
+                  y={1}
+                  fontFamily="'JetBrains Mono', monospace"
+                  fontSize={9}
+                  fill={r.dim ? 'var(--ink-mute)' : 'var(--ink)'}
+                >
+                  {r.label}
+                </text>
+                <text
+                  x={TT_W - 10}
+                  y={1}
+                  fontFamily="'JetBrains Mono', monospace"
+                  fontSize={9}
+                  fill={r.dim ? 'var(--ink-mute)' : 'var(--gold)'}
+                  textAnchor="end"
+                  fontWeight={r.dim ? 400 : 700}
+                >
+                  {(r.iv * 100).toFixed(1)}%
+                </text>
+              </g>
+            ))}
+          </g>
+        </g>
+      )}
     </svg>
   );
 }

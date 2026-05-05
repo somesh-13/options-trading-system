@@ -26,6 +26,7 @@ backend/.venv/
 backend/trades.db
 backend/trades.db-shm
 backend/trades.db-wal
+backend/.cache/
 
 # macOS
 .DS_Store

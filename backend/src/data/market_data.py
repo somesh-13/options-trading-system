@@ -5,6 +5,8 @@ Generalized version of cifr_data.py that works with any ticker.
 Keeps cifr_data.py for backward compatibility.
 """
 
+import math
+
 import yfinance as yf
 import numpy as np
 import pandas as pd
@@ -46,6 +48,15 @@ def get_ticker_detail(ticker: str) -> Dict:
     last = hist.iloc[-1]
     prev_close = float(hist['Close'].iloc[-2]) if len(hist) >= 2 else float(last['Open'])
     price = float(last['Close'])
+    # Refuse to leak a bogus 0 / NaN price: yfinance occasionally returns a
+    # row with NaN Close (rate-limited, delisted, or stale-cache). The DCF
+    # page does `currentPrice.toFixed(2)` and would otherwise render "$0.00",
+    # which the user reads as "this stock is worthless." Better to 5xx here so
+    # the frontend can show a clean error / loading state.
+    if not math.isfinite(price) or price <= 0:
+        raise ValueError(
+            f"yfinance returned an invalid Close ({price!r}) for {ticker}; refusing to surface as $0"
+        )
     change = price - prev_close
     change_pct = (change / prev_close * 100.0) if prev_close else 0.0
 
@@ -139,7 +150,19 @@ def detect_mispricing(ticker: str) -> Dict:
     Detect IV vs HV mispricing for any ticker.
     Generalized version of detect_mispricing_cifr().
     """
-    spot = get_ticker_price(ticker)
+    # Pull a 5d window so we get spot + prev close in one yfinance call.
+    # Falls back to today's open if we only have a single bar (first listing
+    # day, holiday-adjacent windows). Mirrors get_ticker_detail's logic.
+    stock = yf.Ticker(ticker)
+    hist = stock.history(period="5d")
+    if hist.empty:
+        raise ValueError(f"Unable to fetch price for {ticker}")
+    last = hist.iloc[-1]
+    spot = float(last['Close'])
+    prev_close = float(hist['Close'].iloc[-2]) if len(hist) >= 2 else float(last['Open'])
+    change = spot - prev_close
+    change_pct = (change / prev_close * 100.0) if prev_close else 0.0
+
     hv = get_historical_volatility(ticker, window=30)
     options = get_options_chain_yahoo(ticker)
 
@@ -161,6 +184,9 @@ def detect_mispricing(ticker: str) -> Dict:
     return {
         'ticker': ticker,
         'spot_price': float(spot),
+        'previous_close': round(prev_close, 4),
+        'change': round(change, 4),
+        'change_percent': round(change_pct, 4),
         'historical_vol': float(hv),
         'implied_vol_atm': float(iv),
         'iv_hv_ratio': float(iv_hv_ratio),

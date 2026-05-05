@@ -333,15 +333,39 @@ body {
 .rv-log .row .trace { font-size: 10px; color: var(--ink-mute); margin-top: 3px; padding-left: 0; font-style: italic; }
 
 /* chain */
-.rv-expstrip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-.rv-exp { padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #0d0e11; cursor: pointer; }
+/* Single-row horizontal carousel — overflow scrolls instead of wrapping. */
+.rv-expstrip {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  padding-bottom: 4px;
+}
+.rv-expstrip::-webkit-scrollbar { height: 6px; }
+.rv-expstrip::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.rv-expstrip::-webkit-scrollbar-thumb:hover { background: var(--gold-dim, #cdaa3d); }
+.rv-expstrip::-webkit-scrollbar-track { background: transparent; }
+.rv-exp {
+  flex: 0 0 auto;
+  min-width: 92px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #0d0e11;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
 .rv-exp.on { border-color: var(--gold); background: rgba(255,215,0,.06); }
-.rv-exp .dte  { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--ink); }
-.rv-exp .date { font-size: 10.5px; color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; }
-.rv-exp .iv   { font-size: 10.5px; color: var(--gold);    font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
-.rv-exp .oi   { font-size: 10px;   color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; }
+.rv-exp .dte  { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.rv-exp .date { font-size: 10px;   color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; }
+.rv-exp .iv   { font-size: 10px;   color: var(--gold);    font-family: 'JetBrains Mono', monospace; margin-top: 3px; }
+.rv-exp .oi   { font-size: 9.5px;  color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; }
 
-.rv-chain-wrap { display: grid; grid-template-columns: 1fr 340px; gap: 12px; }
+.rv-chain-wrap { display: grid; grid-template-columns: 1fr 300px; gap: 12px; }
 .rv-chain { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
 .rv-chain th { background: #0d0e11; color: var(--ink-mute); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--line); }
 .rv-chain tbody td { padding: 3px 6px; border-bottom: 1px solid var(--line-soft); }
@@ -556,6 +580,19 @@ body {
 /* ===========================================================================
    Phone-specific overrides — stack grids, shrink pills, scroll-wrap tables
    =========================================================================== */
+/* Pricing page: Inputs (left) + Results (right). Collapses to single column
+   on phones so the right panel doesn't get crushed to ~13px. */
+.rv-pricing-grid { display: grid; grid-template-columns: 320px 1fr; gap: 14px; }
+
+/* Auto-engine page: Guardrails (left) + EventStream (right). Same pattern. */
+.rv-engine-grid { display: grid; grid-template-columns: 320px 1fr; gap: 14px; }
+
+@media (max-width: 720px) {
+  .rv-chain-wrap   { grid-template-columns: 1fr; }
+  .rv-pricing-grid { grid-template-columns: 1fr; }
+  .rv-engine-grid  { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
   .rv-grid-4 { grid-template-columns: repeat(2, 1fr); }
   .rv-grid-3 { grid-template-columns: 1fr; }

@@ -412,6 +412,37 @@ def _fetch_equity_positions_for_account(
             ))
         except (TypeError, ValueError):
             continue
+
+    # Batch-refresh quotes from /quotes (one HTTP call for all symbols) so
+    # current_price reflects the latest trade rather than whatever was baked
+    # into the per-position payload. Robinhood's per-position quote can lag
+    # at market open; the batched /quotes endpoint is more consistently
+    # fresh and lets us recompute market_value/unrealized_pnl off it.
+    if out:
+        try:
+            symbols = [h.symbol for h in out]
+            quotes = rh.stocks.get_quotes(symbols) or []
+            quote_map: Dict[str, float] = {}
+            for q in quotes:
+                if not q:
+                    continue
+                sym = q.get("symbol")
+                px = q.get("last_trade_price") or q.get("last_extended_hours_trade_price")
+                if sym and px is not None:
+                    try:
+                        quote_map[sym] = float(px)
+                    except (TypeError, ValueError):
+                        continue
+            for h in out:
+                fresh = quote_map.get(h.symbol)
+                if fresh is None or fresh <= 0:
+                    continue
+                h.current_price = fresh
+                h.market_value = round(fresh * h.quantity, 2)
+                h.unrealized_pnl = round((fresh - h.avg_cost) * h.quantity, 2)
+        except Exception:
+            pass
+
     out.sort(key=lambda h: -(h.market_value or h.cost_basis))
     return out, None
 

@@ -19,6 +19,7 @@ const BACKEND_PROXY_PREFIXES = [
   "agents",
   "analytics",
   "backtest",
+  "ir",
   "market",
   "mispricing",
   "pricing",

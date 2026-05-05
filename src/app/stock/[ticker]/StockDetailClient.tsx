@@ -5,7 +5,9 @@ import Link from 'next/link';
 import StockPriceChart from '@/components/charts/StockPriceChart';
 import MispricingDetector from '@/components/MispricingDetector';
 import DCFValuation from '@/components/DCFValuation';
+import IRFilingsPanel from '@/components/IRFilingsPanel';
 import { StockPositionCard } from '@/components/robinhood/StockPositionCard';
+import { EquityTradePanel } from '@/components/robinhood/EquityTradePanel';
 import type { HistoricalDataPoint, TimeRange } from '@/lib/types/historicalPrice';
 
 const Icon = {
@@ -216,6 +218,11 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
       {/* Position card — always shown, handles "no position" empty state gracefully */}
       <StockPositionCard ticker={ticker} />
 
+      {/* Trade panel — symbol locked to this page's ticker */}
+      <div style={{ marginTop: 14 }}>
+        <EquityTradePanel equities={[]} lockedSymbol={stockData.ticker} />
+      </div>
+
       {activeTab === 'overview' && (
         <div className="rv-stock-overview">
           {/* Main column */}
@@ -300,14 +307,9 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
               <MispricingDetector ticker={stockData.ticker} />
             </div>
 
-            {/* News stub */}
-            <div className="rv-card">
-              <div className="rv-card-head">
-                <h3>LATEST NEWS</h3>
-              </div>
-              <div className="rv-sub" style={{ marginBottom: 0 }}>
-                News feed coming soon — sentiment surfaces today on <Link href="/sentiment">/sentiment</Link>.
-              </div>
+            {/* IR filings (replaces the old "Latest News" stub) */}
+            <div style={{ marginTop: 14 }}>
+              <IRFilingsPanel ticker={stockData.ticker} />
             </div>
           </div>
 

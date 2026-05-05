@@ -15,10 +15,11 @@ const monoStyle: React.CSSProperties = {
 
 interface Props {
   equities: RobinhoodHolding[];
+  lockedSymbol?: string;
 }
 
-export function EquityTradePanel({ equities }: Props) {
-  const [symbol, setSymbol] = useState<string>('');
+export function EquityTradePanel({ equities, lockedSymbol }: Props) {
+  const [symbol, setSymbol] = useState<string>(lockedSymbol ?? '');
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
   const [quantity, setQuantity] = useState<string>('');
   const [account, setAccount] = useState<'brokerage' | 'roth_ira'>('brokerage');
@@ -139,14 +140,16 @@ export function EquityTradePanel({ equities }: Props) {
               placeholder="e.g. RDW"
               list="equity-symbol-list"
               data-testid="equity-symbol"
+              readOnly={!!lockedSymbol}
               style={{
                 ...monoStyle,
                 fontSize: 13,
                 padding: '6px 8px',
-                background: 'var(--bg, #1E1E1E)',
+                background: lockedSymbol ? 'var(--line-soft, #2A2A2A)' : 'var(--bg, #1E1E1E)',
                 border: '1px solid var(--line)',
                 borderRadius: 3,
                 color: 'var(--ink)',
+                cursor: lockedSymbol ? 'not-allowed' : 'text',
               }}
             />
             {heldSymbols.length > 0 && (
@@ -213,7 +216,7 @@ export function EquityTradePanel({ equities }: Props) {
             <input
               type="number"
               min={0.000001}
-              step={1}
+              step="any"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="1"

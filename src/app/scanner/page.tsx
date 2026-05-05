@@ -2,7 +2,8 @@ import { ScannerShell } from '@/components/scanner/ScannerShell';
 
 /**
  * Scanner page — portfolio-driven universe fetched live from Robinhood holdings.
- * Falls back to SCANNER_ROWS demo data if the backend is unreachable.
+ * Shows a "backend unavailable" empty state if the backend is unreachable
+ * (no silent demo-data fallback).
  */
 export default function ScannerPage() {
   return (

@@ -1,6 +1,12 @@
 'use client';
 
+// Positions = per-ticker position-management view (chart + market value cards +
+// option legs + trade ticket). For the fundamentals-heavy stock view (DCF, IR
+// filings, mispricing, sector context), navigate to /stock/[ticker] via the
+// header link. The two pages share a ticker but render different angles.
+
 import { Suspense, useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   getPortfolioSummary,
@@ -218,7 +224,17 @@ function PositionsInner() {
     <main className="min-h-screen bg-[#1E1E1E] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <h2 className="rv-h1">Positions</h2>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h2 className="rv-h1" style={{ margin: 0 }}>Positions</h2>
+          <Link
+            href={`/stock/${ticker}`}
+            className="rv-btn ghost"
+            style={{ fontSize: 11, padding: '4px 10px' }}
+            title={`Open ${ticker} fundamentals (DCF · IR filings · mispricing)`}
+          >
+            View {ticker} fundamentals →
+          </Link>
+        </div>
         <div className="rv-sub">Per-ticker position detail with chart, market value, and trade ticket.</div>
 
         {/* Ticker Search */}

@@ -1,10 +1,60 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { RobinhoodOption } from '@/lib/robinhood-api';
+import { groupStrategies, type StrategyGroup } from '@/lib/option-strategies';
 
 const COLLAPSE_KEY = 'rv:robinhood:option-legs-collapsed';
+const SORT_KEY = 'rv:robinhood:option-legs-sort';
+const EXPANDED_GROUPS_KEY = 'rv:robinhood:option-legs-expanded';
+
+type SortKey =
+  | 'underlying'
+  | 'expiry'
+  | 'qty'
+  | 'cost'
+  | 'mv'
+  | 'realized'
+  | 'unrealized';
+
+type SortDir = 'asc' | 'desc';
+type SortState = { key: SortKey; dir: SortDir } | null;
+
+/**
+ * Comparator for nullable numeric fields. Null values are pushed to the
+ * bottom regardless of asc/desc so a missing mark price never floats to the
+ * top of "highest unrealized" view.
+ */
+function cmpNullableNum(a: number | null, b: number | null, dirSign: 1 | -1): number {
+  const aNull = a == null;
+  const bNull = b == null;
+  if (aNull && bNull) return 0;
+  if (aNull) return 1;
+  if (bNull) return -1;
+  return dirSign * (a - b);
+}
+
+function compareGroups(a: StrategyGroup, b: StrategyGroup, key: SortKey, dirSign: 1 | -1): number {
+  switch (key) {
+    case 'underlying':
+      return dirSign * a.underlying.localeCompare(b.underlying);
+    case 'expiry':
+      return dirSign * a.expiry.localeCompare(b.expiry);
+    case 'qty':
+      return dirSign * (a.spreadCount - b.spreadCount);
+    case 'cost':
+      return dirSign * (a.netCostBasis - b.netCostBasis);
+    case 'realized':
+      return dirSign * (a.netRealized - b.netRealized);
+    case 'mv':
+      return cmpNullableNum(a.netMarketValue, b.netMarketValue, dirSign);
+    case 'unrealized':
+      return cmpNullableNum(a.netUnrealized, b.netUnrealized, dirSign);
+    default:
+      return 0;
+  }
+}
 
 function stockHref(symbol: string): string {
   return `/stock/${encodeURIComponent(symbol)}?from=robinhood`;
@@ -20,29 +70,61 @@ const fmtSigned = (n: number) => {
 
 const cls = (n: number) => (n > 0 ? 'rv-up' : n < 0 ? 'rv-dn' : '');
 
-function groupByUnderlying(options: RobinhoodOption[]): Map<string, RobinhoodOption[]> {
-  const map = new Map<string, RobinhoodOption[]>();
-  for (const o of options) {
-    const list = map.get(o.underlying) ?? [];
-    list.push(o);
-    map.set(o.underlying, list);
+function strategyChipColor(type: StrategyGroup['type']): { bg: string; border: string; fg: string } {
+  // Debit / long bias → green; credit / short bias → gold; neutral / catch-all → blue-ish.
+  switch (type) {
+    case 'long_call':
+    case 'long_put':
+    case 'long_call_spread':
+    case 'long_put_spread':
+    case 'long_straddle':
+    case 'long_strangle':
+      return { bg: 'rgba(0,200,5,.08)', border: 'rgba(0,200,5,.35)', fg: 'var(--green, #00C805)' };
+    case 'short_call':
+    case 'short_put':
+    case 'short_call_spread':
+    case 'short_put_spread':
+    case 'short_straddle':
+    case 'short_strangle':
+    case 'iron_condor':
+    case 'iron_butterfly':
+      return { bg: 'rgba(255,215,0,.08)', border: 'rgba(255,215,0,.35)', fg: 'var(--gold, #FFD700)' };
+    default:
+      return { bg: 'rgba(58,141,255,.08)', border: 'rgba(58,141,255,.35)', fg: 'var(--blue, #3A8DFF)' };
   }
-  for (const list of map.values()) {
-    list.sort((a, b) =>
-      a.expiry !== b.expiry ? a.expiry.localeCompare(b.expiry) : a.strike - b.strike,
-    );
-  }
-  return map;
 }
 
 export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
-  const groups = [...groupByUnderlying(options).entries()].sort(([a], [b]) => a.localeCompare(b));
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try {
       return localStorage.getItem(COLLAPSE_KEY) === '1';
     } catch {
       return false;
+    }
+  });
+
+  const [sort, setSort] = useState<SortState>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(SORT_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as SortState;
+      return parsed && parsed.key ? parsed : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [expanded, setExpanded] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const raw = localStorage.getItem(EXPANDED_GROUPS_KEY);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw);
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set();
     }
   });
 
@@ -53,6 +135,97 @@ export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
       /* ignore */
     }
   }, [collapsed]);
+
+  useEffect(() => {
+    try {
+      if (sort) localStorage.setItem(SORT_KEY, JSON.stringify(sort));
+      else localStorage.removeItem(SORT_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, [sort]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(EXPANDED_GROUPS_KEY, JSON.stringify([...expanded]));
+    } catch {
+      /* ignore */
+    }
+  }, [expanded]);
+
+  const groups = useMemo(() => {
+    const all = groupStrategies(options);
+    if (!sort) return all;
+    const sign = sort.dir === 'asc' ? 1 : -1;
+    return [...all].sort((a, b) => compareGroups(a, b, sort.key, sign));
+  }, [options, sort]);
+
+  const totalLegs = options.length;
+  const totalGroups = groups.length;
+  const multiLegGroups = groups.filter((g) => g.legs.length > 1).length;
+
+  function toggleSort(key: SortKey) {
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: 'asc' };
+      if (prev.dir === 'asc') return { key, dir: 'desc' };
+      return null;
+    });
+  }
+
+  function toggleExpand(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function expandAll() {
+    setExpanded(new Set(groups.map((g) => g.id)));
+  }
+  function collapseAll() {
+    setExpanded(new Set());
+  }
+
+  function SortIndicator({ k }: { k: SortKey }) {
+    if (!sort || sort.key !== k) {
+      return <span style={{ marginLeft: 4, color: 'var(--ink-mute)', fontSize: 9 }}>↕</span>;
+    }
+    return (
+      <span style={{ marginLeft: 4, color: 'var(--ink)', fontSize: 9 }}>
+        {sort.dir === 'asc' ? '▲' : '▼'}
+      </span>
+    );
+  }
+
+  function SortableTh({
+    k,
+    align = 'left',
+    children,
+  }: {
+    k: SortKey;
+    align?: 'left' | 'right';
+    children: React.ReactNode;
+  }) {
+    const active = sort?.key === k;
+    return (
+      <th
+        onClick={() => toggleSort(k)}
+        aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+        title="Click to sort · click again to flip · third click resets"
+        style={{
+          textAlign: align,
+          cursor: 'pointer',
+          userSelect: 'none',
+          color: active ? 'var(--ink)' : undefined,
+        }}
+      >
+        {children}
+        <SortIndicator k={k} />
+      </th>
+    );
+  }
 
   return (
     <div className="rv-card">
@@ -74,82 +247,194 @@ export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
           <span style={{ display: 'inline-block', width: 14, color: 'var(--ink-mute)' }}>
             {collapsed ? '▶' : '▼'}
           </span>
-          {' '}Open option legs · {options.length}
+          {' '}Open option strategies · {totalGroups}
+          {totalLegs !== totalGroups && (
+            <span className="rv-sub" style={{ fontWeight: 400, marginLeft: 6 }}>
+              ({totalLegs} legs · {multiLegGroups} multi-leg)
+            </span>
+          )}
         </h3>
-        <span className="rv-sub" style={{ margin: 0 }}>
-          grouped by underlying · from activity replay
+        <span className="rv-sub" style={{ margin: 0, display: 'flex', gap: 10, alignItems: 'center' }}>
+          grouped by underlying + expiry + account · click strategy to expand legs
+          {!collapsed && multiLegGroups > 0 && (
+            <>
+              <button
+                type="button"
+                className="rv-btn ghost"
+                style={{ fontSize: 10, padding: '2px 8px' }}
+                onClick={expandAll}
+              >
+                expand all
+              </button>
+              <button
+                type="button"
+                className="rv-btn ghost"
+                style={{ fontSize: 10, padding: '2px 8px' }}
+                onClick={collapseAll}
+              >
+                collapse all
+              </button>
+            </>
+          )}
         </span>
       </div>
-      {!collapsed && <div style={{ overflowX: 'auto' }}>
-        <table className="rv-table" style={{ minWidth: 680, width: '100%' }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left' }}>Underlying</th>
-              <th style={{ textAlign: 'left' }}>Leg</th>
-              <th style={{ textAlign: 'left' }}>Expiry</th>
-              <th style={{ textAlign: 'right' }}>Qty</th>
-              <th style={{ textAlign: 'right' }}>Avg premium</th>
-              <th style={{ textAlign: 'right' }}>Cost basis</th>
-              <th style={{ textAlign: 'right' }}>Realized</th>
-            </tr>
-          </thead>
-          <tbody>
-            {options.length === 0 && (
+      {!collapsed && (
+        <div style={{ overflowX: 'auto' }}>
+          <table className="rv-table" style={{ minWidth: 720, width: '100%' }}>
+            <thead>
               <tr>
-                <td colSpan={7} style={{ padding: 12, color: 'var(--ink-mute)', textAlign: 'center' }}>
-                  No open option legs.
-                </td>
+                <th style={{ width: 24 }}></th>
+                <SortableTh k="underlying">Underlying</SortableTh>
+                <th>Strategy</th>
+                <SortableTh k="expiry">Expiry</SortableTh>
+                <SortableTh k="qty" align="right">Qty</SortableTh>
+                <SortableTh k="cost" align="right">Net cost</SortableTh>
+                <SortableTh k="mv" align="right">Mkt value</SortableTh>
+                <SortableTh k="realized" align="right">Realized</SortableTh>
+                <SortableTh k="unrealized" align="right">Unrealized</SortableTh>
               </tr>
-            )}
-            {groups.map(([underlying, legs]) =>
-              legs.map((o, idx) => (
-                <tr key={`${underlying}-${o.expiry}-${o.side}-${o.strike}-${o.position}`}>
-                  <td>
-                    <Link
-                      href={stockHref(underlying)}
-                      data-testid={`option-link-${underlying}`}
-                      style={{
-                        color: idx === 0 ? 'var(--ink)' : 'var(--ink-mute)',
-                        textDecoration: 'none',
-                        borderBottom: idx === 0 ? '1px dotted var(--line)' : 'none',
-                      }}
-                    >
-                      {idx === 0 ? <b>{underlying}</b> : underlying}
-                    </Link>
-                  </td>
-                  <td>
-                    <span
-                      className={`rv-chip ${o.position === 'long' ? '' : 'warn'}`}
-                      style={{ fontSize: 10, marginRight: 6 }}
-                    >
-                      {o.position === 'long' ? 'LONG' : 'SHORT'}
-                    </span>
-                    {o.side} ${fmt(o.strike)}
-                  </td>
-                  <td style={{ fontFamily: "'JetBrains Mono', monospace" }}>{o.expiry}</td>
-                  <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}>{fmt(o.quantity, 0)}</td>
-                  <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}>${fmt(o.avg_cost)}</td>
-                  <td
-                    style={{
-                      textAlign: 'right',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      color: o.cost_basis < 0 ? 'var(--ink-dim)' : undefined,
-                    }}
-                  >
-                    {fmtSigned(o.cost_basis)}
-                  </td>
-                  <td
-                    className={cls(o.realized_pnl)}
-                    style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}
-                  >
-                    {o.realized_pnl === 0 ? '—' : fmtSigned(o.realized_pnl)}
+            </thead>
+            <tbody>
+              {groups.length === 0 && (
+                <tr>
+                  <td colSpan={9} style={{ padding: 12, color: 'var(--ink-mute)', textAlign: 'center' }}>
+                    No open option strategies.
                   </td>
                 </tr>
-              )),
-            )}
-          </tbody>
-        </table>
-      </div>}
+              )}
+              {groups.map((g) => renderGroup(g))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
+
+  function renderGroup(g: StrategyGroup) {
+    const isMultiLeg = g.legs.length > 1;
+    const isOpen = expanded.has(g.id) || g.legs.length === 1;
+    const chip = strategyChipColor(g.type);
+
+    return (
+      <>
+        <tr
+          key={`${g.id}-head`}
+          onClick={isMultiLeg ? () => toggleExpand(g.id) : undefined}
+          style={{
+            cursor: isMultiLeg ? 'pointer' : 'default',
+            background: isMultiLeg ? 'rgba(255,255,255,.015)' : undefined,
+          }}
+          aria-expanded={isMultiLeg ? isOpen : undefined}
+        >
+          <td style={{ textAlign: 'center', color: 'var(--ink-mute)', fontSize: 11 }}>
+            {isMultiLeg ? (isOpen ? '▼' : '▶') : ''}
+          </td>
+          <td>
+            <Link
+              href={stockHref(g.underlying)}
+              data-testid={`option-link-${g.underlying}`}
+              onClick={(e) => e.stopPropagation()}
+              style={{ color: 'var(--ink)', textDecoration: 'none', borderBottom: '1px dotted var(--line)' }}
+            >
+              <b>{g.underlying}</b>
+            </Link>
+          </td>
+          <td>
+            <span
+              className="rv-chip"
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                background: chip.bg,
+                borderColor: chip.border,
+                color: chip.fg,
+                marginRight: 8,
+              }}
+              title={`${g.legs.length} leg${g.legs.length === 1 ? '' : 's'} · ${g.account}`}
+            >
+              {g.label}
+            </span>
+            {g.subLabel && (
+              <span style={{ fontSize: 10, color: 'var(--ink-mute)', fontFamily: "'JetBrains Mono', monospace" }}>
+                {g.subLabel}
+              </span>
+            )}
+          </td>
+          <td style={{ fontFamily: "'JetBrains Mono', monospace" }}>{g.expiry}</td>
+          <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}>
+            {fmt(g.spreadCount, 0)}
+          </td>
+          <td
+            style={{
+              textAlign: 'right',
+              fontFamily: "'JetBrains Mono', monospace",
+              color: g.netCostBasis < 0 ? 'var(--ink-dim)' : undefined,
+            }}
+          >
+            {fmtSigned(g.netCostBasis)}
+          </td>
+          <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}>
+            {g.netMarketValue == null ? '—' : `$${fmt(g.netMarketValue)}`}
+          </td>
+          <td
+            className={cls(g.netRealized)}
+            style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            {g.netRealized === 0 ? '—' : fmtSigned(g.netRealized)}
+          </td>
+          <td
+            className={g.netUnrealized != null ? cls(g.netUnrealized) : ''}
+            style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            {g.netUnrealized == null ? '—' : fmtSigned(g.netUnrealized)}
+          </td>
+        </tr>
+        {isMultiLeg && isOpen && g.legs.map((leg, idx) => (
+          <tr
+            key={`${g.id}-leg-${idx}-${leg.side}-${leg.strike}-${leg.position}`}
+            style={{ background: 'rgba(0,0,0,.15)' }}
+          >
+            <td></td>
+            <td style={{ color: 'var(--ink-mute)', fontSize: 11 }}>↳</td>
+            <td>
+              <span
+                className={`rv-chip ${leg.position === 'long' ? '' : 'warn'}`}
+                style={{ fontSize: 10, marginRight: 6 }}
+              >
+                {leg.position === 'long' ? 'LONG' : 'SHORT'}
+              </span>
+              {leg.side} ${fmt(leg.strike)}
+            </td>
+            <td style={{ fontFamily: "'JetBrains Mono', monospace", color: 'var(--ink-mute)' }}>{leg.expiry}</td>
+            <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}>{fmt(leg.quantity, 0)}</td>
+            <td
+              style={{
+                textAlign: 'right',
+                fontFamily: "'JetBrains Mono', monospace",
+                color: 'var(--ink-mute)',
+              }}
+              title={`Avg premium: $${fmt(leg.avg_cost)}`}
+            >
+              {fmtSigned(leg.cost_basis)}
+            </td>
+            <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", color: 'var(--ink-mute)' }}>
+              {leg.market_value == null ? '—' : `$${fmt(leg.market_value)}`}
+            </td>
+            <td
+              className={cls(leg.realized_pnl)}
+              style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              {leg.realized_pnl === 0 ? '—' : fmtSigned(leg.realized_pnl)}
+            </td>
+            <td
+              className={leg.unrealized_pnl != null ? cls(leg.unrealized_pnl) : ''}
+              style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              {leg.unrealized_pnl == null ? '—' : fmtSigned(leg.unrealized_pnl)}
+            </td>
+          </tr>
+        ))}
+      </>
+    );
+  }
 }

@@ -82,6 +82,15 @@ def start_scheduler() -> AsyncIOScheduler:
         replace_existing=True,
     )
 
+    # IR feed refresh: 3x weekday (10:15 / 14:15 / 18:15 ET). Per-ticker fan-out
+    # over the user's held positions; one Gemini classify per new item.
+    sched.add_job(
+        refresh_ir_for_holdings,
+        trigger=CronTrigger(day_of_week="mon-fri", hour="10,14,18", minute=15),
+        id="ir_refresh_holdings",
+        replace_existing=True,
+    )
+
     sched.start()
     log.info("Scheduler started with jobs: %s", [j.id for j in sched.get_jobs()])
     return sched
@@ -218,3 +227,40 @@ def run_recommend_scan() -> dict:
         future = _asyncio.run_coroutine_threadsafe(scan_and_dispatch(), loop)
         return future.result(timeout=120)
     return _asyncio.run(scan_and_dispatch())
+
+
+# Static fallback when the user has no live snapshot yet (e.g. fresh install).
+# Mirrors the small VegaEdge watchlist used elsewhere in the project.
+_IR_FALLBACK_WATCHLIST = ("HOOD", "CIFR", "WULF", "PYPL", "GRAB")
+
+
+def refresh_ir_for_holdings() -> dict:
+    """Per-ticker fan-out of the IR refresh pipeline.
+
+    Pulls the union of all tickers across the user's live RH snapshots
+    (equities + option underlyings, all accounts). Falls back to a small
+    watchlist when no snapshot exists. Throttles to ~1 ticker / 1.5 s to
+    stay well under SEC EDGAR's 10 req/s ceiling and Yahoo's soft caps.
+    Per-ticker failures are logged but never raise — one bad ticker
+    cannot take down the whole job.
+    """
+    import time as _time
+
+    from data.ir_ingest import held_tickers_from_snapshots, refresh_ir_for_ticker
+
+    tickers = held_tickers_from_snapshots() or list(_IR_FALLBACK_WATCHLIST)
+    log.info("refresh_ir_for_holdings: %d tickers", len(tickers))
+    summary = {"tickers": len(tickers), "new_items": 0, "classified": 0, "errors": 0}
+    for i, t in enumerate(tickers):
+        try:
+            r = refresh_ir_for_ticker(t)
+            summary["new_items"] += int(r.get("new_items", 0))
+            summary["classified"] += int(r.get("classified", 0))
+            summary["errors"] += len(r.get("errors", []))
+        except Exception:
+            log.exception("refresh_ir_for_ticker(%s) failed", t)
+            summary["errors"] += 1
+        if i + 1 < len(tickers):
+            _time.sleep(1.5)
+    log.info("refresh_ir_for_holdings done: %s", summary)
+    return summary

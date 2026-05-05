@@ -291,3 +291,58 @@ export async function placeEquityOrder(req: EquityOrderRequest): Promise<EquityO
   }
   return res.json() as Promise<EquityOrderResponse>;
 }
+
+// ============================
+// Options interfaces + client
+// ============================
+
+export interface OptionOrderRequest {
+  underlying: string;
+  expiration: string; // YYYY-MM-DD
+  strike: number;
+  option_type: 'call' | 'put';
+  side: 'buy' | 'sell';
+  position_effect: 'open' | 'close';
+  quantity: number; // contracts
+  limit_price: number; // per share, not per contract
+  account: 'brokerage' | 'roth_ira';
+  dry_run: boolean;
+  confirm: boolean;
+}
+
+export interface OptionOrderResponse {
+  order_id: string;
+  underlying: string;
+  expiration: string;
+  strike: number;
+  option_type: string;
+  side: string;
+  position_effect: string;
+  quantity: number;
+  limit_price: number;
+  estimated_notional_usd: number;
+  account: string;
+  dry_run: boolean;
+  status: string;
+  message?: string | null;
+}
+
+export async function placeOptionOrder(req: OptionOrderRequest): Promise<OptionOrderResponse> {
+  const res = await fetch(`${PRICING_API_URL}/api/robinhood/options/order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = body.detail;
+    } catch {
+      /* non-JSON body */
+    }
+    throw new Error(detail);
+  }
+  return res.json() as Promise<OptionOrderResponse>;
+}

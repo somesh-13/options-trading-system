@@ -79,6 +79,14 @@ export interface PortfolioGreeksResult {
   total_theta: number;
   total_rho: number;
   position_count: number;
+  /** Backend-only field: total_delta with the equity overlay stripped off. */
+  option_total_delta?: number;
+  /** Backend-only field: long-share Δ contribution (each share = +1). */
+  equity_delta?: number;
+  /** Backend-only field: total long shares across all underlyings. */
+  equity_share_qty?: number;
+  /** Backend-only field: per-underlying share count + spot, for tooltips. */
+  equity_by_underlying?: Record<string, { share_qty: number; spot: number | null }>;
   per_position: Array<{
     strike: number;
     type: string;
@@ -118,6 +126,100 @@ export function getHedgeRatio(
   );
 }
 
+export interface HedgeRatioByUnderlyingRow {
+  underlying: string;
+  spot: number | null;
+  share_qty: number;
+  option_legs: number;
+  option_delta: number;
+  option_gamma: number;
+  option_vega: number;
+  option_theta: number;
+  total_delta: number;
+  hedge_shares: number;
+  hedge_direction: 'BUY' | 'SELL' | 'NONE';
+  hedge_notional: number | null;
+}
+
+export interface HedgeRatioByUnderlyingResult {
+  rows: HedgeRatioByUnderlyingRow[];
+  totals: {
+    underlyings: number;
+    total_delta: number;
+    total_gamma: number;
+    total_hedge_notional: number;
+    total_hedge_shares_abs: number;
+  };
+  target_delta: number;
+  skipped?: SkippedLeg[];
+  assumptions?: AnalyticsAssumptions;
+  error?: string;
+  message?: string;
+}
+
+export function getHedgeRatioByUnderlying(
+  account: RobinhoodAccount,
+  targetDelta = 0,
+): Promise<HedgeRatioByUnderlyingResult> {
+  return getJson(
+    `/api/robinhood/analytics/hedge-ratio-by-underlying?account=${account}&target_delta=${targetDelta}`,
+  );
+}
+
+export interface DeltaGammaHedgeOption {
+  type: 'call' | 'put';
+  strike: number;
+  dte_days: number;
+  expiry_approx: string;
+  iv_used: number;
+  delta_per_contract: number;
+  gamma_per_contract: number;
+}
+
+export interface DeltaGammaHedgeRow {
+  underlying: string;
+  spot: number;
+  delta_book: number;
+  gamma_book: number;
+  hedge_option: DeltaGammaHedgeOption | null;
+  hedge_contracts: number;
+  hedge_contracts_action: 'BUY' | 'SELL' | 'NONE';
+  hedge_shares: number;
+  hedge_shares_action: 'BUY' | 'SELL' | 'NONE';
+  residual_gamma: number;
+  residual_delta: number;
+  note?: string;
+}
+
+export interface DeltaGammaHedgeResult {
+  rows: DeltaGammaHedgeRow[];
+  method: string;
+  params: {
+    hedge_dte: number;
+    hedge_option_type: 'call' | 'put';
+    atm_strike: string;
+    iv_source: string;
+    risk_free_rate: number;
+  };
+  note: string;
+  error?: string;
+  message?: string;
+}
+
+export function getDeltaGammaHedge(
+  account: RobinhoodAccount,
+  opts: { underlying?: string; hedgeDte?: number; hedgeType?: 'call' | 'put'; topN?: number } = {},
+): Promise<DeltaGammaHedgeResult> {
+  const qs = new URLSearchParams({
+    account: String(account),
+    hedge_dte: String(opts.hedgeDte ?? 30),
+    hedge_type: opts.hedgeType ?? 'call',
+    top_n: String(opts.topN ?? 10),
+  });
+  if (opts.underlying) qs.set('underlying', opts.underlying);
+  return getJson(`/api/robinhood/analytics/delta-gamma-hedge?${qs.toString()}`);
+}
+
 export interface RebalanceCheckResult {
   needs_rebalance: boolean;
   breaches: Array<{ greek: string; current: number; limit: number; severity: string }>;
@@ -154,6 +256,12 @@ export interface StressTestResult {
   total_attribution?: Record<string, number>;
   spot_shock_pct?: number;
   vol_shock_pct?: number;
+  /** Backend-only field: total_pnl with the stock contribution stripped off. */
+  options_pnl?: number;
+  /** Backend-only field: stock P&L = Σ (share_qty × spot × spot_shock). */
+  equity_pnl?: number;
+  equity_pnl_by_underlying?: Record<string, number>;
+  equity_share_qty?: number;
   skipped?: SkippedLeg[];
   assumptions?: AnalyticsAssumptions;
   error?: string;

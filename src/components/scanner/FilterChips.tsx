@@ -70,14 +70,35 @@ export const SCANNER_TABS: TabSpec[] = [
   },
 ];
 
-interface FilterChipsProps {
-  active: ScannerTab;
-  counts: Record<ScannerTab, number>;
-  onChange: (tab: ScannerTab) => void;
+// User-saved scanners produced by combining LLM-scanner conditions. Stored in
+// localStorage by ScannerShell. Filtered by `tickers` (subset of the universe);
+// when tickers is empty the tab acts like a saved query name only and shows
+// all rows.
+export interface CustomTab {
+  id: string;
+  query: string;       // full combined query string
+  label: string;       // truncated label shown in the chip
+  tickers: string[];   // parsed tickers to filter rows by
+  intent?: string;
+  conditions?: string[];
+  createdAt: string;   // ISO
 }
 
-export function FilterChips({ active, counts, onChange }: FilterChipsProps) {
-  const activeSpec = SCANNER_TABS.find((t) => t.id === active) ?? SCANNER_TABS[0];
+interface FilterChipsProps {
+  active: string;
+  counts: Record<string, number>;
+  customTabs: CustomTab[];
+  onChange: (tab: string) => void;
+  onRemoveCustom?: (id: string) => void;
+}
+
+export function FilterChips({ active, counts, customTabs, onChange, onRemoveCustom }: FilterChipsProps) {
+  const activeBuiltIn = SCANNER_TABS.find((t) => t.id === active);
+  const activeCustom = !activeBuiltIn ? customTabs.find((c) => c.id === active) : null;
+  const activeDescription =
+    activeBuiltIn?.description ??
+    (activeCustom ? `Custom · ${activeCustom.query}` : SCANNER_TABS[0].description);
+
   return (
     <div style={{ marginBottom: 12 }}>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -107,9 +128,75 @@ export function FilterChips({ active, counts, onChange }: FilterChipsProps) {
                   fontSize: 10,
                 }}
               >
-                · {counts[tab.id]}
+                · {counts[tab.id] ?? 0}
               </span>
             </button>
+          );
+        })}
+
+        {customTabs.map((tab) => {
+          const isActive = tab.id === active;
+          return (
+            <span
+              key={tab.id}
+              className={`rv-btn ${isActive ? '' : 'ghost'}`}
+              style={{
+                background: isActive ? 'var(--line)' : undefined,
+                color: isActive ? 'var(--gold)' : 'var(--gold-dim, var(--ink-dim))',
+                fontSize: 12,
+                cursor: 'pointer',
+                borderColor: isActive ? 'var(--gold)' : 'var(--gold-dim, var(--line))',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 6px 4px 10px',
+              }}
+              title={tab.query}
+            >
+              <button
+                type="button"
+                onClick={() => onChange(tab.id)}
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  font: 'inherit',
+                  padding: 0,
+                }}
+              >
+                {tab.label}
+                <span
+                  style={{
+                    marginLeft: 6,
+                    color: 'var(--ink-mute)',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 10,
+                  }}
+                >
+                  · {counts[tab.id] ?? 0}
+                </span>
+              </button>
+              {onRemoveCustom && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveCustom(tab.id)}
+                  aria-label={`Remove custom scanner "${tab.label}"`}
+                  title="Remove custom scanner"
+                  style={{
+                    background: 'transparent',
+                    border: 0,
+                    color: 'var(--ink-mute)',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    lineHeight: 1,
+                    padding: '0 2px',
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </span>
           );
         })}
       </div>
@@ -121,7 +208,7 @@ export function FilterChips({ active, counts, onChange }: FilterChipsProps) {
           fontFamily: "'JetBrains Mono', monospace",
         }}
       >
-        {activeSpec.description}
+        {activeDescription}
       </div>
     </div>
   );

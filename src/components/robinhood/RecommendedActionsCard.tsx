@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { Fragment, useMemo } from 'react';
 import { InfoIcon } from '@/components/ui/InfoIcon';
 import type {
-  HedgeRatioResult,
   RebalanceCheckResult,
   LimitsCheckResult,
   PortfolioGreeksResult,
@@ -19,7 +18,7 @@ type AsyncState<T> =
   | { status: 'err'; error: string };
 
 type Severity = 'critical' | 'warn' | 'info';
-type Category = 'hedge' | 'limits' | 'opportunity' | 'concentration';
+type Category = 'limits' | 'opportunity' | 'concentration';
 
 interface Contributor {
   ticker: string;
@@ -41,7 +40,6 @@ interface Action {
 
 export interface RecommendedActionsCardProps {
   greeks: AsyncState<PortfolioGreeksResult>;
-  hedge: AsyncState<HedgeRatioResult>;
   rebalance: AsyncState<RebalanceCheckResult>;
   limits: AsyncState<LimitsCheckResult>;
   tickerResults: Record<string, AsyncState<unknown>>;
@@ -56,14 +54,8 @@ function stockHref(symbol: string): string {
   return `/stock/${encodeURIComponent(symbol)}?from=robinhood`;
 }
 
-function fmtMoney(n: number | null | undefined): string {
-  if (n == null) return '—';
-  const sign = n < 0 ? '−' : '';
-  return `${sign}$${Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-}
-
 const SEVERITY_ORDER: Record<Severity, number> = { critical: 0, warn: 1, info: 2 };
-const CATEGORY_ORDER: Record<Category, number> = { hedge: 0, limits: 1, opportunity: 2, concentration: 3 };
+const CATEGORY_ORDER: Record<Category, number> = { limits: 0, opportunity: 1, concentration: 2 };
 
 function sortActions(a: Action, b: Action): number {
   const sev = SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity];
@@ -122,7 +114,6 @@ function SeverityIcon({ s }: { s: Severity }) {
 
 export function RecommendedActionsCard({
   greeks,
-  hedge,
   rebalance,
   limits,
   tickerResults,
@@ -134,24 +125,7 @@ export function RecommendedActionsCard({
     const result: Action[] = [];
     const greeksData = greeks.status === 'ok' && !greeks.data.error ? greeks.data : undefined;
 
-    // ---- a) Hedge action ----------------------------------------------------
-    if (hedge.status === 'ok' && !hedge.data.error) {
-      const { current_delta, hedge_direction, hedge_shares, hedge_notional } = hedge.data;
-      // Only surface if there's a real breach (delta meaningfully non-zero)
-      if (hedge_direction !== 'NONE' && Math.abs(current_delta) > 1) {
-        const severity: Severity = Math.abs(current_delta) > 50 ? 'critical' : 'warn';
-        result.push({
-          severity,
-          category: 'hedge',
-          title: `${hedge_direction} ${Math.abs(hedge_shares).toLocaleString()} shares (≈${fmtMoney(hedge_notional)} notional) to neutralise Δ`,
-          detail: `Current Δ ${current_delta.toFixed(2)} → target 0`,
-          contributors: topContributors(greeksData, holdings, 'delta', 4),
-          link: { label: 'risk-mgmt', href: '/risk-mgmt' },
-        });
-      }
-    }
-
-    // ---- b) Greek limit violations ------------------------------------------
+    // ---- a) Greek limit violations ------------------------------------------
     if (limits.status === 'ok' && !limits.data.error) {
       for (const v of limits.data.violations) {
         const over = v.utilization_pct > 100 ? +(v.utilization_pct - 100).toFixed(1) : 0;
@@ -166,27 +140,15 @@ export function RecommendedActionsCard({
       }
     }
 
-    // Did the hedge action already cover delta?
-    const hedgeFired =
-      hedge.status === 'ok' &&
-      !hedge.data.error &&
-      hedge.data.hedge_direction !== 'NONE' &&
-      Math.abs(hedge.data.current_delta) > 1;
-
     if (rebalance.status === 'ok' && !rebalance.data.error && rebalance.data.needs_rebalance) {
       for (const b of rebalance.data.breaches) {
-        const greekLower = b.greek.toLowerCase();
         // Skip if the same Greek is already a hard-limits violation (different
         // wording, same problem).
         const alreadyByLimits = result.some(
           (a) => a.category === 'limits' && a.title.includes(b.greek),
         );
-        // Skip rebalance-delta when the hedge action is already firing — the
-        // hedge row gives a concrete trade ("SELL N shares") which is a more
-        // useful version of the same delta breach.
-        const coveredByHedge = greekLower === 'delta' && hedgeFired;
-        if (!alreadyByLimits && !coveredByHedge) {
-          const greekKey = greekLower as GreekKey;
+        if (!alreadyByLimits) {
+          const greekKey = b.greek.toLowerCase() as GreekKey;
           result.push({
             severity: 'critical',
             category: 'limits',
@@ -264,13 +226,13 @@ export function RecommendedActionsCard({
     }
 
     return result.sort(sortActions);
-  }, [greeks, hedge, rebalance, limits, tickerResults, tickers, holdings, totalNAV]);
+  }, [greeks, rebalance, limits, tickerResults, tickers, holdings, totalNAV]);
 
   const visible = actions.slice(0, 8);
   const overflow = actions.length - visible.length;
 
   const anyRunStarted =
-    hedge.status !== 'idle' ||
+    greeks.status !== 'idle' ||
     rebalance.status !== 'idle' ||
     limits.status !== 'idle' ||
     tickers.some((t) => tickerResults[`${t}:mispricing`] != null || tickerResults[`${t}:rec`] != null);

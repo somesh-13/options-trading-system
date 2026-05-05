@@ -13,19 +13,48 @@ import re
 
 
 def scrape_yahoo_news(ticker: str, max_articles: int = 10) -> list[dict]:
-    """Scrape recent news headlines and summaries from Yahoo Finance."""
+    """Scrape recent news headlines and summaries from Yahoo Finance.
+
+    yfinance's `Ticker.news` shape changed in late 2025: every field now lives
+    under `item["content"]` rather than at the top level, and the Unix-epoch
+    `providerPublishTime` was replaced with an ISO-8601 `pubDate`. Read both
+    layouts so older yfinance versions still work on machines that haven't
+    upgraded yet.
+    """
     try:
         stock = yf.Ticker(ticker)
         news = stock.news or []
         articles = []
         for item in news[:max_articles]:
+            content = item.get("content") or {}
+            # Fields can live either nested (new yfinance) or top-level (old).
+            title = content.get("title") or item.get("title") or ""
+            summary = content.get("summary") or content.get("description") or item.get("summary", "")
+            content_type = content.get("contentType") or item.get("type", "STORY")
+            published = content.get("pubDate") or content.get("displayTime") or item.get("providerPublishTime", 0)
+
+            provider = content.get("provider") or {}
+            publisher = (
+                provider.get("displayName")
+                or item.get("publisher")
+                or ""
+            )
+
+            link_obj = (
+                content.get("clickThroughUrl")
+                or content.get("canonicalUrl")
+                or {}
+            )
+            link = link_obj.get("url") if isinstance(link_obj, dict) else item.get("link") or ""
+
             articles.append({
-                "title": item.get("title", ""),
-                "publisher": item.get("publisher", ""),
-                "link": item.get("link", ""),
-                "published": item.get("providerPublishTime", 0),
-                "type": item.get("type", "STORY"),
-                "related_tickers": item.get("relatedTickers", []),
+                "title": title,
+                "publisher": publisher,
+                "link": link,
+                "published": published,
+                "summary": summary,
+                "type": content_type,
+                "related_tickers": item.get("relatedTickers") or content.get("finance", {}).get("stockTickers", []),
             })
         return articles
     except Exception:

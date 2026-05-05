@@ -246,10 +246,14 @@ export default function PricingPage() {
   const signGreek = (v: number | null | undefined): number | null =>
     v == null || !Number.isFinite(v) ? null : v * sideSign;
 
-  const chgPct = mispricing
-    ? ((mispricing.spot_price - mispricing.spot_price * 0.976) / (mispricing.spot_price * 0.976)) *
-      100
-    : 0;
+  // Real day-change comes from the mispricing payload's previous_close.
+  // Fall back to 0 if the backend didn't include it (older response shape /
+  // first-listing-day with no prev bar).
+  const chgPct =
+    mispricing && typeof mispricing.change_percent === 'number'
+      ? mispricing.change_percent
+      : 0;
+  const hasChg = mispricing && typeof mispricing.change_percent === 'number';
 
   return (
     <div>
@@ -305,10 +309,19 @@ export default function PricingPage() {
         </span>
         {mispricing && (
           <>
-            <span className={`rv-chip ${chgPct >= 0 ? 'buy' : 'warn'}`}>
-              {chgPct >= 0 ? '+' : ''}
-              {chgPct.toFixed(1)}%
-            </span>
+            {hasChg && (
+              <span
+                className={`rv-chip ${chgPct >= 0 ? 'buy' : 'warn'}`}
+                title={
+                  mispricing.previous_close != null
+                    ? `prev close $${mispricing.previous_close.toFixed(2)}`
+                    : undefined
+                }
+              >
+                {chgPct >= 0 ? '+' : ''}
+                {chgPct.toFixed(2)}%
+              </span>
+            )}
             <IvHvScale
               iv={mispricing.implied_vol_atm}
               hv={mispricing.historical_vol}
@@ -350,7 +363,7 @@ export default function PricingPage() {
         onSelect={setStrike}
       />
 
-      <div className="rv-grid-2" style={{ gridTemplateColumns: '320px 1fr' }}>
+      <div className="rv-pricing-grid">
         <div className="rv-card" style={{ opacity: loading ? 0.7 : 1, transition: 'opacity .12s' }}>
           <div className="rv-card-head">
             <h3>Inputs</h3>

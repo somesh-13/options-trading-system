@@ -22,7 +22,8 @@ import { RecommendedActionsCard } from './RecommendedActionsCard';
 import { TickerVerdict, conviction } from './TickerVerdict';
 import {
   getPortfolioGreeks,
-  getHedgeRatio,
+  getHedgeRatioByUnderlying,
+  getDeltaGammaHedge,
   getRebalanceCheck,
   getLimitsCheck,
   getStressTest,
@@ -38,7 +39,8 @@ import {
   getWheelBacktest,
   saveAnalyticsRun,
   type PortfolioGreeksResult,
-  type HedgeRatioResult,
+  type HedgeRatioByUnderlyingResult,
+  type DeltaGammaHedgeResult,
   type RebalanceCheckResult,
   type LimitsCheckResult,
   type StressTestResult,
@@ -164,6 +166,14 @@ function GreeksCard({
         <>
           <div style={monoGrid}>
             <div>Δ delta<InfoIcon term="delta" /></div><div className={sign(state.data.total_delta)}>{fmtNum(state.data.total_delta)}</div>
+            {state.data.equity_delta != null && state.data.equity_delta !== 0 && (
+              <>
+                <div style={{ fontSize: 10, color: 'var(--ink-mute)', paddingLeft: 8 }}>↳ from options</div>
+                <div style={{ fontSize: 10, color: 'var(--ink-mute)' }}>{fmtNum(state.data.option_total_delta ?? 0)}</div>
+                <div style={{ fontSize: 10, color: 'var(--ink-mute)', paddingLeft: 8 }} title={`${fmtNum(state.data.equity_share_qty ?? 0)} shares × +1 Δ`}>↳ from {fmtNum(state.data.equity_share_qty ?? 0)} shares</div>
+                <div style={{ fontSize: 10, color: 'var(--ink-mute)' }}>+{fmtNum(state.data.equity_delta)}</div>
+              </>
+            )}
             <div>Γ gamma<InfoIcon term="gamma" /></div><div>{fmtNum(state.data.total_gamma)}</div>
             <div>𝜈 vega<InfoIcon term="vega" /></div><div>{fmtNum(state.data.total_vega)}</div>
             <div>Θ theta<InfoIcon term="theta" /></div><div className={sign(state.data.total_theta)}>{fmtNum(state.data.total_theta)}</div>
@@ -181,32 +191,6 @@ function GreeksCard({
   );
 }
 
-function HedgeRatioCard({
-  state,
-  onRun,
-}: {
-  state: AsyncState<HedgeRatioResult>;
-  onRun: () => void;
-}) {
-  return (
-    <CardShell title={<>Hedge ratio (Δ-neutral)<InfoIcon term="hedge-ratio" /></>} state={state} onRun={onRun}>
-      {state.status === 'ok' && !state.data.error && (
-        <div style={monoGrid}>
-          <div>current Δ</div><div className={sign(state.data.current_delta)}>{fmtNum(state.data.current_delta)}</div>
-          <div>target Δ</div><div>{fmtNum(state.data.target_delta)}</div>
-          <div>shares</div>
-          <div className={state.data.hedge_direction === 'BUY' ? 'rv-up' : state.data.hedge_direction === 'SELL' ? 'rv-dn' : ''}>
-            {state.data.hedge_direction} {Math.abs(state.data.hedge_shares)}
-          </div>
-          <div>notional</div><div>{fmtMoney(state.data.hedge_notional)}</div>
-        </div>
-      )}
-      {state.status === 'ok' && state.data.error && (
-        <div className="rv-sub" style={{ fontSize: 11, color: 'var(--pink)' }}>{state.data.message}</div>
-      )}
-    </CardShell>
-  );
-}
 
 function RebalanceCard({
   state,
@@ -301,6 +285,18 @@ function StressCard({
           <div>vol shock</div><div>{fmtPct((state.data.vol_shock_pct ?? 0) * 100)}</div>
           <div>total P&amp;L</div>
           <div className={sign(state.data.total_pnl ?? 0)}>{fmtMoney(state.data.total_pnl)}</div>
+          {state.data.equity_pnl != null && state.data.equity_pnl !== 0 && (
+            <>
+              <div style={{ fontSize: 10, color: 'var(--ink-mute)', paddingLeft: 8 }}>↳ from options</div>
+              <div style={{ fontSize: 10, color: 'var(--ink-mute)' }} className={sign(state.data.options_pnl ?? 0)}>
+                {fmtMoney(state.data.options_pnl)}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--ink-mute)', paddingLeft: 8 }} title={`${state.data.equity_share_qty ?? 0} shares`}>↳ from shares</div>
+              <div style={{ fontSize: 10, color: 'var(--ink-mute)' }} className={sign(state.data.equity_pnl)}>
+                {fmtMoney(state.data.equity_pnl)}
+              </div>
+            </>
+          )}
           {state.data.total_attribution &&
             Object.entries(state.data.total_attribution).slice(0, 5).map(([k, v]) => (
               <Fragment key={k}>
@@ -484,7 +480,8 @@ function summarizeTickerResult(test: TickerTestKey, data: unknown): string {
 
 const PORTFOLIO_TESTS = [
   'greeks',
-  'hedge',
+  'hedgeByUnderlying',
+  'deltaGammaHedge',
   'rebalance',
   'limits',
   'stress',
@@ -507,7 +504,13 @@ export function AnalyticsPanel({
   const tickers = Array.from(new Set(tickersProp));
 
   const [greeks, setGreeks] = useState<AsyncState<PortfolioGreeksResult>>(idle);
-  const [hedge, setHedge] = useState<AsyncState<HedgeRatioResult>>(idle);
+  // Live state setters only — the rendered card lives in ReportsBrowser
+  // (read-only). The live panel doesn't surface these views; running them
+  // here keeps the Run-all save flow whole.
+  const [, setHedgeByUnderlying] =
+    useState<AsyncState<HedgeRatioByUnderlyingResult>>(idle);
+  const [, setDeltaGammaHedge] =
+    useState<AsyncState<DeltaGammaHedgeResult>>(idle);
   const [rebalance, setRebalance] = useState<AsyncState<RebalanceCheckResult>>(idle);
   const [limits, setLimits] = useState<AsyncState<LimitsCheckResult>>(idle);
   const [stress, setStress] = useState<AsyncState<StressTestResult>>(idle);
@@ -561,7 +564,8 @@ export function AnalyticsPanel({
 
   const resetAll = useCallback(() => {
     setGreeks(idle);
-    setHedge(idle);
+    setHedgeByUnderlying(idle);
+    setDeltaGammaHedge(idle);
     setRebalance(idle);
     setLimits(idle);
     setStress(idle);
@@ -573,7 +577,10 @@ export function AnalyticsPanel({
   const runPortfolio = useMemo(
     () => ({
       greeks: () => run(setGreeks, () => getPortfolioGreeks(account)),
-      hedge: () => run(setHedge, () => getHedgeRatio(account)),
+      hedgeByUnderlying: () =>
+        run(setHedgeByUnderlying, () => getHedgeRatioByUnderlying(account)),
+      deltaGammaHedge: () =>
+        run(setDeltaGammaHedge, () => getDeltaGammaHedge(account)),
       rebalance: () => run(setRebalance, () => getRebalanceCheck(account)),
       limits: () => run(setLimits, () => getLimitsCheck(account)),
       stress: () => run(setStress, () => getStressTest(account)),
@@ -709,7 +716,8 @@ export function AnalyticsPanel({
       return new Promise<void>((resolve) => {
         const origSetter = {
           greeks: setGreeks,
-          hedge: setHedge,
+          hedgeByUnderlying: setHedgeByUnderlying,
+          deltaGammaHedge: setDeltaGammaHedge,
           rebalance: setRebalance,
           limits: setLimits,
           stress: setStress,
@@ -723,7 +731,8 @@ export function AnalyticsPanel({
         run(wrappedSetter, () => {
           const fn = {
             greeks: () => getPortfolioGreeks(account),
-            hedge: () => getHedgeRatio(account),
+            hedgeByUnderlying: () => getHedgeRatioByUnderlying(account),
+            deltaGammaHedge: () => getDeltaGammaHedge(account),
             rebalance: () => getRebalanceCheck(account),
             limits: () => getLimitsCheck(account),
             stress: () => getStressTest(account),
@@ -763,7 +772,8 @@ export function AnalyticsPanel({
       const snapshot = {
         portfolio: {
           greeks: getPortData('greeks'),
-          hedge: getPortData('hedge'),
+          hedgeByUnderlying: getPortData('hedgeByUnderlying'),
+          deltaGammaHedge: getPortData('deltaGammaHedge'),
           rebalance: getPortData('rebalance'),
           limits: getPortData('limits'),
           stress: getPortData('stress'),
@@ -858,7 +868,6 @@ export function AnalyticsPanel({
         }}
       >
         <GreeksCard state={greeks} onRun={runPortfolio.greeks} />
-        <HedgeRatioCard state={hedge} onRun={runPortfolio.hedge} />
         <RebalanceCard state={rebalance} onRun={runPortfolio.rebalance} />
         <LimitsCard state={limits} onRun={runPortfolio.limits} />
         <StressCard state={stress} onRun={runPortfolio.stress} />
@@ -868,7 +877,6 @@ export function AnalyticsPanel({
       {/* Recommended Actions card — synthesised from latest analytics run */}
       <RecommendedActionsCard
         greeks={greeks}
-        hedge={hedge}
         rebalance={rebalance}
         limits={limits}
         tickerResults={tickerResults}

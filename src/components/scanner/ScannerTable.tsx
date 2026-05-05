@@ -62,6 +62,7 @@ export function ScannerTable({ rows = SCANNER_ROWS, highlightTicker }: ScannerTa
   }
   return (
     <div className="rv-card" style={{ padding: 0 }}>
+      <div className="rv-table-wrap">
       <table className="rv-table" style={{ fontSize: 11.5 }}>
         <thead>
           <tr>
@@ -140,6 +141,7 @@ export function ScannerTable({ rows = SCANNER_ROWS, highlightTicker }: ScannerTa
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

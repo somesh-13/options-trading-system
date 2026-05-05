@@ -1,21 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IvHvScale } from '@/components/charts/IvHvScale';
+import { getMispricing, getEngineLogs, type MispricingData } from '@/lib/pricing-api';
+import {
+  getRobinhoodHoldings,
+  getRobinhoodSummary,
+  type RobinhoodHoldingsResponse,
+  type RobinhoodSummary,
+} from '@/lib/robinhood-api';
+import {
+  getPortfolioGreeks,
+  type PortfolioGreeksResult,
+} from '@/lib/robinhood-analytics-api';
 
 /**
- * Home dashboard — port of `dashboardAfter()` from the design source.
+ * Home dashboard — wired to live data.
  *
- * Currently uses mock data inline. Data wiring (next pass):
- *   KPIs           ← /api/portfolio  +  /api/risk/var  +  /api/auto-engine/state
- *   Opportunities  ← POST /api/strategy/ev/scan  ({ tickers: watchlist })
- *   Greeks         ← /api/portfolio (aggregate)
- *   Recent signals ← /api/auto-engine/events?limit=4&kinds=exec,signal
+ *   KPIs           ← /api/robinhood/summary?source=live
+ *   Opportunities  ← getMispricing(ticker) fanned out over held tickers
+ *   Greeks         ← /api/robinhood/analytics/portfolio-greeks
+ *   Recent signals ← /api/engine/logs?limit=6
  */
 
 type Signal = 'BUY' | 'SELL' | 'NEUTRAL';
-type Regime = 'normal' | 'high-vol' | 'crash';
 
 type Opportunity = {
   ticker: string;
@@ -24,21 +33,7 @@ type Opportunity = {
   hv: number;
   ratio: number;
   signal: Signal;
-  regime: Regime;
-  ev: number;
-  hitRate: number;
 };
-
-const OPPORTUNITIES: Opportunity[] = [
-  { ticker: 'CIFR', spot: 15.50,  iv: 0.724, hv: 0.498, ratio: 1.45, signal: 'SELL',    regime: 'high-vol', ev: 82, hitRate: 0.61 },
-  { ticker: 'WULF', spot:  8.22,  iv: 0.681, hv: 0.512, ratio: 1.33, signal: 'SELL',    regime: 'high-vol', ev: 64, hitRate: 0.58 },
-  { ticker: 'HOOD', spot: 21.40,  iv: 0.412, hv: 0.381, ratio: 1.08, signal: 'NEUTRAL', regime: 'normal',   ev: 18, hitRate: 0.51 },
-  { ticker: 'MARA', spot: 19.85,  iv: 0.922, hv: 0.610, ratio: 1.51, signal: 'SELL',    regime: 'high-vol', ev: 94, hitRate: 0.66 },
-  { ticker: 'PYPL', spot: 68.20,  iv: 0.281, hv: 0.352, ratio: 0.80, signal: 'BUY',     regime: 'normal',   ev: 41, hitRate: 0.55 },
-  { ticker: 'RIOT', spot: 11.10,  iv: 0.711, hv: 0.918, ratio: 0.77, signal: 'BUY',     regime: 'high-vol', ev: 52, hitRate: 0.57 },
-  { ticker: 'COIN', spot: 182.40, iv: 0.505, hv: 0.488, ratio: 1.04, signal: 'NEUTRAL', regime: 'normal',   ev: 12, hitRate: 0.49 },
-  { ticker: 'GRAB', spot:  4.85,  iv: 0.322, hv: 0.421, ratio: 0.76, signal: 'BUY',     regime: 'normal',   ev: 28, hitRate: 0.54 },
-];
 
 const MAG7 = new Set(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA']);
 
@@ -50,42 +45,74 @@ function filterOpportunities(opps: Opportunity[], f: OppFilter): Opportunity[] {
   return opps;
 }
 
+type SignalKind = 'EXEC' | 'SIGNAL' | 'SKIP' | 'SCAN';
 type SignalRow = {
   time: string;
-  kind: 'EXEC' | 'SIGNAL' | 'SKIP' | 'SCAN';
+  kind: SignalKind;
   cls: 'exec' | 'signal' | 'skip' | 'scan';
   sym: string;
   msg: string;
 };
 
-const SIGNAL_ROWS: SignalRow[] = [
-  { time: '12:08:42', kind: 'EXEC',   cls: 'exec',   sym: 'CIFR', msg: 'SELL 3x CIFR240517C00016000 @ $0.82' },
-  { time: '11:54:01', kind: 'SIGNAL', cls: 'signal', sym: 'WULF', msg: 'IV/HV = 1.33 · EV $64 · approved' },
-  { time: '11:31:15', kind: 'SKIP',   cls: 'skip',   sym: 'HOOD', msg: 'EV $18 below threshold $50' },
-  { time: '11:05:22', kind: 'SCAN',   cls: 'scan',   sym: '—',    msg: '8 tickers · 2 signals · 1 exec' },
-];
+const KIND_FROM_EVENT: Record<string, { kind: SignalKind; cls: SignalRow['cls'] }> = {
+  trade_executed: { kind: 'EXEC', cls: 'exec' },
+  exec: { kind: 'EXEC', cls: 'exec' },
+  signal_generated: { kind: 'SIGNAL', cls: 'signal' },
+  signal: { kind: 'SIGNAL', cls: 'signal' },
+  trade_skipped: { kind: 'SKIP', cls: 'skip' },
+  skip: { kind: 'SKIP', cls: 'skip' },
+  scan_completed: { kind: 'SCAN', cls: 'scan' },
+  scan: { kind: 'SCAN', cls: 'scan' },
+};
+
+function classifyEvent(eventType: string): { kind: SignalKind; cls: SignalRow['cls'] } {
+  return KIND_FROM_EVENT[eventType] ?? { kind: 'SCAN', cls: 'scan' };
+}
 
 type SignalFilter = 'all' | 'exec-signal';
-
 type GreeksMode = 'aggregate' | 'by-ticker';
 
-// Per-ticker Greek contributions for the by-ticker view.
-// Stays consistent with the aggregate totals (sums approximately to the aggregate).
-type PerTickerGreeks = { ticker: string; delta: number; gamma: number; theta: number; vega: number };
+type PerTickerGreeks = {
+  ticker: string;
+  delta: number;
+  gamma: number;
+  theta: number;
+  vega: number;
+};
 
-const BY_TICKER: PerTickerGreeks[] = [
-  { ticker: 'CIFR', delta:  +96.2, gamma:  +6.1, theta:  +112, vega:   -640 },
-  { ticker: 'MARA', delta:  +82.7, gamma:  +5.4, theta:   +98, vega:   -510 },
-  { ticker: 'WULF', delta:  +52.1, gamma:  +3.0, theta:   +61, vega:   -380 },
-  { ticker: 'PYPL', delta:  +33.4, gamma:  +2.1, theta:   +28, vega:   -180 },
-  { ticker: 'HOOD', delta:  +20.0, gamma:  +1.6, theta:   +13, vega:   -130 },
-];
+function aggregateGreeksByTicker(greeks: PortfolioGreeksResult | null): PerTickerGreeks[] {
+  if (!greeks?.per_position) return [];
+  const acc = new Map<string, PerTickerGreeks>();
+  for (const p of greeks.per_position) {
+    const ticker = (p as Record<string, unknown>).underlying as string | undefined;
+    if (!ticker) continue;
+    const qty = Number(p.qty ?? 0);
+    const g = p.greeks ?? { delta: 0, gamma: 0, theta: 0, vega: 0, rho: 0 };
+    // greeks come per-contract; multiply by 100 for option-share equivalent
+    const contractMult = 100;
+    const dDelta = qty * (g.delta ?? 0) * contractMult;
+    const dGamma = qty * (g.gamma ?? 0) * contractMult;
+    const dTheta = qty * (g.theta ?? 0) * contractMult;
+    const dVega = qty * (g.vega ?? 0) * contractMult;
+    const cur = acc.get(ticker) ?? { ticker, delta: 0, gamma: 0, theta: 0, vega: 0 };
+    cur.delta += dDelta;
+    cur.gamma += dGamma;
+    cur.theta += dTheta;
+    cur.vega += dVega;
+    acc.set(ticker, cur);
+  }
+  // Sort by abs delta contribution
+  return Array.from(acc.values()).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+}
+
+function deriveSignal(ratio: number): Signal {
+  if (ratio > 1.3) return 'SELL';
+  if (ratio < 0.8) return 'BUY';
+  return 'NEUTRAL';
+}
 
 function signalChipClass(s: Signal): string {
   return s === 'BUY' ? 'buy' : s === 'SELL' ? 'sell' : 'neutral';
-}
-function regimeChipClass(r: Regime): string {
-  return r === 'high-vol' ? 'warn' : r === 'normal' ? 'buy' : 'neutral';
 }
 
 const TODAY = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -99,51 +126,246 @@ const chipBtnStyle: React.CSSProperties = {
   color: 'inherit',
 };
 
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+
+function fmtUsd(n: number | null | undefined, opts?: { signed?: boolean }): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  const compact = abs >= 10_000;
+  const formatted = compact
+    ? `$${(abs / 1000).toFixed(1)}k`
+    : `$${abs.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  if (!opts?.signed) return n < 0 ? `-${formatted}` : formatted;
+  return n < 0 ? `−${formatted}` : `+${formatted}`;
+}
+
+function fmtPct(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  const sign = n >= 0 ? '+' : '';
+  return `${sign}${n.toFixed(2)}%`;
+}
+
+function fmtTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  } catch {
+    return iso.slice(0, 8);
+  }
+}
+
 export function Dashboard() {
   const [oppFilter, setOppFilter] = useState<OppFilter>('watchlist');
   const [greeksMode, setGreeksMode] = useState<GreeksMode>('aggregate');
   const [signalFilter, setSignalFilter] = useState<SignalFilter>('exec-signal');
 
-  const visibleOpps = useMemo(() => filterOpportunities(OPPORTUNITIES, oppFilter), [oppFilter]);
+  const [summary, setSummary] = useState<RobinhoodSummary | null>(null);
+  const [holdings, setHoldings] = useState<RobinhoodHoldingsResponse | null>(null);
+  const [greeks, setGreeks] = useState<PortfolioGreeksResult | null>(null);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [signalRows, setSignalRows] = useState<SignalRow[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [oppsLoading, setOppsLoading] = useState(false);
+
+  const fetchHeavy = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [s, h, g, logs] = await Promise.all([
+        getRobinhoodSummary(true, 'all', 'live').catch(() => null),
+        getRobinhoodHoldings(true, 'all', 'live').catch(() => null),
+        getPortfolioGreeks('all').catch(() => null),
+        getEngineLogs({ limit: 6 }).catch(() => ({ logs: [], count: 0 })),
+      ]);
+      setSummary(s);
+      setHoldings(h);
+      setGreeks(g);
+      setSignalRows(
+        (logs.logs ?? []).map((l): SignalRow => {
+          const { kind, cls } = classifyEvent(l.event_type);
+          const detailMsg =
+            l.details && typeof l.details === 'object'
+              ? (l.details.message as string) ||
+                (l.details.reason as string) ||
+                JSON.stringify(l.details).slice(0, 80)
+              : '';
+          return {
+            time: fmtTime(l.timestamp),
+            kind,
+            cls,
+            sym: l.ticker || '—',
+            msg: detailMsg || l.event_type,
+          };
+        }),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Mispricing fan-out runs after we know the held tickers. Cap at the top
+  // 20 by market value so a 70+ ticker portfolio doesn't fire a flood of
+  // backend calls on every page load. Tickers held only as options (no
+  // equity row) still get included because they're often the most relevant.
+  const heldTickers = useMemo(() => {
+    if (!holdings) return [] as string[];
+    const equityMV = new Map<string, number>();
+    for (const e of holdings.equities ?? []) {
+      if (!e.symbol) continue;
+      equityMV.set(e.symbol.toUpperCase(), Math.abs(e.market_value ?? 0));
+    }
+    const optionUnderlyings = new Set<string>();
+    for (const o of holdings.options ?? []) {
+      if (o.underlying) optionUnderlyings.add(o.underlying.toUpperCase());
+    }
+    // Tickers only-in-options bubble to the top regardless of equity MV.
+    const all = new Set<string>([...equityMV.keys(), ...optionUnderlyings]);
+    return Array.from(all)
+      .sort((a, b) => {
+        const aOpt = optionUnderlyings.has(a) ? 1 : 0;
+        const bOpt = optionUnderlyings.has(b) ? 1 : 0;
+        if (aOpt !== bOpt) return bOpt - aOpt;
+        return (equityMV.get(b) ?? 0) - (equityMV.get(a) ?? 0);
+      })
+      .slice(0, 20);
+  }, [holdings]);
+
+  useEffect(() => {
+    if (heldTickers.length === 0) {
+      setOpportunities([]);
+      return;
+    }
+    let cancelled = false;
+    setOppsLoading(true);
+    Promise.allSettled(heldTickers.map((t) => getMispricing(t)))
+      .then((results) => {
+        if (cancelled) return;
+        const opps: Opportunity[] = [];
+        results.forEach((r, idx) => {
+          if (r.status !== 'fulfilled') return;
+          const m = r.value as MispricingData & { error?: string };
+          // Backend returns 200 with `{ticker, error}` for unpriceable
+          // tickers (delisted ADRs, BRK.A, etc.). Skip those silently.
+          if (m.error || typeof m.spot_price !== 'number') return;
+          opps.push({
+            ticker: heldTickers[idx],
+            spot: m.spot_price,
+            iv: m.implied_vol_atm,
+            hv: m.historical_vol,
+            ratio: m.iv_hv_ratio,
+            signal: deriveSignal(m.iv_hv_ratio),
+          });
+        });
+        opps.sort((a, b) => Math.abs(b.ratio - 1) - Math.abs(a.ratio - 1));
+        setOpportunities(opps);
+      })
+      .finally(() => {
+        if (!cancelled) setOppsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [heldTickers]);
+
+  useEffect(() => {
+    fetchHeavy();
+    const id = setInterval(fetchHeavy, REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [fetchHeavy]);
+
+  const visibleOpps = useMemo(() => filterOpportunities(opportunities, oppFilter), [opportunities, oppFilter]);
 
   const visibleSignals = useMemo(() => {
-    if (signalFilter === 'all') return SIGNAL_ROWS;
-    return SIGNAL_ROWS.filter((r) => r.kind === 'EXEC' || r.kind === 'SIGNAL');
-  }, [signalFilter]);
+    if (signalFilter === 'all') return signalRows;
+    return signalRows.filter((r) => r.kind === 'EXEC' || r.kind === 'SIGNAL');
+  }, [signalRows, signalFilter]);
+
+  const equityCount = holdings?.equities.length ?? 0;
+  const optionCount = holdings?.options.length ?? 0;
+
+  const unrealized = summary?.unrealized_pnl ?? 0;
+  const unrealizedPct = summary?.total_invested && summary.total_invested > 0
+    ? (unrealized / summary.total_invested) * 100
+    : null;
+
+  const byTicker = useMemo(() => aggregateGreeksByTicker(greeks), [greeks]);
 
   return (
     <>
       <h2 className="rv-h1">Today</h2>
       <div className="rv-sub">
-        {TODAY} · opportunities ranked by expected value · regime-aware
+        {TODAY} · live portfolio · ranked by IV/HV mispricing
       </div>
+
+      {error && (
+        <div
+          style={{
+            border: '1px solid rgba(255,0,110,.35)',
+            background: 'rgba(255,0,110,.08)',
+            color: 'var(--pink)',
+            padding: '8px 12px',
+            borderRadius: 6,
+            fontSize: 12,
+            marginBottom: 12,
+          }}
+        >
+          Error loading dashboard: {error}
+          <button
+            type="button"
+            onClick={fetchHeavy}
+            className="rv-btn ghost"
+            style={{ marginLeft: 10, fontSize: 11, padding: '2px 8px' }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="rv-grid-4" style={{ marginBottom: 14 }}>
         <div className="rv-kpi">
           <div className="k">NAV</div>
-          <div className="v">$142,080</div>
-          <div className="d up">+$1,240 · +0.88%</div>
+          <div className="v">{fmtUsd(summary?.nav ?? null)}</div>
+          <div className="d">
+            invested {fmtUsd(summary?.total_invested ?? null)}
+          </div>
         </div>
         <div className="rv-kpi">
-          <div className="k">Day P&amp;L</div>
-          <div className="v rv-up">+$1,240</div>
-          <div className="d">23 positions · 5 new</div>
+          <div className="k">Unrealized P&amp;L</div>
+          <div className={`v ${unrealized >= 0 ? 'rv-up' : 'rv-dn'}`}>
+            {fmtUsd(unrealized, { signed: true })}
+          </div>
+          <div className="d">
+            {unrealizedPct !== null ? `${fmtPct(unrealizedPct)} on cost · ` : ''}
+            {equityCount} stocks · {optionCount} legs
+          </div>
         </div>
         <div className="rv-kpi">
-          <div className="k">1-day VaR 95%</div>
-          <div className="v">$2,840</div>
-          <div className="d">2.0% NAV · within limits</div>
+          <div className="k">Cash</div>
+          <div className="v">{fmtUsd(summary?.cash_balance ?? null)}</div>
+          <div className="d">available · live snapshot</div>
         </div>
         <div className="rv-kpi">
-          <div className="k">Daily trades</div>
-          <div className="v">4 / 10</div>
-          <div className="d">loss $120 / $1,000 cap</div>
+          <div className="k">Net delta (options)</div>
+          <div className="v">
+            {greeks?.total_delta !== undefined && greeks?.total_delta !== null
+              ? `${greeks.total_delta >= 0 ? '+' : ''}${greeks.total_delta.toFixed(0)}`
+              : '—'}
+          </div>
+          <div className="d">
+            {greeks?.position_count
+              ? `${greeks.position_count} legs · vega ${greeks.total_vega !== undefined ? greeks.total_vega.toFixed(0) : '—'}`
+              : 'no option positions'}
+          </div>
         </div>
       </div>
 
       <div className="rv-card">
         <div className="rv-card-head">
-          <h3>Top opportunities — ranked by EV</h3>
+          <h3>Top opportunities — your positions, ranked by IV/HV</h3>
           <div className="tools">
             <button
               type="button"
@@ -151,7 +373,7 @@ export function Dashboard() {
               className={oppFilter === 'watchlist' ? 'on' : ''}
               onClick={() => setOppFilter('watchlist')}
             >
-              My watchlist
+              My positions
             </button>
             <button
               type="button"
@@ -180,22 +402,27 @@ export function Dashboard() {
               <th>IV / HV</th>
               <th className="r">Ratio</th>
               <th>Signal</th>
-              <th>Regime</th>
-              <th className="r">EV / contract</th>
-              <th className="r">Hit rate</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {visibleOpps.length === 0 ? (
+            {oppsLoading && opportunities.length === 0 ? (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', padding: 14, color: 'var(--ink-mute)', fontSize: 12 }}>
-                  no opportunities match this filter
+                <td colSpan={6} style={{ textAlign: 'center', padding: 14, color: 'var(--ink-mute)', fontSize: 12 }}>
+                  loading {heldTickers.length} tickers…
+                </td>
+              </tr>
+            ) : visibleOpps.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', padding: 14, color: 'var(--ink-mute)', fontSize: 12 }}>
+                  {heldTickers.length === 0
+                    ? 'No positions yet — sync Robinhood to populate.'
+                    : 'No tickers match this filter.'}
                 </td>
               </tr>
             ) : (
-              visibleOpps.map((o, i) => (
-                <tr key={o.ticker} className={i === 3 ? 'sel' : ''}>
+              visibleOpps.map((o) => (
+                <tr key={o.ticker}>
                   <td>
                     <Link href={`/stock/${o.ticker}`} prefetch className="rv-ticker-link">
                       {o.ticker}
@@ -207,13 +434,6 @@ export function Dashboard() {
                     {o.ratio.toFixed(2)}x
                   </td>
                   <td><span className={`rv-chip ${signalChipClass(o.signal)}`}>{o.signal}</span></td>
-                  <td>
-                    <span className={`rv-chip ${regimeChipClass(o.regime)}`} style={{ background: 'transparent' }}>
-                      {o.regime}
-                    </span>
-                  </td>
-                  <td className="r"><b>${o.ev}</b></td>
-                  <td className="r">{(o.hitRate * 100).toFixed(0)}%</td>
                   <td>
                     <Link
                       href={`/options-chain?ticker=${o.ticker}`}
@@ -254,35 +474,48 @@ export function Dashboard() {
               </button>
             </div>
           </div>
-          {greeksMode === 'aggregate' ? (
+          {!greeks || greeks.position_count === 0 ? (
+            <div style={{ padding: 12, color: 'var(--ink-mute)', fontSize: 12 }}>
+              {loading ? 'loading…' : 'No option positions to aggregate.'}
+            </div>
+          ) : greeksMode === 'aggregate' ? (
             <>
               <div className="rv-greeks cols-4">
                 <div className="rv-greek">
                   <div className="sym">Δ<span className="ord">1</span></div>
-                  <div className="val">+284.4</div>
-                  <div className="sub">$ delta = $44.2k</div>
+                  <div className="val">{greeks.total_delta >= 0 ? '+' : ''}{greeks.total_delta.toFixed(1)}</div>
+                  <div className="sub">net option delta</div>
                 </div>
                 <div className="rv-greek">
                   <div className="sym">Γ<span className="ord">1</span></div>
-                  <div className="val">+18.2</div>
+                  <div className="val">{greeks.total_gamma >= 0 ? '+' : ''}{greeks.total_gamma.toFixed(2)}</div>
                   <div className="sub">per $1 move</div>
                 </div>
                 <div className="rv-greek">
                   <div className="sym">Θ<span className="ord">1</span></div>
-                  <div className="val rv-up">+$312</div>
+                  <div className={`val ${greeks.total_theta >= 0 ? 'rv-up' : 'rv-dn'}`}>
+                    {greeks.total_theta >= 0 ? '+' : ''}{greeks.total_theta.toFixed(0)}
+                  </div>
                   <div className="sub">/ day</div>
                 </div>
                 <div className="rv-greek">
                   <div className="sym">V<span className="ord">1</span></div>
-                  <div className="val rv-dn">−$1,840</div>
+                  <div className={`val ${greeks.total_vega >= 0 ? 'rv-up' : 'rv-dn'}`}>
+                    {greeks.total_vega >= 0 ? '+' : ''}{greeks.total_vega.toFixed(0)}
+                  </div>
                   <div className="sub">per 1 vol pt</div>
                 </div>
               </div>
               <div style={{ marginTop: 8, fontSize: 11, color: 'var(--ink-mute)', fontFamily: "'JetBrains Mono', monospace" }}>
-                net short vol · long theta · mild delta long
+                {greeks.position_count} option legs · {greeks.skipped?.length ? `${greeks.skipped.length} skipped` : 'all priced'}
               </div>
             </>
+          ) : byTicker.length === 0 ? (
+            <div style={{ padding: 12, color: 'var(--ink-mute)', fontSize: 12 }}>
+              No per-ticker breakdown available.
+            </div>
           ) : (
+            <div className="rv-table-wrap">
             <table className="rv-table" style={{ fontSize: 12 }}>
               <thead>
                 <tr>
@@ -294,7 +527,7 @@ export function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {BY_TICKER.map((g) => (
+                {byTicker.map((g) => (
                   <tr key={g.ticker}>
                     <td>
                       <Link href={`/stock/${g.ticker}`} prefetch className="rv-ticker-link">
@@ -302,17 +535,18 @@ export function Dashboard() {
                       </Link>
                     </td>
                     <td className="r">{g.delta.toFixed(1)}</td>
-                    <td className="r">{g.gamma.toFixed(1)}</td>
+                    <td className="r">{g.gamma.toFixed(2)}</td>
                     <td className={`r ${g.theta >= 0 ? 'rv-up' : 'rv-dn'}`}>
-                      {g.theta >= 0 ? '+' : ''}{g.theta}
+                      {g.theta >= 0 ? '+' : ''}{g.theta.toFixed(0)}
                     </td>
                     <td className={`r ${g.vega >= 0 ? 'rv-up' : 'rv-dn'}`}>
-                      {g.vega >= 0 ? '+' : ''}{g.vega}
+                      {g.vega >= 0 ? '+' : ''}{g.vega.toFixed(0)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 
@@ -339,14 +573,20 @@ export function Dashboard() {
             </div>
           </div>
           <div className="rv-log">
-            {visibleSignals.map((row) => (
-              <div className="row" key={`${row.time}-${row.kind}`}>
-                <span className="t">{row.time}</span>
-                <span className={`ev ${row.cls}`}>{row.kind}</span>
-                <span className="sym">{row.sym}</span>
-                <span className="msg">{row.msg}</span>
+            {visibleSignals.length === 0 ? (
+              <div style={{ padding: 10, color: 'var(--ink-mute)', fontSize: 11 }}>
+                {loading ? 'loading…' : 'No engine activity yet — start the auto-engine to populate.'}
               </div>
-            ))}
+            ) : (
+              visibleSignals.map((row, i) => (
+                <div className="row" key={`${row.time}-${row.kind}-${i}`}>
+                  <span className="t">{row.time}</span>
+                  <span className={`ev ${row.cls}`}>{row.kind}</span>
+                  <span className="sym">{row.sym}</span>
+                  <span className="msg">{row.msg}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

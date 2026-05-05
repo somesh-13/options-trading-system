@@ -1,10 +1,41 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 import type { RobinhoodHolding } from '@/lib/robinhood-api';
 
 const COLLAPSE_KEY = 'rv:robinhood:equity-holdings-collapsed';
+const COLLAPSE_EVENT = 'rv:robinhood:equity-holdings-collapsed-changed';
+
+function subscribeCollapsed(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener(COLLAPSE_EVENT, callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener(COLLAPSE_EVENT, callback);
+  };
+}
+
+function getCollapsedSnapshot(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function getCollapsedServerSnapshot(): boolean {
+  return false;
+}
+
+function writeCollapsed(value: boolean) {
+  try {
+    localStorage.setItem(COLLAPSE_KEY, value ? '1' : '0');
+    window.dispatchEvent(new Event(COLLAPSE_EVENT));
+  } catch {
+    /* ignore */
+  }
+}
 
 function stockHref(symbol: string): string {
   return `/stock/${encodeURIComponent(symbol)}?from=robinhood`;
@@ -68,26 +99,15 @@ export function HoldingsTable({ equities }: { equities: RobinhoodHolding[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('market_value');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [filter, setFilter] = useState('');
-  // Lazy init from localStorage so we don't trigger a render in useEffect.
-  // SSR sees `false`; client hydrates with the persisted value (acceptable
-  // brief mismatch on the chevron icon only).
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return localStorage.getItem(COLLAPSE_KEY) === '1';
-    } catch {
-      return false;
-    }
-  });
-
-  // Persist on change.
-  useEffect(() => {
-    try {
-      localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
-  }, [collapsed]);
+  const collapsed = useSyncExternalStore(
+    subscribeCollapsed,
+    getCollapsedSnapshot,
+    getCollapsedServerSnapshot,
+  );
+  const setCollapsed = useCallback((updater: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof updater === 'function' ? updater(getCollapsedSnapshot()) : updater;
+    writeCollapsed(next);
+  }, []);
 
   const sorted = useMemo(() => {
     const q = filter.trim().toUpperCase();

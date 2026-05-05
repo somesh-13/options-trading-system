@@ -7,8 +7,22 @@ import type { RobinhoodHolding, RobinhoodSummary } from '@/lib/robinhood-api';
 import type { LimitsCheckResult, DrawdownResult, VaRResult } from '@/lib/robinhood-analytics-api';
 import { PortfolioRiskSummary } from '@/components/risk/PortfolioRiskSummary';
 import { PerTickerRiskTable } from '@/components/risk/PerTickerRiskTable';
+import TCAMonitor from '@/components/TCAMonitor';
+import StressTestPanel from '@/components/StressTestPanel';
 
 const REFRESH_MS = 60_000;
+
+// Single source of truth for portfolio risk limits. The same values are sent to
+// the backend on every limits-check / drawdown call, and rendered in the
+// reference card below — so the card cannot drift from what the API enforces.
+const RISK_LIMITS = {
+  maxPortfolioDelta: 10_000,
+  maxSingleStockDelta: 2_000,
+  maxPortfolioGamma: 500,
+  maxPortfolioVega: 10_000,
+  maxPositionSizePctOfNav: 0.10,
+  maxDrawdownPct: 0.10,
+} as const;
 
 /** Run at most `concurrency` promises at once. */
 async function throttledAllSettled<T>(
@@ -40,6 +54,8 @@ export default function RiskManagementPage() {
   const [varMap, setVarMap] = useState<Map<string, VaRResult | null>>(new Map());
   const [loadingTop, setLoadingTop] = useState(false);
   const [loadingVar, setLoadingVar] = useState(false);
+  const [tcaTicker, setTcaTicker] = useState('CIFR');
+  const [tcaTickerInput, setTcaTickerInput] = useState('CIFR');
   const cancelRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -54,8 +70,13 @@ export default function RiskManagementPage() {
       const [holdingsData, summaryData, limitsData, drawdownData] = await Promise.allSettled([
         getRobinhoodHoldings(true, 'all', 'live'),
         getRobinhoodSummary(true, 'all', 'live'),
-        getLimitsCheck('all'),
-        getDrawdown('all'),
+        getLimitsCheck(
+          'all',
+          RISK_LIMITS.maxPortfolioDelta,
+          RISK_LIMITS.maxPortfolioGamma,
+          RISK_LIMITS.maxPortfolioVega,
+        ),
+        getDrawdown('all', RISK_LIMITS.maxDrawdownPct),
       ]);
 
       if (cancelRef.current) return;
@@ -134,7 +155,7 @@ export default function RiskManagementPage() {
           </button>
         </div>
         <div className="rv-sub" style={{ marginBottom: 16 }}>
-          Portfolio-level limits + drawdown · per-ticker VaR 95% + CVaR 95% (1-day) · auto-refresh 60s
+          Portfolio limits + drawdown · per-ticker VaR/CVaR 95% (1-day) · TCA + stress · auto-refresh 60s
         </div>
 
         {/* Top: portfolio summary */}
@@ -153,19 +174,51 @@ export default function RiskManagementPage() {
           loading={loadingVar}
         />
 
-        {/* Bottom: static reference card */}
+        {/* TCA — per-ticker transaction cost analysis */}
+        <section className="mt-4 sm:mt-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const next = tcaTickerInput.trim().toUpperCase();
+              if (next) setTcaTicker(next);
+            }}
+            className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-3"
+          >
+            <input
+              type="text"
+              value={tcaTickerInput}
+              onChange={(e) => setTcaTickerInput(e.target.value.toUpperCase())}
+              aria-label="TCA ticker"
+              className="w-full sm:w-40 bg-[#2D2D2D] text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00C805]"
+            />
+            <button
+              type="submit"
+              className="w-full sm:w-auto px-6 py-2 bg-[#00C805] hover:bg-[#00A004] text-white font-bold rounded-lg transition-colors"
+            >
+              Update TCA ticker
+            </button>
+          </form>
+          <TCAMonitor ticker={tcaTicker} />
+        </section>
+
+        {/* Stress testing */}
+        <section className="mt-4 sm:mt-6">
+          <StressTestPanel />
+        </section>
+
+        {/* Bottom: limits reference — same values sent to /api/risk/limits-check */}
         <div className="mt-4 sm:mt-6 bg-[#2D2D2D] rounded-lg p-4">
           <h3 className="font-bold text-[#FFD700] mb-2">Risk Limits (SIG Standard)</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-300">
             <ul className="space-y-1">
-              <li>Max Portfolio Delta: +/- 10,000</li>
-              <li>Max Single-Stock Delta: +/- 2,000</li>
-              <li>Max Portfolio Gamma: +/- 500</li>
+              <li>Max Portfolio Delta: +/- {RISK_LIMITS.maxPortfolioDelta.toLocaleString()}</li>
+              <li>Max Single-Stock Delta: +/- {RISK_LIMITS.maxSingleStockDelta.toLocaleString()}</li>
+              <li>Max Portfolio Gamma: +/- {RISK_LIMITS.maxPortfolioGamma.toLocaleString()}</li>
             </ul>
             <ul className="space-y-1">
-              <li>Max Portfolio Vega: +/- 10,000</li>
-              <li>Max Position Size: 10% of NAV</li>
-              <li>Max Drawdown Trigger: 10%</li>
+              <li>Max Portfolio Vega: +/- {RISK_LIMITS.maxPortfolioVega.toLocaleString()}</li>
+              <li>Max Position Size: {(RISK_LIMITS.maxPositionSizePctOfNav * 100).toFixed(0)}% of NAV</li>
+              <li>Max Drawdown Trigger: {(RISK_LIMITS.maxDrawdownPct * 100).toFixed(0)}%</li>
             </ul>
           </div>
         </div>

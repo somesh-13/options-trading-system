@@ -157,12 +157,18 @@ http_get = _http_get
 atomic_write_json = _atomic_write_json
 
 
-def fetch_company_facts(cik: str) -> Optional[dict]:
-    """Disk-cached (24h) companyfacts JSON for a CIK. None on 404 / network error."""
+def fetch_company_facts(cik: str, *, force: bool = False) -> Optional[dict]:
+    """Disk-cached (24h) companyfacts JSON for a CIK. None on 404 / network error.
+
+    When ``force=True``, the fresh-cache fast path is skipped and the SEC HTTP
+    request is always made. The stale-while-error fallback below is *intentionally*
+    preserved even under force — a forced refresh that hits a SEC outage should
+    still serve last-known data rather than 500.
+    """
     _ensure_dirs()
     cache_path = FACTS_DIR / f"CIK{cik}.json"
 
-    if cache_path.exists():
+    if not force and cache_path.exists():
         age = time.time() - cache_path.stat().st_mtime
         if age < FACTS_TTL_SEC:
             try:

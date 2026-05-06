@@ -45,6 +45,11 @@ StatementName = Literal["income", "balance", "cash-flow"]
 STATEMENTS_CACHE_DIR = CACHE_DIR / "statements"
 STATEMENTS_TTL_SEC = 24 * 3600
 
+# Bump when the rendered row schema changes so old cache files are auto-discarded
+# rather than served stale. v2 added the four derived pct rows on the income
+# statement (revenue %Chg, gross/operating margin, effective tax rate).
+SCHEMA_VERSION = 2
+
 # Frontend display unit — backend always returns millions. Per-share rows are
 # left raw (no divisor applied beyond `per_share`).
 UNIT_DIVISOR = 1_000_000.0
@@ -773,9 +778,80 @@ def _read_cached(cik: str, statement: StatementName, period: Period) -> Optional
     if age >= STATEMENTS_TTL_SEC:
         return None
     try:
-        return json.loads(path.read_text())
+        payload = json.loads(path.read_text())
     except Exception:
         return None
+    # Treat older-schema cache files as misses so a fresh extraction runs.
+    if not isinstance(payload, dict) or payload.get("_schema_version") != SCHEMA_VERSION:
+        return None
+    return payload
+
+
+def _safe_div(num: Optional[float], den: Optional[float]) -> Optional[float]:
+    if num is None or den is None or den == 0:
+        return None
+    return num / den
+
+
+def _inject_income_derived_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Insert YoY %Chg + margin + effective-tax-rate rows into the income statement.
+
+    Mirrors the derived rows the legacy yfinance income statement displayed
+    (see fundamentals.py:_INCOME_STMT_ROW_META). Rows are inserted directly
+    after their anchor so the table reads naturally:
+
+        Revenue              123.4   100.0
+        Total Revenues %Chg   23.4%    —     (anchor: revenue)
+        Gross Profit          50.0    40.0
+        Gross Profit Margin   40.5%   40.0%  (anchor: gross_profit)
+        ...
+
+    Values arrive most-recent-first; the YoY change at index i uses index i+1
+    as the prior period (so the oldest column is always None).
+    """
+    by_key: Dict[str, List[Optional[float]]] = {r["key"]: r["values"] for r in rows}
+
+    def _get(k: str) -> List[Optional[float]]:
+        return by_key.get(k, [])
+
+    revenue = _get("revenue")
+    gross_profit = _get("gross_profit")
+    operating_income = _get("operating_income")
+    pretax_income = _get("pretax_income")
+    tax_provision = _get("tax_provision")
+
+    revenue_chg: List[Optional[float]] = []
+    for i, v in enumerate(revenue):
+        prior = revenue[i + 1] if (i + 1) < len(revenue) else None
+        revenue_chg.append((v / prior - 1) if (v is not None and prior not in (None, 0)) else None)
+
+    gross_margin = [_safe_div(g, r) for g, r in zip(gross_profit, revenue)]
+    operating_margin = [_safe_div(o, r) for o, r in zip(operating_income, revenue)]
+    effective_tax_rate = [_safe_div(t, p) for t, p in zip(tax_provision, pretax_income)]
+
+    def _derived(key: str, label: str, values: List[Optional[float]]) -> Dict[str, Any]:
+        return {
+            "key": key,
+            "label": label,
+            "format": "pct",
+            "bold": False,
+            "italic": True,
+            "values": values,
+        }
+
+    insert_after: Dict[str, Dict[str, Any]] = {
+        "revenue": _derived("revenue_growth", "Total Revenues %Chg", revenue_chg),
+        "gross_profit": _derived("gross_margin", "Gross Profit Margin", gross_margin),
+        "operating_income": _derived("operating_margin", "Operating Margin", operating_margin),
+        "tax_provision": _derived("effective_tax_rate", "Effective Tax Rate", effective_tax_rate),
+    }
+
+    out: List[Dict[str, Any]] = []
+    for r in rows:
+        out.append(r)
+        if r["key"] in insert_after:
+            out.append(insert_after[r["key"]])
+    return out
 
 
 def _empty_response(ticker: str, period: Period, message: str) -> Dict[str, Any]:
@@ -797,17 +873,20 @@ def _extract_statement(
     ticker: str,
     statement: StatementName,
     period: Period,
+    *,
+    force: bool = False,
 ) -> Dict[str, Any]:
     ticker_u = ticker.upper()
     cik = get_cik_for_ticker(ticker_u)
     if cik is None:
         return _empty_response(ticker_u, period, "No SEC CIK for ticker (foreign filer or unknown)")
 
-    cached = _read_cached(cik, statement, period)
-    if cached is not None:
-        return cached
+    if not force:
+        cached = _read_cached(cik, statement, period)
+        if cached is not None:
+            return cached
 
-    facts = fetch_company_facts(cik)
+    facts = fetch_company_facts(cik, force=force)
     if not facts:
         return _empty_response(ticker_u, period, "SEC companyfacts unavailable")
 
@@ -859,6 +938,9 @@ def _extract_statement(
             "values": values,
         })
 
+    if statement == "income":
+        out_rows = _inject_income_derived_rows(out_rows)
+
     result: Dict[str, Any] = {
         "ticker": ticker_u,
         "currency": "USD",
@@ -870,6 +952,7 @@ def _extract_statement(
         "rows": out_rows,
         "asOf": latest_filed,
         "source": "sec-edgar",
+        "_schema_version": SCHEMA_VERSION,
     }
 
     try:
@@ -881,13 +964,13 @@ def _extract_statement(
     return result
 
 
-def get_income_statement(ticker: str, period: Period = "annual") -> Dict[str, Any]:
-    return _extract_statement(ticker, "income", period)
+def get_income_statement(ticker: str, period: Period = "annual", *, force: bool = False) -> Dict[str, Any]:
+    return _extract_statement(ticker, "income", period, force=force)
 
 
-def get_balance_sheet(ticker: str, period: Period = "annual") -> Dict[str, Any]:
-    return _extract_statement(ticker, "balance", period)
+def get_balance_sheet(ticker: str, period: Period = "annual", *, force: bool = False) -> Dict[str, Any]:
+    return _extract_statement(ticker, "balance", period, force=force)
 
 
-def get_cash_flow(ticker: str, period: Period = "annual") -> Dict[str, Any]:
-    return _extract_statement(ticker, "cash-flow", period)
+def get_cash_flow(ticker: str, period: Period = "annual", *, force: bool = False) -> Dict[str, Any]:
+    return _extract_statement(ticker, "cash-flow", period, force=force)

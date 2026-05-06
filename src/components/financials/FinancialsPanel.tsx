@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -121,6 +121,17 @@ function totalChange(values: Array<number | null>): number | null {
   return (latest - oldest) / Math.abs(oldest);
 }
 
+function relativeTime(t: number | null): string {
+  if (t == null) return '—';
+  const diff = Date.now() - t;
+  if (diff < 60_000) return 'just now';
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 function cagrFromValues(values: Array<number | null>, years: string[]): number | null {
   // values are most-recent-first; same with years.
   const latest = values[0];
@@ -141,12 +152,25 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
   const [charted, setCharted] = useState<string[]>(DEFAULT_CHARTED_BY_STATEMENT[statement]);
   const [unit, setUnit] = useState<Unit>('M');
   const [period, setPeriod] = useState<Period>('annual');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
+  const [, setNowTick] = useState(0);
+  // Debounce guard: a forced ratios refresh fires 4 SEC calls; SEC limits to
+  // 10 req/s. 5s debounce keeps us well under and avoids accidental hammering.
+  const lastForcedRefreshRef = useRef(0);
 
   // Reset the charted-keys default when the parent switches statements; each
   // statement has its own canonical "important" rows.
   useEffect(() => {
     setCharted(DEFAULT_CHARTED_BY_STATEMENT[statement]);
   }, [statement]);
+
+  // New ticker: drop any "force" intent so the first paint uses the cache.
+  useEffect(() => {
+    setRefreshKey(0);
+    setLastFetchedAt(null);
+    lastForcedRefreshRef.current = 0;
+  }, [ticker]);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,13 +182,14 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
       : statement === 'balance' ? getBalanceSheet
       : statement === 'cash-flow' ? getCashFlow
       : getRatios;
-    fetcher(ticker, period)
+    fetcher(ticker, period, { force: refreshKey > 0 })
       .then((d) => {
         if (cancelled) return;
         if (d.error) {
           setError(d.message ?? d.error);
         } else {
           setData(d);
+          setLastFetchedAt(Date.now());
         }
       })
       .catch((e: Error) => {
@@ -176,7 +201,21 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
     return () => {
       cancelled = true;
     };
-  }, [ticker, period, statement]);
+  }, [ticker, period, statement, refreshKey]);
+
+  // Re-render the "Updated Xs ago" label every 30s so it stays accurate.
+  useEffect(() => {
+    if (lastFetchedAt == null) return;
+    const id = setInterval(() => setNowTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, [lastFetchedAt]);
+
+  const handleScanLatest = () => {
+    if (loading) return;
+    if (Date.now() - lastForcedRefreshRef.current < 5000) return;
+    lastForcedRefreshRef.current = Date.now();
+    setRefreshKey((k) => k + 1);
+  };
 
   // Cap the API response to the most-recent N columns. Backend returns full
   // history (15+ years for mature filers); the UI only renders the recent
@@ -386,9 +425,20 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
         </h3>
         <span className="rv-sub" style={{ fontSize: 11, margin: 0 }}>
           {period === 'quarterly' ? 'Quarterly' : 'Annual'} · {data.source === 'sec-edgar' ? 'SEC EDGAR' : 'standardized'} · {data.currency} · most recent first
+          {lastFetchedAt != null && ` · Updated ${relativeTime(lastFetchedAt)}`}
         </span>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={handleScanLatest}
+            className="rv-btn ghost"
+            disabled={loading}
+            title="Bypass the 24h SEC cache and re-fetch the latest filings from EDGAR"
+            style={{ fontSize: 11, padding: '6px 10px' }}
+          >
+            {loading && refreshKey > 0 ? 'Scanning…' : 'Scan latest'}
+          </button>
           <PeriodToggle period={period} onChange={setPeriod} />
           {statement !== 'ratios' && <UnitToggle unit={unit} onChange={setUnit} />}
         </div>

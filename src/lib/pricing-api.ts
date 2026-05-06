@@ -1174,14 +1174,23 @@ export type IncomeStatementHistory = FinancialStatementHistory;
 
 type Period = 'annual' | 'quarterly';
 
+export interface StatementFetchOptions {
+  /** Bypass the backend's 24h SEC cache and force a fresh fetch from EDGAR.
+   *  Wired to the "Scan latest" button on the Financials tab. */
+  force?: boolean;
+}
+
 async function getStatement(
   endpoint: 'income-statement' | 'balance-sheet' | 'cash-flow' | 'ratios',
   ticker: string,
   period: Period,
   label: string,
+  opts?: StatementFetchOptions,
 ): Promise<FinancialStatementHistory> {
+  const params = new URLSearchParams({ period });
+  if (opts?.force) params.set('force', 'true');
   const res = await fetch(
-    `${PRICING_API_URL}/api/sec/${encodeURIComponent(ticker)}/${endpoint}?period=${period}`,
+    `${PRICING_API_URL}/api/sec/${encodeURIComponent(ticker)}/${endpoint}?${params.toString()}`,
     { cache: 'no-store' },
   );
   if (!res.ok) {
@@ -1200,29 +1209,33 @@ async function getStatement(
 export async function getIncomeStatementSec(
   ticker: string,
   period: Period = 'annual',
+  opts?: StatementFetchOptions,
 ): Promise<FinancialStatementHistory> {
-  return getStatement('income-statement', ticker, period, 'Income statement');
+  return getStatement('income-statement', ticker, period, 'Income statement', opts);
 }
 
 export async function getBalanceSheet(
   ticker: string,
   period: Period = 'annual',
+  opts?: StatementFetchOptions,
 ): Promise<FinancialStatementHistory> {
-  return getStatement('balance-sheet', ticker, period, 'Balance sheet');
+  return getStatement('balance-sheet', ticker, period, 'Balance sheet', opts);
 }
 
 export async function getCashFlow(
   ticker: string,
   period: Period = 'annual',
+  opts?: StatementFetchOptions,
 ): Promise<FinancialStatementHistory> {
-  return getStatement('cash-flow', ticker, period, 'Cash flow');
+  return getStatement('cash-flow', ticker, period, 'Cash flow', opts);
 }
 
 export async function getRatios(
   ticker: string,
   period: Period = 'annual',
+  opts?: StatementFetchOptions,
 ): Promise<FinancialStatementHistory> {
-  return getStatement('ratios', ticker, period, 'Ratios');
+  return getStatement('ratios', ticker, period, 'Ratios', opts);
 }
 
 // ---- AI insights for a structured statement -----------------------------

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Slider } from '@/components/pricing/Slider';
 import { GreekBigCell } from '@/components/pricing/GreekBigCell';
 import { MiniVolSurface } from '@/components/pricing/MiniVolSurface';
@@ -12,6 +13,7 @@ import { PnLScenarios } from '@/components/pricing/PnLScenarios';
 import { VolSmile } from '@/components/pricing/VolSmile';
 import { ExpirationStrip, type Expiration } from '@/components/chain/ExpirationStrip';
 import { IvHvScale } from '@/components/charts/IvHvScale';
+import { OptionsTradePanel } from '@/components/robinhood/OptionsTradePanel';
 import {
   calculateImpliedVol,
   calculatePriceAndGreeks,
@@ -63,13 +65,38 @@ function fmtVal(n: number | null | undefined, digits = 3): string {
   return n.toFixed(digits);
 }
 
-export default function PricingPage() {
-  const [ticker, setTicker] = useState(DEFAULT_TICKER);
-  const [tickerInput, setTickerInput] = useState(DEFAULT_TICKER);
-  const [optType, setOptType] = useState<'call' | 'put'>('call');
+function PricingPageInner() {
+  const searchParams = useSearchParams();
+  // Capture ?ticker / ?strike once at mount. We don't subscribe to live URL
+  // changes — the user-controlled ticker form is the source of truth after the
+  // initial deep-link.
+  const initialFromUrl = useMemo(() => {
+    const t = searchParams?.get('ticker');
+    const s = searchParams?.get('strike');
+    const ty = searchParams?.get('type');
+    const ex = searchParams?.get('expiry');
+    const sNum = s != null ? Number(s) : NaN;
+    return {
+      ticker: t && /^[A-Z0-9.\-]+$/i.test(t) ? t.toUpperCase() : null,
+      strike: Number.isFinite(sNum) && sNum > 0 ? sNum : null,
+      type: ty === 'call' || ty === 'put' ? (ty as 'call' | 'put') : null,
+      expiry: ex && /^\d{4}-\d{2}-\d{2}$/.test(ex) ? ex : null,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [ticker, setTicker] = useState(initialFromUrl.ticker ?? DEFAULT_TICKER);
+  const [tickerInput, setTickerInput] = useState(initialFromUrl.ticker ?? DEFAULT_TICKER);
+  const [optType, setOptType] = useState<'call' | 'put'>(initialFromUrl.type ?? 'call');
   const [side, setSide] = useState<Side>('long');
-  const [strike, setStrike] = useState(16);
+  const [strike, setStrike] = useState(initialFromUrl.strike ?? 16);
   const [expiryIdx, setExpiryIdx] = useState(2);
+  // One-shot guards: when a deep-link supplies ?strike or ?expiry, the first
+  // ticker-hydration cycle must NOT overwrite them with the auto-derived ATM
+  // strike or expiryIdx=0. After the first cycle, normal ATM/expiry logic
+  // resumes (e.g., when the user types a new ticker into the form).
+  const urlStrikeConsumedRef = useRef<boolean>(initialFromUrl.strike == null);
+  const urlExpiryConsumedRef = useRef<boolean>(initialFromUrl.expiry == null);
   const [spot, setSpot] = useState<number | null>(null);
   const [sigma, setSigma] = useState(0.724);
   const [days, setDays] = useState(24);
@@ -115,12 +142,25 @@ export default function PricingPage() {
           if (s == null) setSpot(m.spot_price);
         }
         if (vs) setSurface(vs);
-        if (m && Number.isFinite(m.atm_strike) && m.atm_strike > 0) {
+        if (!urlStrikeConsumedRef.current) {
+          // Honor the ?strike= deep-link this once; future ticker changes
+          // will fall back to ATM auto-derive.
+          urlStrikeConsumedRef.current = true;
+        } else if (m && Number.isFinite(m.atm_strike) && m.atm_strike > 0) {
           setStrike(m.atm_strike);
         } else if (s != null && s > 0) {
           setStrike(Math.round(s));
         }
-        setExpiryIdx(0);
+        if (!urlExpiryConsumedRef.current && initialFromUrl.expiry && vs?.expirations) {
+          // Honor ?expiry=YYYY-MM-DD by selecting its index in the surface,
+          // but only on the first hydration. Falls back to index 0 if the
+          // requested expiry isn't on the surface.
+          const idx = vs.expirations.indexOf(initialFromUrl.expiry);
+          setExpiryIdx(idx >= 0 ? idx : 0);
+          urlExpiryConsumedRef.current = true;
+        } else {
+          setExpiryIdx(0);
+        }
         if (s == null && m == null && vs == null) {
           setError(`No data returned for ${ticker}`);
         }
@@ -131,7 +171,7 @@ export default function PricingPage() {
     return () => {
       cancelled = true;
     };
-  }, [ticker]);
+  }, [ticker, initialFromUrl.expiry]);
 
   // Build the expiration strip from the live surface; fall back to a placeholder
   // before any data arrives so the strip doesn't pop in.
@@ -780,6 +820,29 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+
+      {/* Place an order from the same context (ticker / strike / expiry / type)
+          you've been pricing. The panel mounts fresh on every ticker change so
+          its initial fields stay in sync with the deep-link or load. */}
+      <div style={{ marginTop: 14 }}>
+        <OptionsTradePanel
+          key={ticker}
+          underlying={ticker}
+          initialStrike={strike}
+          initialOptionType={optType}
+          initialSide={side === 'short' ? 'sell' : 'buy'}
+          initialExpiration={expSel.rawDate || undefined}
+          initialLimitPrice={tradePremium > 0 ? tradePremium : undefined}
+        />
+      </div>
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<div className="rv-sub" style={{ padding: 12 }}>Loading pricing…</div>}>
+      <PricingPageInner />
+    </Suspense>
   );
 }

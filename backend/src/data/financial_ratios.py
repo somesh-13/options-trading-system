@@ -241,17 +241,17 @@ def _read_cached(cik: str, period: Period) -> Optional[Dict[str, Any]]:
         return None
 
 
-def get_ratios(ticker: str, period: Period = "annual") -> Dict[str, Any]:
+def get_ratios(ticker: str, period: Period = "annual", *, force: bool = False) -> Dict[str, Any]:
     ticker_u = ticker.upper()
     cik = get_cik_for_ticker(ticker_u)
-    if cik is not None:
+    if cik is not None and not force:
         cached = _read_cached(cik, period)
         if cached is not None:
             return cached
 
-    inc = get_income_statement(ticker_u, period)
-    bal = get_balance_sheet(ticker_u, period)
-    cfs = get_cash_flow(ticker_u, period)
+    inc = get_income_statement(ticker_u, period, force=force)
+    bal = get_balance_sheet(ticker_u, period, force=force)
+    cfs = get_cash_flow(ticker_u, period, force=force)
 
     # All three should share the canonical period grid (sec_statements uses the
     # income-statement-derived period set for all three). Defensively inner-join

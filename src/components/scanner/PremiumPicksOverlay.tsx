@@ -1,9 +1,41 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getOptionExpirations, getOptionChain, type OptionChainLeg } from '@/lib/pricing-api';
+import { RESIZE_LOCALSTORAGE_PREFIX } from '@/lib/useDisplaySettings';
 import type { Opportunity } from './ScannerTable';
+
+const RESIZE_KEY = RESIZE_LOCALSTORAGE_PREFIX + 'overlay:premium-picks';
+
+interface PersistedSize {
+  w?: number;
+  h?: number;
+}
+
+function loadSize(): PersistedSize {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(RESIZE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as PersistedSize;
+    return {
+      w: typeof parsed.w === 'number' && Number.isFinite(parsed.w) ? parsed.w : undefined,
+      h: typeof parsed.h === 'number' && Number.isFinite(parsed.h) ? parsed.h : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function saveSize(size: PersistedSize): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(RESIZE_KEY, JSON.stringify(size));
+  } catch {
+    /* private mode / quota — non-fatal */
+  }
+}
 
 const MAX_TICKERS = 6;
 const MIN_DTE = 5;
@@ -202,6 +234,36 @@ export function PremiumPicksOverlay({ open, onClose, candidates }: Props) {
     };
   }, [open, targets]);
 
+  // Persisted resize: load on open, observe + debounce-write while open.
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [persisted, setPersisted] = useState<PersistedSize>({});
+  const debounceRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setPersisted(loadSize());
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const el = cardRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const obs = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      if (debounceRef.current != null) window.clearTimeout(debounceRef.current);
+      debounceRef.current = window.setTimeout(() => {
+        saveSize({ w: Math.round(width), h: Math.round(height) });
+      }, 250);
+    });
+    obs.observe(el);
+    return () => {
+      if (debounceRef.current != null) window.clearTimeout(debounceRef.current);
+      obs.disconnect();
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
@@ -224,16 +286,42 @@ export function PremiumPicksOverlay({ open, onClose, candidates }: Props) {
       }}
     >
       <div
+        ref={cardRef}
         onClick={stop}
         className="rv-card"
         style={{
-          width: 'min(960px, 96vw)',
-          maxHeight: '92vh',
-          overflowY: 'auto',
+          width: persisted.w ?? 'min(1280px, 96vw)',
+          height: persisted.h,
+          minWidth: 720,
+          minHeight: 420,
+          maxWidth: '98vw',
+          maxHeight: '95vh',
+          resize: 'both',
+          overflow: 'auto',
           padding: 16,
           background: 'var(--surface-raised, #161616)',
+          position: 'relative',
         }}
       >
+        {/* Drag-to-resize affordance — the native handle sits in the bottom-right
+            corner but is invisible on dark themes. This subtle glyph helps users
+            discover it. The native handle handles the actual drag. */}
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            right: 4,
+            bottom: 2,
+            fontSize: 12,
+            color: 'var(--ink-mute)',
+            pointerEvents: 'none',
+            userSelect: 'none',
+            opacity: 0.6,
+          }}
+          title="Drag corner to resize"
+        >
+          ↘
+        </span>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
           <h3 style={{ margin: 0, fontSize: 14 }}>$ Juiciest premium to sell</h3>
           <button
@@ -359,14 +447,24 @@ function PicksTable({
             {rows.map((p) => {
               const annTier =
                 p.annualizedPct >= 0.5 ? 'rv-up' : p.annualizedPct >= 0.2 ? '' : 'rv-sub';
+              const pricingHref = `/pricing?ticker=${p.ticker}&strike=${p.strike}&type=${p.side}&expiry=${p.expiration}`;
               return (
                 <tr key={`${p.ticker}-${p.side}-${p.strike}-${p.expiration}`}>
                   <td>
-                    <Link href={`/stock/${p.ticker}`} className="rv-ticker-link" prefetch>
+                    <Link href={pricingHref} className="rv-ticker-link" prefetch>
                       {p.ticker}
                     </Link>
                   </td>
-                  <td className="r">${p.strike.toFixed(2)}</td>
+                  <td className="r">
+                    <Link
+                      href={pricingHref}
+                      prefetch
+                      style={{ color: 'inherit', textDecoration: 'none' }}
+                      title={`Open ${p.ticker} ${p.side.toUpperCase()} $${p.strike.toFixed(2)} on pricing page`}
+                    >
+                      ${p.strike.toFixed(2)}
+                    </Link>
+                  </td>
                   <td className="r">${p.mid.toFixed(2)}</td>
                   <td className={`r ${annTier}`}>
                     <b>{(p.annualizedPct * 100).toFixed(1)}%</b>

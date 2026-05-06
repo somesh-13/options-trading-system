@@ -90,7 +90,11 @@ export function ScannerTable({ rows = SCANNER_ROWS, highlightTicker }: ScannerTa
               <tr key={o.ticker} className={selected ? 'sel' : ''}>
                 <td className="r" style={{ color: 'var(--ink-mute)', fontSize: 10 }}>{i + 1}</td>
                 <td>
-                  <Link href={`/stock/${o.ticker}`} prefetch className="rv-ticker-link">
+                  <Link
+                    href={`/pricing?ticker=${o.ticker}&strike=${Math.round(o.spot)}`}
+                    prefetch
+                    className="rv-ticker-link"
+                  >
                     {o.ticker}
                   </Link>
                 </td>
@@ -100,7 +104,14 @@ export function ScannerTable({ rows = SCANNER_ROWS, highlightTicker }: ScannerTa
                 <td className="r">{o.spot.toFixed(2)}</td>
                 <td><IvHvScale iv={o.iv} hv={o.hv} ratio={o.ratio} /></td>
                 <td className={`r ${o.ratio > 1.3 ? 'rv-up' : o.ratio < 0.8 ? 'rv-dn' : ''}`}>
-                  <b>{o.ratio.toFixed(2)}x</b>
+                  <Link
+                    href={`/pricing?ticker=${o.ticker}&strike=${Math.round(o.spot)}`}
+                    prefetch
+                    style={{ color: 'inherit', textDecoration: 'none' }}
+                    title={`Open ${o.ticker} on pricing page at $${Math.round(o.spot)} strike`}
+                  >
+                    <b>{o.ratio.toFixed(2)}x</b>
+                  </Link>
                 </td>
                 <td><span className={`rv-chip ${signalChipClass(o.signal)}`}>{o.signal}</span></td>
                 <td>

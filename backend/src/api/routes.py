@@ -1093,43 +1093,43 @@ def sec_companyfacts(ticker: str):
 
 
 @app.get("/api/sec/{ticker}/income-statement")
-def sec_income_statement(ticker: str, period: str = "annual"):
+def sec_income_statement(ticker: str, period: str = "annual", force: bool = False):
     """Full multi-year income statement extracted from XBRL companyfacts."""
     from data.sec_statements import get_income_statement
     if period not in ("annual", "quarterly"):
         raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
     ticker_u = ticker.upper().strip().replace(".", "-")
-    return get_income_statement(ticker_u, period)
+    return get_income_statement(ticker_u, period, force=force)
 
 
 @app.get("/api/sec/{ticker}/balance-sheet")
-def sec_balance_sheet(ticker: str, period: str = "annual"):
+def sec_balance_sheet(ticker: str, period: str = "annual", force: bool = False):
     """Full multi-year balance sheet extracted from XBRL companyfacts."""
     from data.sec_statements import get_balance_sheet
     if period not in ("annual", "quarterly"):
         raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
     ticker_u = ticker.upper().strip().replace(".", "-")
-    return get_balance_sheet(ticker_u, period)
+    return get_balance_sheet(ticker_u, period, force=force)
 
 
 @app.get("/api/sec/{ticker}/cash-flow")
-def sec_cash_flow(ticker: str, period: str = "annual"):
+def sec_cash_flow(ticker: str, period: str = "annual", force: bool = False):
     """Full multi-year cash flow statement extracted from XBRL companyfacts."""
     from data.sec_statements import get_cash_flow
     if period not in ("annual", "quarterly"):
         raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
     ticker_u = ticker.upper().strip().replace(".", "-")
-    return get_cash_flow(ticker_u, period)
+    return get_cash_flow(ticker_u, period, force=force)
 
 
 @app.get("/api/sec/{ticker}/ratios")
-def sec_ratios(ticker: str, period: str = "annual"):
+def sec_ratios(ticker: str, period: str = "annual", force: bool = False):
     """Derived financial ratios (margins, returns, liquidity, leverage)."""
     from data.financial_ratios import get_ratios
     if period not in ("annual", "quarterly"):
         raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
     ticker_u = ticker.upper().strip().replace(".", "-")
-    return get_ratios(ticker_u, period)
+    return get_ratios(ticker_u, period, force=force)
 
 
 @app.get("/api/sec/{ticker}/{statement}/insights")

@@ -1132,6 +1132,18 @@ def sec_ratios(ticker: str, period: str = "annual", force: bool = False):
     return get_ratios(ticker_u, period, force=force)
 
 
+@app.get("/api/sec/{ticker}/valuation-snapshot")
+def sec_valuation_snapshot(ticker: str, force: bool = False):
+    """Live valuation multiples (P/E, P/S, P/B, P/FCF, EV/EBITDA, EV/Sales)
+    for the latest annual period using today's spot from get_ticker_price.
+
+    Rendered as snapshot tiles above the Ratios history table on the frontend.
+    """
+    from data.financial_ratios import get_valuation_snapshot
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    return get_valuation_snapshot(ticker_u, force=force)
+
+
 @app.get("/api/sec/{ticker}/{statement}/insights")
 def sec_statement_insights(ticker: str, statement: str, period: str = "annual", force: bool = False):
     """AI-generated trend commentary for one statement.

@@ -6,6 +6,8 @@
  * spot calendar skew without opening a dropdown.
  */
 
+import { ScrollCarousel } from '@/components/ui/ScrollCarousel';
+
 export type Expiration = {
   dte: string;
   date: string;
@@ -21,7 +23,7 @@ export type ExpirationStripProps = {
 
 export function ExpirationStrip({ expirations, selectedIdx, onSelect }: ExpirationStripProps) {
   return (
-    <div className="rv-expstrip" style={{ margin: '10px 0 12px' }}>
+    <ScrollCarousel centerOnKey={selectedIdx} style={{ margin: '10px 0 12px' }}>
       {expirations.map((e, i) => (
         <div
           key={`${e.dte}-${e.date}`}
@@ -34,6 +36,6 @@ export function ExpirationStrip({ expirations, selectedIdx, onSelect }: Expirati
           <div className="oi">{e.oi}k OI</div>
         </div>
       ))}
-    </div>
+    </ScrollCarousel>
   );
 }

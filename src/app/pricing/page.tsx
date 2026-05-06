@@ -18,10 +18,12 @@ import {
   calculateImpliedVol,
   calculatePriceAndGreeks,
   getMispricing,
+  getOptionExpirations,
   getTickerPrice,
   getVolSurface,
   type Greeks,
   type MispricingData,
+  type OptionExpirationMeta,
   type PricingResponse,
   type VolSurfaceData,
 } from '@/lib/pricing-api';
@@ -107,6 +109,10 @@ function PricingPageInner() {
   const [pricing, setPricing] = useState<PricingResponse | null>(null);
   const [solvedIV, setSolvedIV] = useState<number | null>(null);
   const [surface, setSurface] = useState<VolSurfaceData | null>(null);
+  // Full expiration list (incl. LEAPS out to 2028+). The vol-surface payload
+  // is intentionally short-dated for smile rendering, so the strip is built
+  // from this richer source instead.
+  const [fullExpirations, setFullExpirations] = useState<OptionExpirationMeta[] | null>(null);
   const [mispricing, setMispricing] = useState<MispricingData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -124,14 +130,16 @@ function PricingPageInner() {
     setSpot(null);
     setMispricing(null);
     setSurface(null);
+    setFullExpirations(null);
     setPricing(null);
     setError(null);
     (async () => {
       try {
-        const [s, m, vs] = await Promise.all([
+        const [s, m, vs, exps] = await Promise.all([
           getTickerPrice(ticker).catch(() => null),
           getMispricing(ticker).catch(() => null),
           getVolSurface(ticker).catch(() => null),
+          getOptionExpirations(ticker).catch(() => null),
         ]);
         if (cancelled) return;
         if (s != null) setSpot(s);
@@ -142,6 +150,7 @@ function PricingPageInner() {
           if (s == null) setSpot(m.spot_price);
         }
         if (vs) setSurface(vs);
+        if (exps?.expirations) setFullExpirations(exps.expirations);
         if (!urlStrikeConsumedRef.current) {
           // Honor the ?strike= deep-link this once; future ticker changes
           // will fall back to ATM auto-derive.
@@ -151,11 +160,16 @@ function PricingPageInner() {
         } else if (s != null && s > 0) {
           setStrike(Math.round(s));
         }
-        if (!urlExpiryConsumedRef.current && initialFromUrl.expiry && vs?.expirations) {
-          // Honor ?expiry=YYYY-MM-DD by selecting its index in the surface,
-          // but only on the first hydration. Falls back to index 0 if the
-          // requested expiry isn't on the surface.
-          const idx = vs.expirations.indexOf(initialFromUrl.expiry);
+        if (!urlExpiryConsumedRef.current && initialFromUrl.expiry) {
+          // Honor ?expiry=YYYY-MM-DD by selecting its index in the strip's
+          // source list. Prefer the full chain (incl. LEAPS) so a deep-link
+          // to a long-dated contract resolves; fall back to surface and
+          // finally to index 0 if the date isn't listed at all.
+          const fullList = exps?.expirations.map((e) => e.expiration) ?? [];
+          const idx =
+            fullList.indexOf(initialFromUrl.expiry) >= 0
+              ? fullList.indexOf(initialFromUrl.expiry)
+              : (vs?.expirations.indexOf(initialFromUrl.expiry) ?? -1);
           setExpiryIdx(idx >= 0 ? idx : 0);
           urlExpiryConsumedRef.current = true;
         } else {
@@ -173,33 +187,56 @@ function PricingPageInner() {
     };
   }, [ticker, initialFromUrl.expiry]);
 
-  // Build the expiration strip from the live surface; fall back to a placeholder
-  // before any data arrives so the strip doesn't pop in.
+  // Build the expiration strip from the FULL chain (incl. LEAPS) so the
+  // strip carousel can scroll out to multi-year dates. Decorate with ATM IV
+  // from the (intentionally short-dated) surface when the date overlaps.
+  // Falls back to surface-only or a placeholder if neither has loaded yet.
   const expirations: DerivedExpiration[] = useMemo(() => {
-    if (!surface || !surface.expirations.length) return FALLBACK_EXPIRATIONS;
-    const strikes = surface.strikes;
-    const refSpot = mispricing?.spot_price ?? spot ?? surface.spot_price ?? strikes[0] ?? 0;
-    let atmIdx = 0;
-    let atmDiff = Infinity;
-    for (let j = 0; j < strikes.length; j++) {
-      const d = Math.abs(strikes[j] - refSpot);
-      if (d < atmDiff) {
-        atmDiff = d;
-        atmIdx = j;
+    // Compute the surface's ATM-IV column once so we can index into it for
+    // each expiration date that the surface includes.
+    const surfaceIvByDate = new Map<string, number>();
+    if (surface && surface.expirations.length && surface.strikes.length) {
+      const strikes = surface.strikes;
+      const refSpot = mispricing?.spot_price ?? spot ?? surface.spot_price ?? strikes[0] ?? 0;
+      let atmIdx = 0;
+      let atmDiff = Infinity;
+      for (let j = 0; j < strikes.length; j++) {
+        const d = Math.abs(strikes[j] - refSpot);
+        if (d < atmDiff) {
+          atmDiff = d;
+          atmIdx = j;
+        }
       }
+      surface.expirations.forEach((iso, i) => {
+        const ivAtm = surface.iv_matrix[i]?.[atmIdx];
+        if (typeof ivAtm === 'number' && Number.isFinite(ivAtm)) {
+          surfaceIvByDate.set(iso, ivAtm);
+        }
+      });
     }
-    return surface.expirations.map((iso, i) => {
-      const dte = daysUntil(iso);
-      const ivAtm = surface.iv_matrix[i]?.[atmIdx];
-      return {
-        dte: `${dte}d`,
+
+    if (fullExpirations && fullExpirations.length > 0) {
+      return fullExpirations.map((e) => ({
+        dte: `${e.dte}d`,
+        date: formatExpDate(e.expiration),
+        rawDate: e.expiration,
+        // Prefer surface-derived ATM IV (interpolated); fall back to the
+        // chain's own per-expiration ATM IV; finally 0 so the chip renders.
+        iv: surfaceIvByDate.get(e.expiration) ?? e.atm_iv ?? 0,
+        oi: 0,
+      }));
+    }
+    if (surface && surface.expirations.length) {
+      return surface.expirations.map((iso) => ({
+        dte: `${daysUntil(iso)}d`,
         date: formatExpDate(iso),
         rawDate: iso,
-        iv: typeof ivAtm === 'number' && Number.isFinite(ivAtm) ? ivAtm : 0,
+        iv: surfaceIvByDate.get(iso) ?? 0,
         oi: 0,
-      };
-    });
-  }, [surface, mispricing, spot]);
+      }));
+    }
+    return FALLBACK_EXPIRATIONS;
+  }, [surface, fullExpirations, mispricing, spot]);
 
   const safeExpiryIdx = Math.min(expiryIdx, Math.max(0, expirations.length - 1));
   const expSel = expirations[safeExpiryIdx] ?? FALLBACK_EXPIRATIONS[0];
@@ -211,13 +248,21 @@ function PricingPageInner() {
     if (dte > 0) setDays(dte);
   }, [expSel.rawDate]);
 
-  // Keep the strike window centered on the spot.
+  // Render the full set of strikes the backend exposes for this ticker so the
+  // user can scroll out to far-OTM contracts (e.g. $2028 LEAPS strikes) via
+  // the carousel arrows. Fall back to a small spot-centered window before the
+  // surface arrives so the strip doesn't flash empty.
   const strikeWindow = useMemo(() => {
+    if (surface?.strikes && surface.strikes.length > 0) {
+      const all = [...surface.strikes];
+      if (!all.includes(strike)) all.push(strike);
+      return [...new Set(all)].sort((a, b) => a - b);
+    }
     if (spot == null) return [strike];
     const win = buildStrikeWindow(spot);
     if (!win.includes(strike)) win.push(strike);
     return [...new Set(win)].sort((a, b) => a - b);
-  }, [spot, strike]);
+  }, [surface, spot, strike]);
 
   // Recompute on input changes (debounced + abortable).
   useEffect(() => {

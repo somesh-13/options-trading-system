@@ -1,5 +1,7 @@
 'use client';
 
+import { ScrollCarousel } from '@/components/ui/ScrollCarousel';
+
 type StrikeStripProps = {
   strikes: number[];
   selected: number;
@@ -16,7 +18,7 @@ function moneyness(k: number, spot: number, optType: 'call' | 'put'): 'ITM' | 'O
 
 export function StrikeStrip({ strikes, selected, spot, optType, onSelect }: StrikeStripProps) {
   return (
-    <div className="rv-expstrip" style={{ margin: '6px 0 12px' }}>
+    <ScrollCarousel centerOnKey={selected} style={{ margin: '6px 0 12px' }}>
       {strikes.map((k) => {
         const m = moneyness(k, spot, optType);
         return (
@@ -38,7 +40,7 @@ export function StrikeStrip({ strikes, selected, spot, optType, onSelect }: Stri
           </div>
         );
       })}
-    </div>
+    </ScrollCarousel>
   );
 }
 

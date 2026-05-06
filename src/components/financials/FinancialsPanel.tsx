@@ -22,6 +22,7 @@ import {
   type FinancialStatementHistory,
   type StatementRow,
 } from '@/lib/pricing-api';
+import { ValuationTiles } from './ValuationTiles';
 
 ChartJS.register(
   CategoryScale,
@@ -379,36 +380,56 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
     },
   }), [chartConfig?.hasPercentSeries]);
 
+  // Tiles fetch independently of the statement payload so they should render
+  // even while ratios history is loading / errored / empty.
+  const tilesPrefix =
+    statement === 'ratios' ? <ValuationTiles ticker={ticker} refreshKey={refreshKey} /> : null;
+
   if (loading) {
     return (
-      <div className="rv-card" style={{ padding: 24 }}>
-        <div className="rv-sub" style={{ fontSize: 12 }}>Loading {ticker} financials…</div>
-      </div>
+      <>
+        {tilesPrefix}
+        <div className="rv-card" style={{ padding: 24 }}>
+          <div className="rv-sub" style={{ fontSize: 12 }}>Loading {ticker} financials…</div>
+        </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="rv-card" style={{ padding: 24 }}>
-        <div style={{ color: 'var(--pink)', fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
-          {error}
+      <>
+        {tilesPrefix}
+        <div className="rv-card" style={{ padding: 24 }}>
+          <div style={{ color: 'var(--pink)', fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+            {error}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (!data || data.rows.length === 0) {
     return (
-      <div className="rv-card" style={{ padding: 24 }}>
-        <div className="rv-sub" style={{ fontSize: 12 }}>
-          No {HEADER_LABEL_BY_STATEMENT[statement].toLowerCase()} data for {ticker}.
+      <>
+        {tilesPrefix}
+        <div className="rv-card" style={{ padding: 24 }}>
+          <div className="rv-sub" style={{ fontSize: 12 }}>
+            No {HEADER_LABEL_BY_STATEMENT[statement].toLowerCase()} data for {ticker}.
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="rv-card" style={{ padding: 0, overflow: 'hidden' }}>
+    <>
+      {/* Live valuation multiples (P/E, P/S, P/B, P/FCF, EV/EBITDA, EV/Sales)
+          shown only on the Ratios tab. Mixes today's spot with the latest
+          annual filing — historical rows aren't computed because we don't
+          have period-end share prices. */}
+      {tilesPrefix}
+      <div className="rv-card" style={{ padding: 0, overflow: 'hidden' }}>
       {/* Header */}
       <div
         style={{
@@ -673,7 +694,8 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
           </tbody>
         </table>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

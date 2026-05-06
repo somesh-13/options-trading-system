@@ -345,3 +345,155 @@ def _label_for_end(end: str) -> str:
         return _date.fromisoformat(end).strftime("%b '%y")
     except Exception:
         return end
+
+
+# ---------------------------------------------------------------------------
+# Valuation snapshot — multiples that mix live spot with filed financials
+# ---------------------------------------------------------------------------
+#
+# Unlike the statement-internal ratios above, these need today's share price
+# to compute. They're a *snapshot*: only the latest period's revenue / NI /
+# equity / FCF is used; we intentionally don't backfill historical multiples
+# because we don't have period-end share prices. The frontend renders these
+# as tiles above the Ratios table.
+
+
+def _latest_value(rows: List[Dict[str, Any]], key: str) -> Optional[float]:
+    for r in rows:
+        if r.get("key") == key:
+            vals = r.get("values") or []
+            return vals[0] if vals and isinstance(vals[0], (int, float)) else None
+    return None
+
+
+def get_valuation_snapshot(ticker: str, *, force: bool = False) -> Dict[str, Any]:
+    """Compute P/E, P/S, P/B, P/FCF, EV/EBITDA, EV/Sales for the latest annual
+    period using the current spot from ``get_ticker_price``.
+
+    All money inputs from sec_statements are denominated in millions; the
+    multiples are unitless so the scaling cancels. Market cap and enterprise
+    value are returned in millions.
+    """
+    from data.market_data import get_ticker_price  # local import: avoid cycles
+
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    inc = get_income_statement(ticker_u, "annual", force=force)
+    bal = get_balance_sheet(ticker_u, "annual", force=force)
+    cfs = get_cash_flow(ticker_u, "annual", force=force)
+
+    # If a filer is foreign or there's no SEC data at all, surface a clean
+    # empty payload instead of NaN-laden multiples.
+    if not inc.get("rows") or not bal.get("rows"):
+        return {
+            "ticker": ticker_u,
+            "spot": None,
+            "asof_period": None,
+            "market_cap_m": None,
+            "enterprise_value_m": None,
+            "multiples": {},
+            "message": inc.get("message") or "No SEC statements for ticker",
+        }
+
+    try:
+        spot = get_ticker_price(ticker_u)
+    except Exception as exc:
+        log.warning("spot lookup failed for %s: %s", ticker_u, exc)
+        spot = None
+
+    if spot is None or not math.isfinite(spot) or spot <= 0:
+        return {
+            "ticker": ticker_u,
+            "spot": None,
+            "asof_period": (inc.get("years") or [None])[0],
+            "market_cap_m": None,
+            "enterprise_value_m": None,
+            "multiples": {},
+            "message": "Spot price unavailable",
+        }
+
+    inc_rows = inc.get("rows", [])
+    bal_rows = bal.get("rows", [])
+    cf_rows = cfs.get("rows", [])
+
+    revenue = _latest_value(inc_rows, "revenue")
+    net_income = _latest_value(inc_rows, "net_income")
+    operating_income = _latest_value(inc_rows, "operating_income")
+    da = _latest_value(inc_rows, "da")
+    shares = _latest_value(inc_rows, "shares_diluted_was") or _latest_value(inc_rows, "shares_basic_was")
+    total_equity = _latest_value(bal_rows, "total_equity")
+    cash = _latest_value(bal_rows, "cash") or 0.0
+    lt_debt = _latest_value(bal_rows, "lt_debt") or 0.0
+    st_debt = _latest_value(bal_rows, "st_debt") or 0.0
+    cfo = _latest_value(cf_rows, "cf_from_operations")
+    capex = _latest_value(cf_rows, "cf_capex")
+
+    # Market cap: spot ($/share) × shares (in millions) → result in millions.
+    if shares is None or shares <= 0:
+        return {
+            "ticker": ticker_u,
+            "spot": spot,
+            "asof_period": (inc.get("years") or [None])[0],
+            "market_cap_m": None,
+            "enterprise_value_m": None,
+            "multiples": {},
+            "message": "Shares outstanding unavailable",
+        }
+    market_cap_m = spot * shares
+    total_debt = lt_debt + st_debt
+    ev_m = market_cap_m + total_debt - cash
+
+    # FCF = CFO − |Capex|. abs() guards against either sign convention since
+    # the XBRL `PaymentsToAcquirePropertyPlantAndEquipment` is sometimes
+    # extracted positive (a payment) and sometimes negated.
+    fcf = (cfo - abs(capex)) if cfo is not None and capex is not None else None
+    # EBITDA = Operating Income + D&A. Fall back to None if either missing.
+    ebitda = (operating_income + da) if operating_income is not None and da is not None else None
+
+    def _safe(num: Optional[float], den: Optional[float]) -> Optional[float]:
+        if num is None or den is None or den == 0:
+            return None
+        v = num / den
+        return v if math.isfinite(v) else None
+
+    multiples = {
+        "pe": {
+            "label": "P/E",
+            "value": _safe(market_cap_m, net_income if (net_income is not None and net_income > 0) else None),
+            "tooltip": "Market cap ÷ net income · negative earnings → not meaningful",
+        },
+        "ps": {
+            "label": "P/S",
+            "value": _safe(market_cap_m, revenue if (revenue is not None and revenue > 0) else None),
+            "tooltip": "Market cap ÷ revenue",
+        },
+        "pb": {
+            "label": "P/B",
+            "value": _safe(market_cap_m, total_equity if (total_equity is not None and total_equity > 0) else None),
+            "tooltip": "Market cap ÷ total stockholders' equity",
+        },
+        "p_fcf": {
+            "label": "P/FCF",
+            "value": _safe(market_cap_m, fcf if (fcf is not None and fcf > 0) else None),
+            "tooltip": "Market cap ÷ free cash flow (CFO − Capex)",
+        },
+        "ev_ebitda": {
+            "label": "EV/EBITDA",
+            "value": _safe(ev_m, ebitda if (ebitda is not None and ebitda > 0) else None),
+            "tooltip": "(Market cap + total debt − cash) ÷ (Operating Income + D&A)",
+        },
+        "ev_sales": {
+            "label": "EV/Sales",
+            "value": _safe(ev_m, revenue if (revenue is not None and revenue > 0) else None),
+            "tooltip": "(Market cap + total debt − cash) ÷ revenue",
+        },
+    }
+
+    return {
+        "ticker": ticker_u,
+        "spot": spot,
+        "asof_period": (inc.get("years") or [None])[0],
+        "market_cap_m": market_cap_m,
+        "enterprise_value_m": ev_m,
+        "shares_diluted_m": shares,
+        "multiples": multiples,
+    }

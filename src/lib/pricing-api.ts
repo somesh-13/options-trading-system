@@ -1238,6 +1238,49 @@ export async function getRatios(
   return getStatement('ratios', ticker, period, 'Ratios', opts);
 }
 
+// ---- Valuation snapshot (live spot × latest period) ---------------------
+
+export interface ValuationMultiple {
+  label: string;
+  value: number | null;
+  tooltip: string;
+}
+
+export interface ValuationSnapshot {
+  ticker: string;
+  spot: number | null;
+  asof_period: string | null;
+  market_cap_m: number | null;
+  enterprise_value_m: number | null;
+  shares_diluted_m?: number | null;
+  multiples: Record<string, ValuationMultiple>;
+  message?: string;
+}
+
+export async function getValuationSnapshot(
+  ticker: string,
+  opts?: StatementFetchOptions,
+): Promise<ValuationSnapshot> {
+  const params = new URLSearchParams();
+  if (opts?.force) params.set('force', 'true');
+  const qs = params.toString();
+  const res = await fetch(
+    `${PRICING_API_URL}/api/sec/${encodeURIComponent(ticker)}/valuation-snapshot${qs ? `?${qs}` : ''}`,
+    { cache: 'no-store' },
+  );
+  if (!res.ok) {
+    let detail = `Valuation snapshot fetch failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = body.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
 // ---- AI insights for a structured statement -----------------------------
 
 export interface FinancialInsights {

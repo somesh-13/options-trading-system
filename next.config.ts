@@ -22,11 +22,13 @@ const BACKEND_PROXY_PREFIXES = [
   "ir",
   "market",
   "mispricing",
+  "notifications",
   "pricing",
   "regime",
   "replay",
   "robinhood",
   "scanner",
+  "sec",
   "sentiment",
   "signals",
 ];

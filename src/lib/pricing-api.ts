@@ -1114,3 +1114,188 @@ export async function runReplay(ticker: string, start: string, end: string): Pro
 export function replayPdfUrl(replayId: string): string {
   return `${PRICING_API_URL}/api/replay/${encodeURIComponent(replayId)}/pdf`;
 }
+
+// ---- Financial statement history (Financials tab) ------------------------
+
+export type StatementRowFormat = 'money' | 'pct' | 'per_share' | 'ratio' | 'days' | 'x';
+
+/** Back-compat alias — older callers used `ISRowFormat`. */
+export type ISRowFormat = StatementRowFormat;
+
+export interface StatementRow {
+  key: string;
+  label: string;
+  format?: StatementRowFormat;
+  bold?: boolean;
+  italic?: boolean;
+  /** Aligned with the parent's `years[]`. `null` = unavailable in source data. */
+  values: Array<number | null>;
+}
+
+/** Back-compat alias. */
+export type IncomeStatementRow = StatementRow;
+
+export type StatementYearsSource =
+  | '8-K'
+  | '6-K'
+  | 'yfinance'
+  | 'sec-edgar'
+  | 'yfinance-fallback';
+
+export interface FinancialStatementHistory {
+  ticker: string;
+  currency: string;
+  unit: 'K' | 'M' | 'B';
+  /** "annual" or "quarterly" — set by the backend. */
+  period?: 'annual' | 'quarterly';
+  /** Most-recent period first. */
+  years: string[];
+  /** Aligned with `years[]`. Identifies the column's data source.
+   *  - `sec-edgar`: extracted from XBRL companyfacts (canonical).
+   *  - `yfinance-fallback`: spliced from yfinance because SEC hasn't tagged the
+   *    most-recent quarter yet (10-Q lag of ~30-45 days).
+   *  - `8-K` / `6-K`: legacy — preliminary numbers from the latest earnings
+   *    release exhibit (deprecated path).
+   *  - `yfinance`: legacy — fully sourced from yfinance (deprecated path). */
+  years_source?: StatementYearsSource[];
+  /** Raw ISO end-dates, parallel to `years[]`. Backend-only metadata; the UI
+   *  uses the human-formatted `years[]` strings. */
+  year_ends?: string[];
+  rows: StatementRow[];
+  asOf?: string | null;
+  /** Where the response as a whole came from. */
+  source?: 'sec-edgar' | 'yfinance-fallback';
+  error?: string;
+  message?: string;
+}
+
+/** Back-compat alias. */
+export type IncomeStatementHistory = FinancialStatementHistory;
+
+type Period = 'annual' | 'quarterly';
+
+async function getStatement(
+  endpoint: 'income-statement' | 'balance-sheet' | 'cash-flow' | 'ratios',
+  ticker: string,
+  period: Period,
+  label: string,
+): Promise<FinancialStatementHistory> {
+  const res = await fetch(
+    `${PRICING_API_URL}/api/sec/${encodeURIComponent(ticker)}/${endpoint}?period=${period}`,
+    { cache: 'no-store' },
+  );
+  if (!res.ok) {
+    let detail = `${label} fetch failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = body.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+export async function getIncomeStatementSec(
+  ticker: string,
+  period: Period = 'annual',
+): Promise<FinancialStatementHistory> {
+  return getStatement('income-statement', ticker, period, 'Income statement');
+}
+
+export async function getBalanceSheet(
+  ticker: string,
+  period: Period = 'annual',
+): Promise<FinancialStatementHistory> {
+  return getStatement('balance-sheet', ticker, period, 'Balance sheet');
+}
+
+export async function getCashFlow(
+  ticker: string,
+  period: Period = 'annual',
+): Promise<FinancialStatementHistory> {
+  return getStatement('cash-flow', ticker, period, 'Cash flow');
+}
+
+export async function getRatios(
+  ticker: string,
+  period: Period = 'annual',
+): Promise<FinancialStatementHistory> {
+  return getStatement('ratios', ticker, period, 'Ratios');
+}
+
+// ---- AI insights for a structured statement -----------------------------
+
+export interface FinancialInsights {
+  summary_bullets: string[];
+  trends: {
+    revenue: string | null;
+    gross_profit: string | null;
+    operating: string | null;
+    ebitda: string | null;
+    net_income: string | null;
+  };
+  data_quality_notes: string[];
+  missing_periods: string[];
+  _model?: string;
+  _ticker?: string;
+  _statement?: string;
+  _period?: string;
+  _data_hash?: string;
+  _periods_covered?: string[];
+  _generated_at?: number;
+  _elapsed_sec?: number;
+}
+
+export type StatementKind = 'income-statement' | 'balance-sheet' | 'cash-flow' | 'ratios';
+
+export async function getStatementInsights(
+  ticker: string,
+  statement: StatementKind,
+  period: Period = 'annual',
+  options: { force?: boolean } = {},
+): Promise<FinancialInsights> {
+  const qs = new URLSearchParams({ period });
+  if (options.force) qs.set('force', 'true');
+  const res = await fetch(
+    `${PRICING_API_URL}/api/sec/${encodeURIComponent(ticker)}/${statement}/insights?${qs.toString()}`,
+    { cache: 'no-store' },
+  );
+  if (!res.ok) {
+    let detail = `Insights fetch failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = body.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+/** Legacy yfinance-backed income statement endpoint. Will be removed once the
+ *  Financials tab fully migrates to {@link getIncomeStatementSec}. */
+export async function getIncomeStatement(
+  ticker: string,
+  periods = 11,
+  quarterly = false,
+): Promise<FinancialStatementHistory> {
+  const qs = `periods=${periods}${quarterly ? '&quarterly=true' : ''}`;
+  const res = await fetch(
+    `${PRICING_API_URL}/api/market/${encodeURIComponent(ticker)}/income-statement?${qs}`,
+    { cache: 'no-store' },
+  );
+  if (!res.ok) {
+    let detail = `Income statement fetch failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) detail = body.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}

@@ -151,6 +151,12 @@ def get_cik_for_ticker(ticker: str) -> Optional[str]:
     return _load_ticker_cik_map().get(ticker.upper())
 
 
+# Public aliases for sibling modules (sec_exhibits, future SEC consumers) that
+# need the same rate-limited session — never duplicate the lock or User-Agent.
+http_get = _http_get
+atomic_write_json = _atomic_write_json
+
+
 def fetch_company_facts(cik: str) -> Optional[dict]:
     """Disk-cached (24h) companyfacts JSON for a CIK. None on 404 / network error."""
     _ensure_dirs()

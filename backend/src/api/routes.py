@@ -1,6 +1,6 @@
 """FastAPI Routes for Options Pricing Engine"""
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import sys
@@ -23,8 +23,13 @@ from pricing.vol_surface import generate_vol_surface
 from pricing.hedge_stability import forecast_delta_decay, forecast_vol_shock, rehedge_recommendation
 from pricing.pnl_attribution import greeks_pnl_attribution, stress_test_position, stress_test_portfolio
 from data.market_data import get_ticker_price, detect_mispricing, get_tca_data, get_price_history, get_ticker_detail
-from data.fundamentals import get_ticker_fundamentals
+from data.earnings_extract import get_latest_8k_earnings
+from data.fundamentals import get_ticker_fundamentals, get_income_statement_history
 from scanner.nl_parser import parse_nl_query
+from scanner.regime_shift import (
+    classify as classify_regime_shift,
+    AnthropicNotConfigured as _AnthropicNotConfigured,
+)
 from data.hmm_regime import detect_current_regime
 from stats.hv_confidence import hv_with_confidence
 from api.models import (
@@ -556,11 +561,74 @@ def get_ticker_detail_endpoint(ticker: str):
 
 @app.get("/api/market/{ticker}/fundamentals")
 def get_ticker_fundamentals_endpoint(ticker: str):
-    """Deep fundamentals (income stmt, cashflow, balance sheet) for the DCF page."""
+    """Smart router. Returns the ETF digest for funds (AUM, NAV, expense ratio,
+    top holdings, sector weights) and the operating-company DCF digest for
+    everything else. The `quoteType` field on the response distinguishes them.
+    """
+    from data.etf_fundamentals import get_etf_fundamentals, is_etf
+    ticker_u = ticker.upper()
     try:
-        return get_ticker_fundamentals(ticker.upper())
+        if is_etf(ticker_u):
+            return get_etf_fundamentals(ticker_u)
+        result = get_ticker_fundamentals(ticker_u)
+        if isinstance(result, dict) and "quoteType" not in result:
+            result["quoteType"] = "EQUITY"
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Fundamentals fetch failed for {ticker}: {str(e)}")
+
+
+@app.get("/api/market/{ticker}/latest-earnings")
+def get_ticker_latest_earnings_endpoint(ticker: str):
+    """Headline numbers from the most recent 8-K Exhibit 99.1 earnings release.
+
+    Useful when yfinance hasn't yet ingested the just-filed quarter (typical
+    1-3 day lag). Returns ``{"ticker": ..., "available": false}`` when no
+    parseable earnings release was filed in the last 120 days.
+    """
+    try:
+        extract = get_latest_8k_earnings(ticker.upper())
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Latest earnings fetch failed for {ticker}: {str(e)}",
+        )
+    if not extract:
+        return {"ticker": ticker.upper(), "available": False}
+    return {"ticker": ticker.upper(), "available": True, **extract}
+
+
+@app.get("/api/market/{ticker}/income-statement")
+def get_ticker_income_statement_endpoint(
+    ticker: str,
+    periods: int = 11,
+    quarterly: bool = False,
+    response: Response = None,  # type: ignore[assignment]
+):
+    """[DEPRECATED] Yfinance-backed income statement.
+
+    The Financials tab now uses ``/api/sec/{ticker}/income-statement`` which
+    is sourced from SEC XBRL companyfacts (10+ years vs ~4 from yfinance).
+    This endpoint is preserved for one release for any external consumer; new
+    callers should migrate.
+    """
+    if response is not None:
+        response.headers["Deprecation"] = "true"
+        response.headers["Sunset"] = "use /api/sec/{ticker}/income-statement"
+    try:
+        result = get_income_statement_history(
+            ticker.upper(),
+            periods=periods,
+            quarterly=quarterly,
+        )
+        if isinstance(result, dict):
+            result["_deprecated"] = "use /api/sec/{ticker}/income-statement"
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Income statement fetch failed for {ticker}: {str(e)}",
+        )
 
 
 from pydantic import BaseModel as _ScannerBaseModel  # local alias; avoids touching models.py
@@ -576,6 +644,48 @@ def scanner_parse(body: ScannerParseRequest):
         return parse_nl_query(body.query)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"NL parse failed: {str(e)}")
+
+
+@app.get("/api/market/{ticker}/contracts")
+def get_ticker_contracts(ticker: str, force: bool = False):
+    """LLM-extracted signed commercial contracts (HPC leases, PPAs, hosting deals).
+
+    Reads recent 8-K Exhibit 99.1 bodies + IR news headlines for the ticker,
+    runs Gemini (or Claude when ANTHROPIC_API_KEY is set), and returns
+    structured Contract objects for the contract-aware DCF layer. Disk-cached
+    per-ticker keyed on the latest 8-K accession; in-memory cached ~30 min.
+    """
+    from data.contract_extract import extract_contracts
+    try:
+        return extract_contracts(ticker.upper(), force=force).model_dump()
+    except _AnthropicNotConfigured as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Contract extraction failed for {ticker}: {str(e)}",
+        )
+
+
+@app.post("/api/scanner/regime-shift/{ticker}")
+def scanner_regime_shift(ticker: str, force: bool = False):
+    """Single-stock fundamentals regime-shift classifier (Claude-driven).
+
+    Aggregates 8q quarterly fundamentals, the latest 8-K/6-K earnings release,
+    price/volume technicals, IV/HV context, and recent news headlines, then
+    runs the SanDisk-style 6-step rubric. Cached for ~15 min per ticker;
+    pass ``?force=true`` to bypass.
+    """
+    try:
+        result = classify_regime_shift(ticker.upper(), force=force)
+    except _AnthropicNotConfigured as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Regime-shift classification failed for {ticker}: {str(e)}",
+        )
+    return result.model_dump()
 
 
 @app.get("/api/market/{ticker}/price-history")
@@ -923,6 +1033,221 @@ def get_ir_counts(ticker: str):
         counts={k: v for k, v in counts.items() if k != "TOTAL"},
         total=int(counts.get("TOTAL", 0)),
     )
+
+
+# =============================================
+# SEC EDGAR — S&P 500 + Portfolio cache + per-ticker reads
+# =============================================
+
+@app.post("/api/sec/sync")
+def sec_sync_kickoff(
+    limit: Optional[int] = None,
+    include_portfolio: bool = True,
+    include_sp500: bool = True,
+):
+    """Kick off a non-blocking S&P 500 + portfolio EDGAR cache warmup.
+
+    Portfolio holdings are processed first so they're guaranteed coverage even
+    if `limit` is set. Subsequent runs are mostly cache hits and finish fast.
+    """
+    from data.sp500_sync import kick_off_in_thread, is_running
+    if is_running():
+        return {"started": False, "reason": "already_running"}
+    return kick_off_in_thread(limit=limit)
+
+
+@app.get("/api/sec/sync/status")
+def sec_sync_status():
+    """Current sync progress (or last completed run)."""
+    from data.sp500_sync import get_sync_status
+    return get_sync_status()
+
+
+@app.get("/api/sec/universe")
+def sec_universe():
+    """The dedup'd ticker universe used by the sync (portfolio first)."""
+    from data.sp500_sync import _resolve_universe
+    from data.sp500_universe import get_universe_status
+    tickers = _resolve_universe(include_sp500=True, include_portfolio=True, force_refresh_universe=False)
+    return {
+        "tickers": tickers,
+        "count": len(tickers),
+        "sp500_cache": get_universe_status(),
+    }
+
+
+@app.get("/api/sec/companyfacts/{ticker}")
+def sec_companyfacts(ticker: str):
+    """Extracted fundamentals digest from cached XBRL companyfacts.
+
+    Returns the load-bearing DCF inputs (revenue, op margin, tax rate, capex,
+    debt, cash, shares) plus revenue history. Cache hit is instant; miss
+    triggers a single SEC roundtrip.
+    """
+    from data.sec_edgar import extract_sec_fundamentals
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    data = extract_sec_fundamentals(ticker_u)
+    if not data:
+        raise HTTPException(status_code=404, detail=f"No SEC data for {ticker_u}")
+    return {"ticker": ticker_u, **data}
+
+
+@app.get("/api/sec/{ticker}/income-statement")
+def sec_income_statement(ticker: str, period: str = "annual"):
+    """Full multi-year income statement extracted from XBRL companyfacts."""
+    from data.sec_statements import get_income_statement
+    if period not in ("annual", "quarterly"):
+        raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    return get_income_statement(ticker_u, period)
+
+
+@app.get("/api/sec/{ticker}/balance-sheet")
+def sec_balance_sheet(ticker: str, period: str = "annual"):
+    """Full multi-year balance sheet extracted from XBRL companyfacts."""
+    from data.sec_statements import get_balance_sheet
+    if period not in ("annual", "quarterly"):
+        raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    return get_balance_sheet(ticker_u, period)
+
+
+@app.get("/api/sec/{ticker}/cash-flow")
+def sec_cash_flow(ticker: str, period: str = "annual"):
+    """Full multi-year cash flow statement extracted from XBRL companyfacts."""
+    from data.sec_statements import get_cash_flow
+    if period not in ("annual", "quarterly"):
+        raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    return get_cash_flow(ticker_u, period)
+
+
+@app.get("/api/sec/{ticker}/ratios")
+def sec_ratios(ticker: str, period: str = "annual"):
+    """Derived financial ratios (margins, returns, liquidity, leverage)."""
+    from data.financial_ratios import get_ratios
+    if period not in ("annual", "quarterly"):
+        raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    return get_ratios(ticker_u, period)
+
+
+@app.get("/api/sec/{ticker}/{statement}/insights")
+def sec_statement_insights(ticker: str, statement: str, period: str = "annual", force: bool = False):
+    """AI-generated trend commentary for one statement.
+
+    Pulls the structured statement (income/balance/cash-flow/ratios), passes
+    it to ``financial_ai_insights.generate_financial_insights``, and returns
+    the result. Cached by data-hash so restatements auto-invalidate.
+    """
+    from data.financial_ai_insights import generate_financial_insights
+    from data.sec_statements import (
+        get_balance_sheet,
+        get_cash_flow,
+        get_income_statement,
+    )
+    from data.financial_ratios import get_ratios
+
+    if period not in ("annual", "quarterly"):
+        raise HTTPException(status_code=400, detail="period must be 'annual' or 'quarterly'")
+
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    fetcher = {
+        "income-statement": get_income_statement,
+        "balance-sheet": get_balance_sheet,
+        "cash-flow": get_cash_flow,
+        "ratios": get_ratios,
+    }.get(statement)
+    if fetcher is None:
+        raise HTTPException(
+            status_code=400,
+            detail="statement must be one of: income-statement, balance-sheet, cash-flow, ratios",
+        )
+
+    statement_data = fetcher(ticker_u, period)  # type: ignore[arg-type]
+    if not statement_data.get("rows"):
+        raise HTTPException(status_code=404, detail=f"No statement data for {ticker_u}")
+
+    insights = generate_financial_insights(
+        ticker=ticker_u,
+        statement=statement,
+        period=period,
+        statement_data=statement_data,
+        force=force,
+    )
+    if insights is None:
+        raise HTTPException(
+            status_code=503,
+            detail="AI insights unavailable (Gemini API key missing or call failed)",
+        )
+    return insights
+
+
+@app.get("/api/sec/filings/{ticker}/{accession}/ai-summary")
+def sec_filing_ai_summary(ticker: str, accession: str, force: bool = False):
+    """AI-generated executive summary for one SEC filing.
+
+    Cached forever per-accession (filings are immutable). Returns the cached
+    payload if it exists; otherwise fetches the exhibit body, runs Gemini
+    Flash with a structured schema, and caches the result. ``?force=true``
+    skips the cache (useful for re-running after a prompt change).
+    """
+    from data.filing_ai_summary import generate_filing_summary, get_cached_summary
+    from data.sec_exhibits import fetch_filing_body_by_accession
+
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    if not force:
+        cached = get_cached_summary(accession)
+        if cached is not None:
+            return cached
+
+    body = fetch_filing_body_by_accession(ticker_u, accession)
+    if not body:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No retrievable body for {ticker_u}/{accession} (8-K may lack Exhibit 99.1)",
+        )
+
+    summary = generate_filing_summary(
+        ticker=ticker_u,
+        accession=accession,
+        body=body,
+        force=force,
+    )
+    if summary is None:
+        raise HTTPException(
+            status_code=503,
+            detail="AI summary unavailable (Gemini API key missing or call failed)",
+        )
+    return summary
+
+
+@app.get("/api/sec/filings/{ticker}")
+def sec_filings(ticker: str, limit: int = 15):
+    """Recent SEC filings for a ticker. For 8-Ks, includes exhibit-99.1 body.
+
+    Cache-warm on tickers covered by the overnight sync. Cold tickers fall
+    through to a live SEC fetch (rate-limited at 10 req/s).
+    """
+    from data.sec_exhibits import scrape_filings_with_bodies
+    ticker_u = ticker.upper().strip().replace(".", "-")
+    rows = scrape_filings_with_bodies(ticker_u, limit=int(limit))
+    if not rows:
+        raise HTTPException(status_code=404, detail=f"No filings for {ticker_u}")
+    return {"ticker": ticker_u, "count": len(rows), "filings": rows}
+
+
+@app.get("/api/etf/{ticker}")
+def etf_fundamentals_endpoint(ticker: str):
+    """ETF metadata digest (AUM, NAV, expense ratio, top holdings, sector
+    weights). 404 if the ticker isn't an ETF — callers wanting an automatic
+    stock/ETF router should use `/api/market/{ticker}/fundamentals` instead.
+    """
+    from data.etf_fundamentals import get_etf_fundamentals, is_etf
+    ticker_u = ticker.upper().strip()
+    if not is_etf(ticker_u):
+        raise HTTPException(status_code=404, detail=f"{ticker_u} is not an ETF")
+    return get_etf_fundamentals(ticker_u)
 
 
 # =============================================
@@ -3062,6 +3387,47 @@ def get_analytics_run(run_id: int):
         payload=payload,
         notes=row["notes"],
     )
+
+
+# ---------------------------------------------------------------------------
+# Notifications
+# ---------------------------------------------------------------------------
+
+import notifications as _notifications  # noqa: E402  -- import after FastAPI app is created
+
+
+@app.get("/api/notifications")
+def list_notifications():
+    """Return undismissed alerts, newest first."""
+    try:
+        items = _notifications.list_active()
+        return {"items": items, "count": len(items)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"List failed: {e}")
+
+
+@app.post("/api/notifications/scan-now")
+def scan_notifications(account: str = "all"):
+    """Run all detectors against the live Robinhood book and persist new alerts."""
+    try:
+        return _notifications.scan_now(account=account)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Scan failed: {e}")
+
+
+@app.post("/api/notifications/{notification_id}/dismiss")
+def dismiss_notification(notification_id: int):
+    ok = _notifications.dismiss(notification_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Notification not found or already dismissed.")
+    return {"id": notification_id, "dismissed": True}
+
+
+@app.post("/api/notifications/dismiss-all")
+def dismiss_all_notifications():
+    from notifications import service as _svc  # type: ignore
+    n = _svc.dismiss_all()
+    return {"dismissed": n}
 
 
 if __name__ == "__main__":

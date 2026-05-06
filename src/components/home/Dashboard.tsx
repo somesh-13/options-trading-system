@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IvHvScale } from '@/components/charts/IvHvScale';
+import { MarketSnapshot } from './MarketSnapshot';
 import { getMispricing, getEngineLogs, type MispricingData } from '@/lib/pricing-api';
 import {
   getRobinhoodHoldings,
@@ -324,6 +325,8 @@ export function Dashboard() {
           </button>
         </div>
       )}
+
+      <MarketSnapshot />
 
       <div className="rv-grid-4" style={{ marginBottom: 14 }}>
         <div className="rv-kpi">

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useSyncExternalStore } from 'react';
 import { StatusPills } from './StatusPills';
 import { CommandPaletteTrigger } from './CommandPalette';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { SettingsButton } from './SettingsButton';
 
 const PAGE_LABELS: Record<string, string> = {
   '': 'Today',
@@ -96,6 +98,8 @@ export function TopBar({ onHamburgerClick }: TopBarProps) {
       </div>
       <CommandPaletteTrigger />
       <div className="rv-pills"><StatusPills /></div>
+      <SettingsButton />
+      <NotificationBell />
     </div>
   );
 }

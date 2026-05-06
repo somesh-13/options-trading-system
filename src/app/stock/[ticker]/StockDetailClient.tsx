@@ -5,7 +5,18 @@ import Link from 'next/link';
 import StockPriceChart from '@/components/charts/StockPriceChart';
 import MispricingDetector from '@/components/MispricingDetector';
 import DCFValuation from '@/components/DCFValuation';
+import FinancialsTabs from '@/components/financials/FinancialsTabs';
+import { PanelHost } from '@/components/ui/PanelHost';
+import { AddPanelButton } from '@/components/ui/AddPanelButton';
+import { usePanelLayout } from '@/lib/usePanelLayout';
+import {
+  STOCK_OVERVIEW_PANELS,
+  DEFAULT_OVERVIEW_LAYOUT,
+  type StockOverviewContext,
+} from './panels';
 import IRFilingsPanel from '@/components/IRFilingsPanel';
+import { EarningsAIPanel } from '@/components/EarningsAIPanel';
+import RegimeShiftPanel from '@/components/scanner/RegimeShiftPanel';
 import { StockPositionCard } from '@/components/robinhood/StockPositionCard';
 import { EquityTradePanel } from '@/components/robinhood/EquityTradePanel';
 import type { HistoricalDataPoint, TimeRange } from '@/lib/types/historicalPrice';
@@ -18,7 +29,7 @@ const Icon = {
   LineChart:      ({ size = 14 }: { size?: number }) => <span aria-hidden style={{ fontSize: size, lineHeight: 1 }}>⎍</span>,
 };
 
-type TabType = 'overview' | 'dcf';
+type TabType = 'overview' | 'financials' | 'dcf' | 'regime-shift' | 'earnings-ir';
 
 export interface Fundamentals {
   revenue?: number | null;           // $ absolute (TTM)
@@ -132,6 +143,18 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
     setStockData((prev) => (prev ? { ...prev, historicalData: filtered } : prev));
   }, [timeRange, fullHistoricalData]);
 
+  // Layout hooks must run on every render — keep above the early returns.
+  const overviewMain = usePanelLayout(
+    'stock-detail',
+    'overview-main',
+    [...DEFAULT_OVERVIEW_LAYOUT.main],
+  );
+  const overviewSidebar = usePanelLayout(
+    'stock-detail',
+    'overview-sidebar',
+    [...DEFAULT_OVERVIEW_LAYOUT.sidebar],
+  );
+
   if (loading && !stockData) {
     return (
       <div style={{ padding: '18px 22px' }}>
@@ -161,8 +184,32 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
   const isPositive = stockData.changePercent >= 0;
   const changeColor = isPositive ? 'var(--green)' : 'var(--pink)';
 
+  const panelCtx: StockOverviewContext = { stockData, isPositive, changeColor };
+
+  const renderPanel = (
+    panelId: string,
+    layout: ReturnType<typeof usePanelLayout>,
+  ) => {
+    const def = STOCK_OVERVIEW_PANELS[panelId];
+    if (!def) return null;
+    const idx = layout.visible.indexOf(panelId);
+    return (
+      <PanelHost
+        key={panelId}
+        cardId={`stock-detail:${panelId}`}
+        onRemove={() => layout.removePanel(panelId)}
+        onMoveUp={() => layout.movePanel(panelId, 'up')}
+        onMoveDown={() => layout.movePanel(panelId, 'down')}
+        canMoveUp={idx > 0}
+        canMoveDown={idx >= 0 && idx < layout.visible.length - 1}
+      >
+        {def.body(panelCtx)}
+      </PanelHost>
+    );
+  };
+
   return (
-    <div style={{ padding: '18px 22px' }}>
+    <div className="rv-stock-detail" style={{ padding: '18px 22px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <Link href="/" className="rv-btn ghost" prefetch style={{ padding: '6px 8px' }}>
@@ -192,7 +239,7 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--line)', marginBottom: 14 }}>
-        {(['overview', 'dcf'] as TabType[]).map((tab) => (
+        {(['overview', 'financials', 'dcf', 'regime-shift', 'earnings-ir'] as TabType[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -210,67 +257,50 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
               letterSpacing: '.04em',
             }}
           >
-            {tab === 'dcf' ? 'DCF Valuation' : 'Overview'}
+            {tab === 'dcf'
+              ? 'DCF Valuation'
+              : tab === 'financials'
+                ? 'Financials'
+                : tab === 'regime-shift'
+                  ? 'Regime Shift'
+                  : tab === 'earnings-ir'
+                    ? 'Earnings & IR'
+                    : 'Overview'}
           </button>
         ))}
       </div>
 
-      {/* Position card — always shown, handles "no position" empty state gracefully */}
-      <StockPositionCard ticker={ticker} />
-
-      {/* Trade panel — symbol locked to this page's ticker */}
-      <div style={{ marginTop: 14 }}>
-        <EquityTradePanel equities={[]} lockedSymbol={stockData.ticker} />
-      </div>
+      {/* Position + Trade row — Overview only. Other tabs (Financials / DCF /
+          Regime Shift / Earnings & IR) are analytical views; the trade panels
+          are noise there and waste vertical space. */}
+      {activeTab === 'overview' && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: 14,
+            alignItems: 'start',
+            marginBottom: 14,
+          }}
+        >
+          <StockPositionCard ticker={ticker} />
+          <EquityTradePanel equities={[]} lockedSymbol={stockData.ticker} />
+        </div>
+      )}
 
       {activeTab === 'overview' && (
         <div className="rv-stock-overview">
           {/* Main column */}
           <div>
-            {/* Price overview */}
-            <div className="rv-card" style={{ marginTop: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div className="text-meta">CURRENT PRICE</div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-jetbrains-mono), monospace',
-                      fontSize: 34,
-                      fontWeight: 700,
-                      letterSpacing: '-0.01em',
-                      color: 'var(--ink)',
-                      marginTop: 4,
-                    }}
-                  >
-                    ${stockData.price.toFixed(2)}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    padding: 10,
-                    borderRadius: 8,
-                    background: isPositive ? 'rgba(0,200,5,.08)' : 'rgba(255,0,110,.08)',
-                    border: `1px solid ${isPositive ? 'rgba(0,200,5,.3)' : 'rgba(255,0,110,.3)'}`,
-                  }}
-                >
-                  {isPositive ? <Icon.TrendingUp color={changeColor} /> : <Icon.TrendingDown color={changeColor} />}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 14, marginTop: 10, alignItems: 'baseline' }}>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-jetbrains-mono), monospace',
-                    color: changeColor,
-                    fontWeight: 600,
-                    fontSize: 14,
-                  }}
-                >
-                  {isPositive ? '+' : ''}
-                  ${stockData.change.toFixed(2)}
-                </span>
-                <span className="text-meta">LAST UPDATE {stockData.lastUpdated}</span>
-              </div>
-            </div>
+            {/* Customisable panels (price-overview etc.) */}
+            {overviewMain.visible.map((id) => renderPanel(id, overviewMain))}
+            <AddPanelButton
+              hidden={overviewMain.hidden.map((id) => ({
+                id,
+                title: STOCK_OVERVIEW_PANELS[id]?.title ?? id,
+              }))}
+              onAdd={overviewMain.restorePanel}
+            />
 
             {/* Price chart */}
             {stockData.historicalData && stockData.historicalData.length > 0 ? (
@@ -306,71 +336,24 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
             <div style={{ marginTop: 14 }}>
               <MispricingDetector ticker={stockData.ticker} />
             </div>
-
-            {/* IR filings (replaces the old "Latest News" stub) */}
-            <div style={{ marginTop: 14 }}>
-              <IRFilingsPanel ticker={stockData.ticker} />
-            </div>
           </div>
 
           {/* Sidebar */}
           <div>
-            {/* Key stats */}
-            <div className="rv-card" style={{ marginTop: 0 }}>
-              <div className="rv-card-head">
-                <h3>KEY STATISTICS</h3>
-              </div>
-              <StatRow label="Open" value={`$${stockData.open.toFixed(2)}`} />
-              <StatRow label="Previous Close" value={`$${stockData.previousClose.toFixed(2)}`} />
-              <StatRow label="Day High" value={`$${stockData.dayHigh.toFixed(2)}`} />
-              <StatRow label="Day Low" value={`$${stockData.dayLow.toFixed(2)}`} />
-              {stockData.yearHigh != null && (
-                <StatRow label="52W High" value={`$${stockData.yearHigh.toFixed(2)}`} />
-              )}
-              {stockData.yearLow != null && (
-                <StatRow label="52W Low" value={`$${stockData.yearLow.toFixed(2)}`} />
-              )}
-            </div>
-
-            {/* Trading info */}
-            <div className="rv-card">
-              <div className="rv-card-head">
-                <h3>TRADING INFO</h3>
-              </div>
-              <StatRow label="Volume" value={stockData.volume.toLocaleString()} />
-              {stockData.avgVolume != null && (
-                <StatRow label="Avg Volume" value={stockData.avgVolume.toLocaleString()} />
-              )}
-              <StatRow label="Market Cap" value={stockData.marketCap} />
-              {stockData.pe != null && (
-                <StatRow label="P/E Ratio" value={stockData.pe.toFixed(2)} />
-              )}
-            </div>
-
-            {/* Quick actions */}
-            <div className="rv-card">
-              <div className="rv-card-head">
-                <h3>QUICK ACTIONS</h3>
-              </div>
-              <Link
-                href={`/options-chain?ticker=${stockData.ticker}`}
-                className="rv-btn"
-                prefetch
-                style={{ width: '100%', justifyContent: 'flex-start', marginBottom: 8 }}
-              >
-                <Icon.LineChart /> Options Chain →
-              </Link>
-              <Link
-                href={`/pricing?ticker=${stockData.ticker}`}
-                className="rv-btn"
-                prefetch
-                style={{ width: '100%', justifyContent: 'flex-start' }}
-              >
-                <Icon.BarChart3 /> Pricing Calculator →
-              </Link>
-            </div>
+            {overviewSidebar.visible.map((id) => renderPanel(id, overviewSidebar))}
+            <AddPanelButton
+              hidden={overviewSidebar.hidden.map((id) => ({
+                id,
+                title: STOCK_OVERVIEW_PANELS[id]?.title ?? id,
+              }))}
+              onAdd={overviewSidebar.restorePanel}
+            />
           </div>
         </div>
+      )}
+
+      {activeTab === 'financials' && (
+        <FinancialsTabs ticker={stockData.ticker} />
       )}
 
       {activeTab === 'dcf' && (
@@ -381,31 +364,18 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
           fundamentals={stockData.fundamentals}
         />
       )}
+
+      {activeTab === 'regime-shift' && (
+        <RegimeShiftPanel ticker={stockData.ticker} />
+      )}
+
+      {activeTab === 'earnings-ir' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <EarningsAIPanel ticker={stockData.ticker} />
+          <IRFilingsPanel ticker={stockData.ticker} />
+        </div>
+      )}
     </div>
   );
 }
 
-function StatRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        padding: '6px 0',
-        borderBottom: '1px solid var(--line-soft)',
-        fontSize: 12,
-      }}
-    >
-      <span style={{ color: 'var(--ink-mute)' }}>{label}</span>
-      <span
-        style={{
-          fontFamily: 'var(--font-jetbrains-mono), monospace',
-          color: 'var(--ink)',
-          fontWeight: 500,
-        }}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}

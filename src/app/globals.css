@@ -175,6 +175,14 @@ body {
 .rv-h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 2px; color: var(--ink); }
 .rv-sub { font-size: 12px; color: var(--ink-mute); margin-bottom: 16px; }
 
+/* Scanner page: force 15px on all text (tickers, chips, table cells, headers,
+ * etc.) — overrides the many inline fontSize values scattered across the
+ * scanner components. The `.rv-h1` heading on the page keeps its own size. */
+.scanner-page-15,
+.scanner-page-15 *:not(.rv-h1) {
+  font-size: 15px !important;
+}
+
 /* ---------- grids + KPI ---------- */
 .rv-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
 .rv-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
@@ -349,6 +357,55 @@ body {
 .rv-expstrip::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
 .rv-expstrip::-webkit-scrollbar-thumb:hover { background: var(--gold-dim, #cdaa3d); }
 .rv-expstrip::-webkit-scrollbar-track { background: transparent; }
+
+/* Horizontally scrollable tab nav (e.g. stock-detail page tabs).
+   Mobile widths can't fit the 7 tabs in a row — let it scroll, hide the bar. */
+.rv-tabstrip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.rv-tabstrip::-webkit-scrollbar { display: none; }
+.rv-tabstrip-tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Notification dropdown. Desktop: 380px panel right-anchored to the bell.
+   Mobile (≤480px): switch to fixed-position sheet so the 380px panel can't
+   overflow the viewport from a near-right anchor. */
+.rv-notif-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  width: 380px;
+  max-height: 520px;
+  background: #0c0d10;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  z-index: 50;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+@media (max-width: 480px) {
+  .rv-notif-dropdown {
+    position: fixed;
+    top: 60px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-height: calc(100dvh - 76px);
+    margin-top: 0;
+  }
+}
 .rv-exp {
   flex: 0 0 auto;
   min-width: 92px;
@@ -481,6 +538,14 @@ body {
 
 /* Stock-detail two-column layout — collapses to single column on phone */
 .rv-stock-overview { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; align-items: start; }
+
+/* Stock detail page — uniform 15px text on large screens */
+@media (min-width: 1025px) {
+  .rv-stock-detail,
+  .rv-stock-detail * {
+    font-size: 15px !important;
+  }
+}
 
 /* Equity summary row in StockPositionCard — collapses to 2-col on phone */
 .rv-position-equity {
@@ -660,4 +725,79 @@ body {
     padding: 10px !important;
     margin: -10px !important;
   }
+}
+
+/* ---------- Sitewide type scale-up for tablet & desktop ----------
+   Base UI was tuned at 11px (dense terminal-style). On ≥768px viewports
+   bump everything ~1.36× so the dominant 11px body text reads at 15px.
+   Placed at the end of the file so per-class overrides win on cascade.
+   Mobile keeps the dense default so nothing reflows on phones. */
+@media (min-width: 768px) {
+  html, body { font-size: 15px; }
+
+  /* Type scale */
+  .text-display { font-size: 27px; line-height: 38px; }
+  .text-section { font-size: 18px; line-height: 27px; }
+  .text-body    { font-size: 16px; line-height: 24px; }
+  .text-data    { font-size: 16px; line-height: 22px; }
+  .text-meta    { font-size: 14px; line-height: 19px; }
+
+  /* Topbar / brand */
+  .rv-brand .name { font-size: 18px; }
+  .rv-crumbs      { font-size: 15px; }
+  .rv-search      { font-size: 16px; }
+  .rv-search input { font-size: 16px !important; }
+  .rv-search .kbd, .rv-search button { font-size: 14px; }
+  .rv-pills, .rv-pill { font-size: 15px; }
+
+  /* Sidebar rail */
+  .rv-rail .item .ricon  { font-size: 19px; }
+  .rv-rail .item .rlabel { font-size: 16px; }
+
+  /* Headings & KPIs */
+  .rv-h1     { font-size: 27px; }
+  .rv-sub    { font-size: 16px; }
+  .rv-kpi .k { font-size: 14px; }
+  .rv-kpi .v { font-size: 27px; }
+  .rv-kpi .d { font-size: 15px; }
+
+  /* Cards */
+  .rv-card-head h3     { font-size: 16px; }
+  .rv-card-head .tools { font-size: 15px; }
+
+  /* Tables */
+  .rv-table    { font-size: 15px; }
+  .rv-table th { font-size: 14px; }
+
+  /* Greeks */
+  .rv-greek .lab           { font-size: 15px; }
+  .rv-greek .val           { font-size: 20px; }
+  .rv-greek .sub           { font-size: 12px; }
+  .rv-greek-big .sym       { font-size: 20px; }
+  .rv-greek-big .sym .ord  { font-size: 12px; }
+  .rv-greek-big .nm        { font-size: 14px; }
+  .rv-greek-big .val       { font-size: 25px; }
+  .rv-greek-big .desc      { font-size: 13px; }
+
+  /* Attribution / logs */
+  .attr-row           { font-size: 15px; }
+  .rv-log             { font-size: 15px; }
+  .rv-log .ev         { font-size: 14px; }
+  .rv-log .row .trace { font-size: 14px; }
+
+  /* Options expiry / chain / ticket */
+  .rv-exp .dte         { font-size: 17px; }
+  .rv-exp .date        { font-size: 14px; }
+  .rv-exp .iv          { font-size: 14px; }
+  .rv-exp .oi          { font-size: 13px; }
+  .rv-chain            { font-size: 14px; }
+  .rv-ticket           { font-size: 16px; }
+  .rv-ticket-line      { font-size: 18px; }
+  .rv-ticket-line.sub  { font-size: 14px; }
+  .rv-ticket-row       { font-size: 16px; }
+  .rv-alt              { font-size: 14px; }
+
+  /* Misc badges + limits */
+  .rv-kbd       { font-size: 14px; }
+  .rv-limit .hd { font-size: 15px; }
 }

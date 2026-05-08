@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import json
 import logging
+import logging.handlers
+import os
 import sys
 import threading
 import time
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
@@ -50,14 +53,38 @@ class JsonFormatter(logging.Formatter):
 
 
 def configure_json_logging(level: int = logging.INFO) -> None:
-    """Attach the JSON formatter to the root logger (idempotent)."""
+    """Attach the JSON formatter to the root logger (idempotent).
+
+    Always writes JSON to stdout. If BACKEND_LOG_DIR is set (or the conventional
+    ``backend/logs/`` directory exists/can be created), additionally writes a
+    rotating ERROR-only file ``backend-error.log`` so production errors survive
+    independent of the parent shell's redirection.
+    """
     root = logging.getLogger()
     for h in list(root.handlers):
         root.removeHandler(h)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JsonFormatter())
-    root.addHandler(handler)
+    formatter = JsonFormatter()
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    root.addHandler(stdout_handler)
     root.setLevel(level)
+
+    log_dir = os.environ.get("BACKEND_LOG_DIR")
+    if not log_dir:
+        log_dir = str(Path(__file__).resolve().parents[2] / "logs")
+    try:
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+        err_handler = logging.handlers.RotatingFileHandler(
+            os.path.join(log_dir, "backend-error.log"),
+            maxBytes=10 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
+        )
+        err_handler.setLevel(logging.ERROR)
+        err_handler.setFormatter(formatter)
+        root.addHandler(err_handler)
+    except Exception as exc:  # noqa: BLE001 — logging must never break startup
+        sys.stderr.write(f"[observability] error-log handler disabled: {exc}\n")
 
 
 # ---------------------------------------------------------------------------

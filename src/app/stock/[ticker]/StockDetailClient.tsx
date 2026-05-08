@@ -8,6 +8,7 @@ import DCFValuation from '@/components/DCFValuation';
 import FinancialsTabs from '@/components/financials/FinancialsTabs';
 import { PanelHost } from '@/components/ui/PanelHost';
 import { AddPanelButton } from '@/components/ui/AddPanelButton';
+import { PanelErrorBoundary } from '@/components/ui/PanelErrorBoundary';
 import { usePanelLayout } from '@/lib/usePanelLayout';
 import {
   STOCK_OVERVIEW_PANELS,
@@ -17,6 +18,8 @@ import {
 import IRFilingsPanel from '@/components/IRFilingsPanel';
 import { EarningsAIPanel } from '@/components/EarningsAIPanel';
 import RegimeShiftPanel from '@/components/scanner/RegimeShiftPanel';
+import OwnershipPanel from '@/components/ownership/OwnershipPanel';
+import ShortInterestPanel from '@/components/ownership/ShortInterestPanel';
 import { StockPositionCard } from '@/components/robinhood/StockPositionCard';
 import { EquityTradePanel } from '@/components/robinhood/EquityTradePanel';
 import type { HistoricalDataPoint, TimeRange } from '@/lib/types/historicalPrice';
@@ -29,7 +32,7 @@ const Icon = {
   LineChart:      ({ size = 14 }: { size?: number }) => <span aria-hidden style={{ fontSize: size, lineHeight: 1 }}>⎍</span>,
 };
 
-type TabType = 'overview' | 'financials' | 'dcf' | 'regime-shift' | 'earnings-ir';
+type TabType = 'overview' | 'financials' | 'ownership' | 'short-interest' | 'dcf' | 'regime-shift' | 'earnings-ir';
 
 export interface Fundamentals {
   revenue?: number | null;           // $ absolute (TTM)
@@ -95,42 +98,69 @@ function filterByRange(data: HistoricalDataPoint[], range: TimeRange): Historica
   return filtered.length > 0 ? filtered : data.slice(-Math.min(data.length, 30));
 }
 
+function makeStubDetail(ticker: string): StockDetailData {
+  return {
+    ticker,
+    name: ticker,
+    price: NaN,
+    change: 0,
+    changePercent: 0,
+    volume: 0,
+    marketCap: '—',
+    dayHigh: 0,
+    dayLow: 0,
+    open: 0,
+    previousClose: 0,
+    lastUpdated: '',
+  };
+}
+
 export default function StockDetailClient({ ticker }: StockDetailClientProps) {
   const [stockData, setStockData] = useState<StockDetailData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [detailWarning, setDetailWarning] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>('1M');
   const [fullHistoricalData, setFullHistoricalData] = useState<HistoricalDataPoint[] | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    try {
-      const [detailRes, historyRes] = await Promise.all([
-        fetch(`/api/market/${ticker}/detail`, { cache: 'no-store' }),
-        fetch(`/api/market/${ticker}/price-history?period=5Y`, { cache: 'no-store' }),
-      ]);
+    setDetailWarning(null);
+    const [detailRes, historyRes] = await Promise.allSettled([
+      fetch(`/api/market/${ticker}/detail`, { cache: 'no-store' }),
+      fetch(`/api/market/${ticker}/price-history?period=5Y`, { cache: 'no-store' }),
+    ]);
 
-      if (!detailRes.ok) {
-        throw new Error(`Detail fetch failed: ${detailRes.status}`);
+    let detail: StockDetailData | null = null;
+    if (detailRes.status === 'fulfilled' && detailRes.value.ok) {
+      try {
+        detail = (await detailRes.value.json()) as StockDetailData;
+      } catch {
+        detail = null;
       }
-
-      const detail: StockDetailData = await detailRes.json();
-      let history: HistoricalDataPoint[] = [];
-      if (historyRes.ok) {
-        const body = (await historyRes.json()) as PriceHistoryResponse;
-        history = body.data ?? [];
-      }
-
-      setFullHistoricalData(history);
-      setStockData({ ...detail, historicalData: filterByRange(history, '1M') });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setStockData(null);
-    } finally {
-      setLoading(false);
     }
+    if (!detail) {
+      const status =
+        detailRes.status === 'fulfilled'
+          ? `HTTP ${detailRes.value.status}`
+          : (detailRes.reason as Error)?.message ?? 'network error';
+      setDetailWarning(`Live price/quote unavailable (${status}). Other panels load independently.`);
+      detail = makeStubDetail(ticker);
+    }
+
+    let history: HistoricalDataPoint[] = [];
+    if (historyRes.status === 'fulfilled' && historyRes.value.ok) {
+      try {
+        const body = (await historyRes.value.json()) as PriceHistoryResponse;
+        history = body.data ?? [];
+      } catch {
+        history = [];
+      }
+    }
+
+    setFullHistoricalData(history);
+    setStockData({ ...detail, historicalData: filterByRange(history, '1M') });
+    setLoading(false);
   }, [ticker]);
 
   useEffect(() => {
@@ -165,14 +195,12 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
     );
   }
 
-  if (error || !stockData) {
+  if (!stockData) {
     return (
       <div style={{ padding: '18px 22px' }}>
         <div className="rv-card" style={{ textAlign: 'center', padding: '48px 16px' }}>
           <h1 className="rv-h1" style={{ marginBottom: 8 }}>Stock not found</h1>
-          <p className="rv-sub">
-            {error ? error : `We couldn't load data for "${ticker}".`}
-          </p>
+          <p className="rv-sub">We couldn&apos;t load data for &quot;{ticker}&quot;.</p>
           <Link href="/" className="rv-btn primary" prefetch>
             <Icon.ArrowLeft /> Back to Today
           </Link>
@@ -183,6 +211,7 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
 
   const isPositive = stockData.changePercent >= 0;
   const changeColor = isPositive ? 'var(--green)' : 'var(--pink)';
+  const hasLiveQuote = Number.isFinite(stockData.price);
 
   const panelCtx: StockOverviewContext = { stockData, isPositive, changeColor };
 
@@ -219,32 +248,63 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
           <h1 className="rv-h1" style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
             {stockData.ticker}
           </h1>
-          <span
-            className="rv-pill"
-            style={{
-              color: changeColor,
-              borderColor: isPositive ? 'rgba(0,200,5,.35)' : 'rgba(255,0,110,.35)',
-              background: isPositive ? 'rgba(0,200,5,.08)' : 'rgba(255,0,110,.08)',
-              fontWeight: 600,
-            }}
-          >
-            {isPositive ? '+' : ''}
-            {stockData.changePercent.toFixed(2)}%
-          </span>
+          {hasLiveQuote ? (
+            <span
+              className="rv-pill"
+              style={{
+                color: changeColor,
+                borderColor: isPositive ? 'rgba(0,200,5,.35)' : 'rgba(255,0,110,.35)',
+                background: isPositive ? 'rgba(0,200,5,.08)' : 'rgba(255,0,110,.08)',
+                fontWeight: 600,
+              }}
+            >
+              {isPositive ? '+' : ''}
+              {stockData.changePercent.toFixed(2)}%
+            </span>
+          ) : (
+            <span
+              className="rv-pill"
+              style={{ color: 'var(--ink-mute)', borderColor: 'var(--line)', fontWeight: 500 }}
+            >
+              quote n/a
+            </span>
+          )}
           <span className="rv-sub" style={{ margin: 0 }}>
             {stockData.name}
           </span>
         </div>
       </div>
 
+      {detailWarning && (
+        <div
+          className="rv-card"
+          style={{
+            padding: '10px 14px',
+            marginBottom: 12,
+            border: '1px solid rgba(255, 215, 0, 0.4)',
+            background: 'rgba(255, 215, 0, 0.06)',
+            color: 'var(--ink)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+          role="status"
+        >
+          <span aria-hidden style={{ color: 'var(--gold, #FFD700)', fontSize: 14 }}>⚠</span>
+          <span style={{ fontSize: 12 }}>{detailWarning}</span>
+        </div>
+      )}
+
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--line)', marginBottom: 14 }}>
-        {(['overview', 'financials', 'dcf', 'regime-shift', 'earnings-ir'] as TabType[]).map((tab) => (
+      <div className="rv-tabstrip" role="tablist">
+        {(['overview', 'financials', 'ownership', 'short-interest', 'dcf', 'regime-shift', 'earnings-ir'] as TabType[]).map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
-            className="rv-btn ghost"
+            className="rv-btn ghost rv-tabstrip-tab"
+            role="tab"
+            aria-selected={activeTab === tab}
             style={{
               borderRadius: 0,
               border: 0,
@@ -261,11 +321,15 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
               ? 'DCF Valuation'
               : tab === 'financials'
                 ? 'Financials'
-                : tab === 'regime-shift'
-                  ? 'Regime Shift'
-                  : tab === 'earnings-ir'
-                    ? 'Earnings & IR'
-                    : 'Overview'}
+                : tab === 'ownership'
+                  ? 'Ownership'
+                  : tab === 'short-interest'
+                    ? 'Short Interest'
+                    : tab === 'regime-shift'
+                      ? 'Regime Shift'
+                      : tab === 'earnings-ir'
+                        ? 'Earnings & IR'
+                        : 'Overview'}
           </button>
         ))}
       </div>
@@ -293,7 +357,11 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
           {/* Main column */}
           <div>
             {/* Customisable panels (price-overview etc.) */}
-            {overviewMain.visible.map((id) => renderPanel(id, overviewMain))}
+            {overviewMain.visible.map((id) => (
+              <PanelErrorBoundary key={id} label={STOCK_OVERVIEW_PANELS[id]?.title ?? id}>
+                {renderPanel(id, overviewMain)}
+              </PanelErrorBoundary>
+            ))}
             <AddPanelButton
               hidden={overviewMain.hidden.map((id) => ({
                 id,
@@ -303,44 +371,52 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
             />
 
             {/* Price chart */}
-            {stockData.historicalData && stockData.historicalData.length > 0 ? (
-              <StockPriceChart
-                ticker={stockData.ticker}
-                data={stockData.historicalData}
-                timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
-              />
-            ) : (
-              <div className="rv-card">
-                <div className="rv-card-head">
-                  <h3>PRICE CHART</h3>
+            <PanelErrorBoundary label="Price chart">
+              {stockData.historicalData && stockData.historicalData.length > 0 ? (
+                <StockPriceChart
+                  ticker={stockData.ticker}
+                  data={stockData.historicalData}
+                  timeRange={timeRange}
+                  onTimeRangeChange={setTimeRange}
+                />
+              ) : (
+                <div className="rv-card">
+                  <div className="rv-card-head">
+                    <h3>PRICE CHART</h3>
+                  </div>
+                  <div
+                    style={{
+                      height: 240,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--ink-mute)',
+                      gap: 6,
+                    }}
+                  >
+                    <Icon.BarChart3 size={32} />
+                    <span className="text-meta">NO HISTORICAL DATA AVAILABLE</span>
+                  </div>
                 </div>
-                <div
-                  style={{
-                    height: 240,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--ink-mute)',
-                    gap: 6,
-                  }}
-                >
-                  <Icon.BarChart3 size={32} />
-                  <span className="text-meta">NO HISTORICAL DATA AVAILABLE</span>
-                </div>
-              </div>
-            )}
+              )}
+            </PanelErrorBoundary>
 
             {/* Mispricing */}
             <div style={{ marginTop: 14 }}>
-              <MispricingDetector ticker={stockData.ticker} />
+              <PanelErrorBoundary label="Mispricing">
+                <MispricingDetector ticker={stockData.ticker} />
+              </PanelErrorBoundary>
             </div>
           </div>
 
           {/* Sidebar */}
           <div>
-            {overviewSidebar.visible.map((id) => renderPanel(id, overviewSidebar))}
+            {overviewSidebar.visible.map((id) => (
+              <PanelErrorBoundary key={id} label={STOCK_OVERVIEW_PANELS[id]?.title ?? id}>
+                {renderPanel(id, overviewSidebar)}
+              </PanelErrorBoundary>
+            ))}
             <AddPanelButton
               hidden={overviewSidebar.hidden.map((id) => ({
                 id,
@@ -353,26 +429,48 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
       )}
 
       {activeTab === 'financials' && (
-        <FinancialsTabs ticker={stockData.ticker} />
+        <PanelErrorBoundary label="Financials">
+          <FinancialsTabs ticker={stockData.ticker} />
+        </PanelErrorBoundary>
+      )}
+
+      {activeTab === 'ownership' && (
+        <PanelErrorBoundary label="Ownership">
+          <OwnershipPanel ticker={stockData.ticker} />
+        </PanelErrorBoundary>
+      )}
+
+      {activeTab === 'short-interest' && (
+        <PanelErrorBoundary label="Short interest">
+          <ShortInterestPanel ticker={stockData.ticker} />
+        </PanelErrorBoundary>
       )}
 
       {activeTab === 'dcf' && (
-        <DCFValuation
-          ticker={stockData.ticker}
-          currentPrice={stockData.price}
-          companyName={stockData.name}
-          fundamentals={stockData.fundamentals}
-        />
+        <PanelErrorBoundary label="DCF valuation">
+          <DCFValuation
+            ticker={stockData.ticker}
+            currentPrice={stockData.price}
+            companyName={stockData.name}
+            fundamentals={stockData.fundamentals}
+          />
+        </PanelErrorBoundary>
       )}
 
       {activeTab === 'regime-shift' && (
-        <RegimeShiftPanel ticker={stockData.ticker} />
+        <PanelErrorBoundary label="Regime shift">
+          <RegimeShiftPanel ticker={stockData.ticker} />
+        </PanelErrorBoundary>
       )}
 
       {activeTab === 'earnings-ir' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <EarningsAIPanel ticker={stockData.ticker} />
-          <IRFilingsPanel ticker={stockData.ticker} />
+          <PanelErrorBoundary label="Earnings AI">
+            <EarningsAIPanel ticker={stockData.ticker} />
+          </PanelErrorBoundary>
+          <PanelErrorBoundary label="IR filings">
+            <IRFilingsPanel ticker={stockData.ticker} />
+          </PanelErrorBoundary>
         </div>
       )}
     </div>

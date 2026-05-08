@@ -67,6 +67,7 @@ const ALERT_TYPE_LABEL: Record<string, string> = {
   high_iv: 'High IV',
   cc_opportunity: 'Covered Call',
   csp_opportunity: 'Cash-Secured Put',
+  vol_term_spike: 'Earnings Vol Spike',
 };
 
 function severityRank(s: AlertSeverity): number {
@@ -199,13 +200,25 @@ export function NotificationBell() {
       setOpen(false);
       try {
         const exps = await getOptionExpirations(item.ticker);
+        // Vol-term-spike alerts (and any future detector that pinpoints a
+        // specific expiration) carry `metadata.front_expiration`. Land on
+        // that exact date so the user sees the spike, not the generic 5–60
+        // DTE pick.
+        const metaExpRaw = (item.metadata as Record<string, unknown> | null)?.front_expiration;
+        const metaExp =
+          typeof metaExpRaw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(metaExpRaw)
+            ? metaExpRaw
+            : null;
+        const preferred = metaExp
+          ? exps.expirations.find((e) => e.expiration === metaExp) ?? null
+          : null;
         const eligible = exps.expirations
           .filter((e) => e.dte >= ALERT_DTE_MIN && e.dte <= ALERT_DTE_MAX)
           .sort((a, b) => a.dte - b.dte);
         const positive = exps.expirations
           .filter((e) => e.dte > 0)
           .sort((a, b) => a.dte - b.dte);
-        const chosen = eligible[0] ?? positive[0] ?? null;
+        const chosen = preferred ?? eligible[0] ?? positive[0] ?? null;
         if (!chosen) {
           router.push(fallback);
           return;
@@ -286,26 +299,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div
-          role="dialog"
-          aria-label="Notifications"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            marginTop: 6,
-            width: 380,
-            maxHeight: 520,
-            background: '#0c0d10',
-            border: '1px solid var(--line)',
-            borderRadius: 6,
-            zIndex: 50,
-            boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-        >
+        <div role="dialog" aria-label="Notifications" className="rv-notif-dropdown">
           {/* Header */}
           <div
             style={{

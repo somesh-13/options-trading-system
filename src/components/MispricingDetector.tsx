@@ -20,10 +20,26 @@ export default function MispricingDetector({ ticker }: MispricingDetectorProps) 
       setError(null);
       setLoading(true);
       const mispricingData = await getMispricing(ticker);
+      // Backend returns 200 with `{ticker, error}` on yfinance failure rather
+      // than a 4xx/5xx — surface that as an error so the rendering path doesn't
+      // dereference undefined numeric fields.
+      const degradedMessage = (mispricingData as { error?: string }).error;
+      if (degradedMessage) {
+        throw new Error(degradedMessage);
+      }
+      if (
+        typeof mispricingData.spot_price !== 'number' ||
+        typeof mispricingData.historical_vol !== 'number' ||
+        typeof mispricingData.implied_vol_atm !== 'number' ||
+        typeof mispricingData.iv_hv_ratio !== 'number'
+      ) {
+        throw new Error('Mispricing data unavailable');
+      }
       setData(mispricingData);
       setLastUpdate(new Date());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed');
+      setData(null);
     } finally {
       setLoading(false);
     }

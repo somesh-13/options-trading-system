@@ -143,11 +143,13 @@ function PricingPageInner() {
         ]);
         if (cancelled) return;
         if (s != null) setSpot(s);
-        if (m) {
+        // Backend returns 200 with `{ticker, error}` when yfinance throttles
+        // — guard against undefined numeric fields before pushing to state.
+        if (m && typeof m.atm_call_price === 'number' && typeof m.implied_vol_atm === 'number') {
           setMispricing(m);
           setMarketPrice(m.atm_call_price);
           setSigma(m.implied_vol_atm);
-          if (s == null) setSpot(m.spot_price);
+          if (s == null && typeof m.spot_price === 'number') setSpot(m.spot_price);
         }
         if (vs) setSurface(vs);
         if (exps?.expirations) setFullExpirations(exps.expirations);

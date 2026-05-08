@@ -230,7 +230,12 @@ export function ScannerShell() {
     rows.sort((a, b) => b.ratio - a.ratio);
 
     const fetchedAt = new Date().toISOString();
-    writeCache({ rows, tickerCount: uniqueSymbols.length, errors, fetchedAt });
+    // Don't persist all-fail snapshots — when the backend recovers, a stale
+    // empty cache otherwise keeps the scanner (and the $ premium picks button)
+    // looking dead until the user manually clicks ↻ Refresh latest.
+    if (rows.length > 0) {
+      writeCache({ rows, tickerCount: uniqueSymbols.length, errors, fetchedAt });
+    }
 
     setFetchState({
       status: 'ok',

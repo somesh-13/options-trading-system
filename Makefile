@@ -72,7 +72,7 @@ start-be: | $(LOG_DIR)
 		echo "backend already running on :$(BE_PORT) (pid$$(fuser $(BE_PORT)/tcp 2>/dev/null))"; \
 	else \
 		echo "starting backend on :$(BE_PORT) -> $(BE_LOG)"; \
-		cd $(BACKEND_DIR) && ( setsid --fork bash -c 'source venv/bin/activate && exec uvicorn src.api.routes:app --host 0.0.0.0 --port $(BE_PORT) --reload' </dev/null >$(BE_LOG) 2>&1 & ); \
+		cd $(BACKEND_DIR) && ( setsid --fork bash -c 'source venv/bin/activate && exec uvicorn src.api.routes:app --host :: --port $(BE_PORT) --reload' </dev/null >$(BE_LOG) 2>&1 & ); \
 		sleep 2; fuser $(BE_PORT)/tcp 2>/dev/null | awk '{print $$1}' >$(BE_PID) || true; \
 	fi
 

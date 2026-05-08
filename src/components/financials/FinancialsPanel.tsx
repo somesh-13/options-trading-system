@@ -78,9 +78,13 @@ const COLUMN_ANCHOR_BY_STATEMENT: Record<StatementName, string> = {
 /** Cap how many period columns are shown in the table, chart, and chip row.
  *  Backend returns the full available history (15+ years for mature filers);
  *  the UI shows just the most recent slice to keep tables compact and CAGRs
- *  meaningful at a fixed window. Tune per period if you need quarterly to
- *  show more (10 quarters = 2.5 years; consider raising for quarterly view). */
-const MAX_DISPLAY_COLUMNS = 10;
+ *  meaningful at a fixed window. Quarterly is wider so a 5-year QoQ revenue
+ *  trend (≈20 quarters) fits without scrolling — matches the inspiration's
+ *  Mar '22 → Mar '26 window. */
+const MAX_DISPLAY_COLUMNS_BY_PERIOD: Record<Period, number> = {
+  annual: 10,
+  quarterly: 20,
+};
 
 const COLOR_POOL = ['#9FB2C5', '#FF974D', '#B07EF0', '#52B390', '#4c9aff', '#FFD700', '#FF006E'];
 
@@ -224,7 +228,8 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
   // chip row / table all agree on the same window.
   const cappedData = useMemo<FinancialStatementHistory | null>(() => {
     if (!data) return null;
-    const n = Math.min(MAX_DISPLAY_COLUMNS, data.years.length);
+    const cap = MAX_DISPLAY_COLUMNS_BY_PERIOD[period];
+    const n = Math.min(cap, data.years.length);
     if (n === data.years.length) return data;
     return {
       ...data,
@@ -233,7 +238,7 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
       year_ends: data.year_ends ? data.year_ends.slice(0, n) : undefined,
       rows: data.rows.map((r) => ({ ...r, values: r.values.slice(0, n) })),
     };
-  }, [data]);
+  }, [data, period]);
 
   const rowsByKey = useMemo(() => {
     if (!cappedData) return new Map<string, StatementRow>();

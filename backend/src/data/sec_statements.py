@@ -625,42 +625,47 @@ def _pick_quarterly_value(
                     return None
         return None
 
-    # Cash-flow YTD math: 3-month = current_YTD − prior_YTD within the same fiscal year.
-    if is_cash_flow:
-        # Find an entry ending at q_end whose start is the FY-start.
-        ytd_now = next(
-            (e for e in cleaned if e.get("end") == q_end
-             and _ytd_months(e.get("start"), q_end) is not None),
-            None,
-        )
-        if ytd_now is None:
-            return None
-        months_now = _ytd_months(ytd_now.get("start"), q_end)
-        if months_now == 3:
-            try:
-                return float(ytd_now["val"])
-            except (KeyError, TypeError, ValueError):
-                return None
-        # Need prior YTD with months_now − 3 months ending in the same FY.
-        prior_months = (months_now or 0) - 3
-        prior = [
-            e for e in cleaned
-            if (e.get("end") or "")[:4] == q_end[:4]
-            and (e.get("end") or "") < q_end
-            and _ytd_months(e.get("start"), e.get("end")) == prior_months
-        ]
-        if not prior:
-            return None
-        prior.sort(key=lambda e: e.get("end", ""), reverse=True)
+    # YTD subtraction: 3-month = current_YTD − prior_YTD within the same fiscal
+    # year. This handles two cases:
+    #   - Cash-flow rows (always YTD-only in 10-Q filings).
+    #   - Income-statement rows for Q2/Q3 when the filer reports cumulative YTD
+    #     instead of discrete 3-month numbers (the common pattern). Direct 3M
+    #     was tried above and missed; this is the fallback.
+    # Caveat: matches by calendar-year prefix on `end` to keep prior-YTD search
+    # within the same fiscal year. Correct for calendar-FY filers (most). Filers
+    # with a non-calendar FY end (e.g. AAPL: Sep) can split a fiscal year across
+    # two calendar years; the resulting Q1 value may be skipped on the boundary.
+    ytd_now = next(
+        (e for e in cleaned if e.get("end") == q_end
+         and _ytd_months(e.get("start"), q_end) is not None),
+        None,
+    )
+    if ytd_now is None:
+        return None
+    months_now = _ytd_months(ytd_now.get("start"), q_end)
+    if months_now == 3:
         try:
-            v = float(ytd_now["val"]) - float(prior[0]["val"])
-            if abs(v) < EPSILON_M * UNIT_DIVISOR:
-                return 0.0
-            return v
+            return float(ytd_now["val"])
         except (KeyError, TypeError, ValueError):
             return None
-
-    return None
+    # Need prior YTD with months_now − 3 months ending in the same FY.
+    prior_months = (months_now or 0) - 3
+    prior = [
+        e for e in cleaned
+        if (e.get("end") or "")[:4] == q_end[:4]
+        and (e.get("end") or "") < q_end
+        and _ytd_months(e.get("start"), e.get("end")) == prior_months
+    ]
+    if not prior:
+        return None
+    prior.sort(key=lambda e: e.get("end", ""), reverse=True)
+    try:
+        v = float(ytd_now["val"]) - float(prior[0]["val"])
+        if abs(v) < EPSILON_M * UNIT_DIVISOR:
+            return 0.0
+        return v
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def _canonical_periods(facts: dict, period: Period) -> Tuple[List[str], Optional[str]]:
@@ -733,8 +738,12 @@ def _enumerate_periods(
                 fy_ends.add(end)
             elif (
                 form.startswith("10-Q")
-                and _is_quarterly_window(start, end)
+                and _ytd_months(start, end) in (3, 6, 9)
             ):
+                # Accept Q1/Q2/Q3 ends. Q2/Q3 are filed as 6M/9M YTD windows;
+                # the value picker derives the discrete quarter via YTD
+                # subtraction. Without this, Jun/Sep ends are dropped and the
+                # quarterly history alternates Mar/Dec only.
                 q_ends.add(end)
 
     if period == "annual":

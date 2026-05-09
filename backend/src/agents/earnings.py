@@ -11,11 +11,9 @@ import math
 from datetime import datetime
 from typing import Optional
 
-import pandas as pd
-import yfinance as yf
-
 from agents.base import AgentSignal, AnalysisContext, BaseAgent
 from data.market_data import detect_mispricing
+from data.market_provider import get_earnings_calendar
 
 
 class EarningsAgent(BaseAgent):
@@ -93,23 +91,10 @@ class EarningsAgent(BaseAgent):
     @staticmethod
     def _days_to_earnings(ticker: str) -> Optional[int]:
         try:
-            cal = yf.Ticker(ticker).calendar
+            cal = get_earnings_calendar(ticker)
         except Exception:
             return None
-
-        dt: Optional[datetime] = None
-        if isinstance(cal, pd.DataFrame) and "Earnings Date" in cal.index:
-            values = cal.loc["Earnings Date"].values.tolist()
-            if values:
-                dt = pd.to_datetime(values[0]).to_pydatetime()
-        elif isinstance(cal, dict):
-            raw = cal.get("Earnings Date")
-            if isinstance(raw, list) and raw:
-                dt = pd.to_datetime(raw[0]).to_pydatetime()
-            elif raw is not None:
-                dt = pd.to_datetime(raw).to_pydatetime()
-
-        if dt is None:
+        if cal.next_earnings_date is None:
             return None
-        delta = (dt.date() - datetime.utcnow().date()).days
+        delta = (cal.next_earnings_date - datetime.utcnow().date()).days
         return int(delta) if delta >= 0 else None

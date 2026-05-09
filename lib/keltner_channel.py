@@ -6,14 +6,23 @@ Uses EMA-20 and ATR-20 to calculate upper/lower bands
 
 import requests
 import os
+import sys
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from pathlib import Path
+
+# This script lives outside backend/. Wire backend/src onto sys.path so we can
+# pull market data through the same adapter the FastAPI service uses.
+_BACKEND_SRC = Path(__file__).resolve().parent.parent / "backend" / "src"
+if _BACKEND_SRC.is_dir() and str(_BACKEND_SRC) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_SRC))
+
 try:
-    import yfinance as yf
-    HAS_YFINANCE = True
+    from data.market_provider import get_history, history_to_dataframe
+    HAS_PROVIDER = True
 except ImportError:
-    HAS_YFINANCE = False
+    HAS_PROVIDER = False
 
 
 def get_weekly_data(symbol, weeks=52):
@@ -28,46 +37,38 @@ def get_weekly_data(symbol, weeks=52):
     Returns:
         DataFrame with columns: open, high, low, close, volume, timestamp
     """
-    # Try yfinance first (more reliable for weekly data)
-    if HAS_YFINANCE:
+    # Try the market_provider adapter first (yfinance-backed by default;
+    # provider can be swapped via MARKET_PROVIDER env var).
+    if HAS_PROVIDER:
         try:
-            # Calculate period
             period = f"{int(weeks/52) + 1}y" if weeks > 52 else "1y"
-            
-            # Fetch data
-            ticker = yf.Ticker(symbol)
-            df = ticker.history(period=period, interval="1wk")
-            
-            if df.empty:
+            bars = get_history(symbol, period=period, interval="1wk")
+            if not bars:
                 raise ValueError(f"No data returned for {symbol}")
-            
-            # Standardize column names
-            df = df.reset_index()
+
+            df = history_to_dataframe(bars).reset_index()
             df = df.rename(columns={
-                'Date': 'timestamp',
+                'index': 'timestamp',
                 'Open': 'open',
                 'High': 'high',
                 'Low': 'low',
                 'Close': 'close',
-                'Volume': 'volume'
+                'Volume': 'volume',
             })
-            
-            # Take last N weeks
             df = df.tail(weeks)
             df = df[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
             df = df.reset_index(drop=True)
-            
             return df
-            
+
         except Exception as e:
-            print(f"yfinance failed, trying Alpaca: {e}")
+            print(f"market_provider failed, trying Alpaca: {e}")
     
     # Fallback to Alpaca
     api_key = os.environ.get('ALPACA_API_KEY')
     secret_key = os.environ.get('ALPACA_SECRET_KEY')
     
     if not api_key or not secret_key:
-        raise ValueError("No data source available (yfinance not installed, Alpaca credentials missing)")
+        raise ValueError("No data source available (market_provider unavailable, Alpaca credentials missing)")
     
     # Calculate date range
     end_date = datetime.now()

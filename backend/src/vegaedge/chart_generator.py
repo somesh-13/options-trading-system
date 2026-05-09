@@ -9,7 +9,8 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
+
+from data.market_provider import get_history, history_to_dataframe
 
 # Matplotlib only when generating
 import matplotlib
@@ -47,12 +48,10 @@ def generate_keltner_chart(ticker: str, period: str = "6mo") -> Tuple[str, str]:
     Generate Keltner-style channel chart (EMA middle, ATR bands).
     Returns (base64_png_string, channel_position).
     """
-    stock = yf.Ticker(ticker)
-    hist = stock.history(period=period)
-
-    if hist is None or len(hist) < 20:
-        # Return a minimal placeholder or raise
+    bars = get_history(ticker, period=period)
+    if not bars or len(bars) < 20:
         raise ValueError(f"Insufficient history for {ticker} (need at least 20 bars)")
+    hist = history_to_dataframe(bars)
 
     close = hist["Close"]
     high = hist["High"]

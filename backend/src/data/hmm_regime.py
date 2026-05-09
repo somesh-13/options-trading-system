@@ -6,12 +6,13 @@ Classifies current market state as Low Vol, Medium Vol, or High Vol.
 """
 
 import numpy as np
-import yfinance as yf
 from typing import Dict
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
+
+from data.market_provider import get_history, history_to_dataframe
 
 
 def fit_regime_model(
@@ -42,11 +43,10 @@ def fit_regime_model(
             'regime_vols': []
         }
 
-    stock = yf.Ticker(ticker)
-    hist = stock.history(period=f"{lookback_days + 10}d")
-
-    if len(hist) < 30:
+    bars = get_history(ticker, period=f"{lookback_days + 10}d")
+    if len(bars) < 30:
         raise ValueError(f"Insufficient data for {ticker}")
+    hist = history_to_dataframe(bars)
 
     # Calculate log returns
     returns = np.log(hist['Close'] / hist['Close'].shift(1)).dropna().values

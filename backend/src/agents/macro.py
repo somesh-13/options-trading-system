@@ -11,9 +11,8 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
-import yfinance as yf
-
 from agents.base import AgentSignal, AnalysisContext, BaseAgent
+from data.market_provider import get_history
 
 
 class MacroAgent(BaseAgent):
@@ -68,10 +67,10 @@ class MacroAgent(BaseAgent):
     @staticmethod
     def _latest(symbol: str) -> Optional[float]:
         try:
-            hist = yf.Ticker(symbol).history(period="5d")
-            if hist is None or hist.empty:
+            bars = get_history(symbol, period="5d")
+            if not bars:
                 return None
-            return float(hist["Close"].iloc[-1])
+            return float(bars[-1].close)
         except Exception:
             return None
 

@@ -9,9 +9,10 @@ Implements:
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
 from scipy.stats import norm
 from typing import Optional
+
+from data.market_provider import get_history, history_to_dataframe
 
 
 def historical_var(
@@ -33,11 +34,10 @@ def historical_var(
     Returns:
         VaR metrics dict
     """
-    stock = yf.Ticker(ticker)
-    hist = stock.history(period=f"{lookback_days + 30}d")
-
-    if len(hist) < 30:
+    bars = get_history(ticker, period=f"{lookback_days + 30}d")
+    if len(bars) < 30:
         return {"error": "Insufficient data", "ticker": ticker}
+    hist = history_to_dataframe(bars)
 
     prices = hist["Close"].tail(lookback_days)
     daily_returns = np.log(prices / prices.shift(1)).dropna().values
@@ -90,11 +90,10 @@ def parametric_var(
 
     VaR = z * sigma * sqrt(holding_period) * portfolio_value
     """
-    stock = yf.Ticker(ticker)
-    hist = stock.history(period=f"{lookback_days + 30}d")
-
-    if len(hist) < 30:
+    bars = get_history(ticker, period=f"{lookback_days + 30}d")
+    if len(bars) < 30:
         return {"error": "Insufficient data", "ticker": ticker}
+    hist = history_to_dataframe(bars)
 
     prices = hist["Close"].tail(lookback_days)
     daily_returns = np.log(prices / prices.shift(1)).dropna().values
@@ -141,11 +140,10 @@ def monte_carlo_var(
     Generates random returns from fitted distribution and computes VaR
     from the simulated P&L distribution.
     """
-    stock = yf.Ticker(ticker)
-    hist = stock.history(period=f"{lookback_days + 30}d")
-
-    if len(hist) < 30:
+    bars = get_history(ticker, period=f"{lookback_days + 30}d")
+    if len(bars) < 30:
         return {"error": "Insufficient data", "ticker": ticker}
+    hist = history_to_dataframe(bars)
 
     prices = hist["Close"].tail(lookback_days)
     daily_returns = np.log(prices / prices.shift(1)).dropna().values

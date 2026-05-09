@@ -248,7 +248,14 @@ export function NLScannerBar({ onResult, onSubmitted }: NLScannerBarProps) {
               type="button"
               onClick={() => { void runExample(ex); }}
               className="rv-chip neutral"
-              style={{ cursor: 'pointer', fontSize: 10.5, border: '1px solid var(--line)' }}
+              style={{
+                cursor: 'pointer',
+                fontSize: 10.5,
+                border: '1px solid var(--line)',
+                maxWidth: '100%',
+                whiteSpace: 'normal',
+                textAlign: 'left',
+              }}
             >
               {ex}
             </button>

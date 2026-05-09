@@ -5,97 +5,73 @@ Fetches real-time stock price, options chain, and calculates historical volatili
 Focused on CIFR for initial implementation.
 """
 
-import yfinance as yf
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+from data.market_provider import (
+    get_history,
+    get_option_chain,
+    get_option_expirations,
+    history_to_dataframe,
+)
+
 
 def get_cifr_price() -> float:
-    """
-    Get current CIFR stock price.
-    
-    Returns:
-        Current price (float)
-    """
-    ticker = yf.Ticker("CIFR")
-    data = ticker.history(period="1d")
-    
-    if data.empty:
-        raise ValueError("Unable to fetch CIFR price from Yahoo Finance")
-    
-    return float(data['Close'].iloc[-1])
+    """Get current CIFR stock price."""
+    bars = get_history("CIFR", period="1d")
+    if not bars:
+        raise ValueError("Unable to fetch CIFR price from market provider")
+    return float(bars[-1].close)
 
 
 def get_historical_volatility(ticker: str = "CIFR", window: int = 30) -> float:
-    """
-    Calculate historical volatility (HV) using rolling window.
-    
-    Args:
-        ticker: Stock symbol
-        window: Number of days for rolling window
-    
-    Returns:
-        Annualized historical volatility
-    """
-    stock = yf.Ticker(ticker)
-    
-    # Fetch extra data to ensure we have enough for rolling window
-    hist = stock.history(period=f"{window + 10}d")
-    
-    if len(hist) < window:
-        raise ValueError(f"Insufficient data: need {window} days, got {len(hist)}")
-    
-    # Calculate log returns
+    """Annualized HV from a rolling window of log returns."""
+    bars = get_history(ticker, period=f"{window + 10}d")
+    if len(bars) < window:
+        raise ValueError(f"Insufficient data: need {window} days, got {len(bars)}")
+    hist = history_to_dataframe(bars)
     returns = np.log(hist['Close'] / hist['Close'].shift(1)).dropna()
-    
-    # Annualized volatility (252 trading days)
-    volatility = returns.std() * np.sqrt(252)
-    
-    return float(volatility)
+    return float(returns.std() * np.sqrt(252))
 
 
 def get_options_chain_yahoo(ticker: str = "CIFR") -> pd.DataFrame:
-    """
-    Fetch options chain from Yahoo Finance.
-    
-    Args:
-        ticker: Stock symbol
-    
-    Returns:
-        DataFrame with options data (strike, bid, ask, IV, volume, etc.)
-    """
-    stock = yf.Ticker(ticker)
-    
-    # Get available expiration dates
-    expirations = stock.options
-    
+    """Fetch options chain (calls + puts) for the nearest expiration via the
+    market provider. Returns a DataFrame with the columns the rest of the
+    backend already expects (strike, bid, ask, impliedVolatility, volume,
+    openInterest, type, mid_price, expiration)."""
+    expirations = get_option_expirations(ticker)
     if not expirations:
         raise ValueError(f"No options data available for {ticker}")
-    
-    # Get nearest expiration (first in list)
+
     nearest_exp = expirations[0]
-    
-    # Fetch options chain for nearest expiration
-    opt_chain = stock.option_chain(nearest_exp)
-    
-    # Combine calls and puts
-    calls = opt_chain.calls.copy()
-    calls['type'] = 'call'
-    
-    puts = opt_chain.puts.copy()
-    puts['type'] = 'put'
-    
-    # Combine both
-    options = pd.concat([calls, puts], ignore_index=True)
-    
-    # Calculate mid price
-    options['mid_price'] = (options['bid'] + options['ask']) / 2
-    
-    # Add expiration date
+    chain = get_option_chain(ticker, nearest_exp)
+
+    def _contracts_to_records(contracts, side: str):
+        return [
+            {
+                "strike": c.strike,
+                "lastPrice": c.last_price,
+                "bid": c.bid,
+                "ask": c.ask,
+                "impliedVolatility": c.implied_volatility,
+                "openInterest": c.open_interest,
+                "volume": c.volume,
+                "inTheMoney": c.in_the_money,
+                "type": side,
+            }
+            for c in contracts
+        ]
+
+    options = pd.DataFrame(
+        _contracts_to_records(chain.calls, "call")
+        + _contracts_to_records(chain.puts, "put")
+    )
+    if options.empty:
+        return options
+    options['mid_price'] = (options['bid'].fillna(0) + options['ask'].fillna(0)) / 2
     options['expiration'] = nearest_exp
-    
     return options
 
 

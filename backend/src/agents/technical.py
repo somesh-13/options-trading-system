@@ -12,9 +12,9 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
 
 from agents.base import AgentSignal, AnalysisContext, BaseAgent
+from data.market_provider import get_history, history_to_dataframe
 
 
 class TechnicalAgent(BaseAgent):
@@ -58,9 +58,10 @@ class TechnicalAgent(BaseAgent):
 
     @staticmethod
     def _compute(ticker: str) -> dict:
-        hist = yf.Ticker(ticker).history(period="6mo")
-        if hist is None or len(hist) < 25:
+        bars = get_history(ticker, period="6mo")
+        if not bars or len(bars) < 25:
             raise ValueError(f"Insufficient data for {ticker}")
+        hist = history_to_dataframe(bars)
 
         close = hist["Close"]
         high = hist["High"]

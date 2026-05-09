@@ -93,12 +93,11 @@ def _get_spot_cached(symbol: str) -> Optional[float]:
         if now - ts < _SPOT_CACHE_TTL:
             return price
     try:
-        import yfinance as yf
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period="1d")
-        if hist.empty:
+        from data.market_provider import get_history
+        bars = get_history(symbol, period="1d")
+        if not bars:
             return None
-        price = float(hist["Close"].iloc[-1])
+        price = float(bars[-1].close)
         _SPOT_CACHE[symbol] = (now, price)
         return price
     except Exception:
@@ -159,14 +158,15 @@ def _enrich_option_market_values(positions: List[OptionHolding]) -> None:
     for sym in underlyings:
         spot_map[sym] = _get_spot_cached(sym)
 
-    # Build a per-underlying HV map using yfinance for the BS fallback.
+    # Build a per-underlying HV map for the BS fallback.
     hv_map: Dict[str, float] = {}
     for sym in underlyings:
         try:
-            import yfinance as yf
             import numpy as np
-            hist = yf.Ticker(sym).history(period="60d")
-            if len(hist) >= 10:
+            from data.market_provider import get_history, history_to_dataframe
+            bars = get_history(sym, period="60d")
+            if len(bars) >= 10:
+                hist = history_to_dataframe(bars)
                 log_rets = np.log(hist["Close"] / hist["Close"].shift(1)).dropna()
                 hv_map[sym] = float(np.std(log_rets) * np.sqrt(252))
         except Exception:

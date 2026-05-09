@@ -12,7 +12,7 @@ import pandas as pd
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from pricing.black_scholes import black_scholes
+from pricing.black_scholes import black_scholes, black_scholes_call, black_scholes_put
 from pricing.greeks import calculate_greeks
 from datetime import datetime
 from pricing.implied_vol import implied_volatility
@@ -22,7 +22,7 @@ from pricing.implied_vol import implied_volatility_compare
 from pricing.vol_surface import generate_vol_surface
 from pricing.hedge_stability import forecast_delta_decay, forecast_vol_shock, rehedge_recommendation
 from pricing.pnl_attribution import greeks_pnl_attribution, stress_test_position, stress_test_portfolio
-from data.market_data import get_ticker_price, detect_mispricing, get_tca_data, get_price_history, get_ticker_detail
+from data.market_data import get_ticker_price, detect_mispricing, get_tca_data, get_price_history, get_ticker_detail, get_short_interest, get_ownership
 from data.earnings_extract import get_latest_8k_earnings
 from data.fundamentals import get_ticker_fundamentals, get_income_statement_history
 from scanner.nl_parser import parse_nl_query
@@ -40,6 +40,9 @@ from api.models import (
     ImpliedVolResponse,
     HedgeForecastRequest,
     HedgeForecastResponse,
+    SimulateMultiLegRequest,
+    SimulateMultiLegResponse,
+    SimCurve,
     StressTestRequest,
     StressTestResponse,
     PnLAttributionRequest,
@@ -88,7 +91,9 @@ from api.models import (
     IRFilingListResponse,
     IRFilingRefreshResponse,
     IRFilingCountsResponse,
+    MacroNewsResponse,
 )
+from data.macro_news import aggregate as aggregate_macro_news, CATEGORIES as _MACRO_CATEGORIES
 
 # Robinhood activity ingestion + portfolio derivation.
 from robinhood import database as rh_db
@@ -524,6 +529,68 @@ def get_hedge_forecast(params: HedgeForecastRequest):
         raise HTTPException(status_code=500, detail=f"Hedge forecast failed: {str(e)}")
 
 
+@app.post("/api/pricing/simulate-multi-leg", response_model=SimulateMultiLegResponse)
+def simulate_multi_leg(req: SimulateMultiLegRequest):
+    """Simulate combined P&L of a multi-leg options position over a price grid
+    and a series of evaluation dates. Re-prices each leg with Black-Scholes at
+    every (price, date) cell, sums signed leg P&L vs entry premium, and returns
+    one curve per evaluation date so the frontend can show payoff evolution
+    with a date slider.
+
+    Per-leg P&L formula at price p, date d:
+        T_remaining = max(0, (leg.expiration - d).days / 365)
+        theo       = BS(p, K, T_remaining, r, sigma)   # intrinsic when T<=0
+        leg_pnl    = sign * qty * 100 * (theo - entry_price)
+    where sign = +1 for buy, -1 for sell.
+    """
+    import numpy as np
+    from datetime import date as _date
+
+    try:
+        # Parse legs and evaluation dates once
+        leg_exps: List[_date] = []
+        for leg in req.legs:
+            try:
+                leg_exps.append(datetime.strptime(leg.expiration, "%Y-%m-%d").date())
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"Bad leg expiration: {leg.expiration}")
+
+        eval_dates: List[_date] = []
+        for s in req.evaluation_dates:
+            try:
+                eval_dates.append(datetime.strptime(s, "%Y-%m-%d").date())
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"Bad evaluation_date: {s}")
+
+        # Price grid
+        pmin = req.price_range.min if req.price_range.min is not None else max(0.01, req.spot * 0.7)
+        pmax = req.price_range.max if req.price_range.max is not None else req.spot * 1.3
+        if pmax <= pmin:
+            raise HTTPException(status_code=422, detail="price_range.max must exceed min")
+        prices = np.linspace(pmin, pmax, req.price_range.steps)
+
+        curves: List[SimCurve] = []
+        for d in eval_dates:
+            pnl = np.zeros_like(prices)
+            for leg, exp in zip(req.legs, leg_exps):
+                days = (exp - d).days
+                T = max(0.0, days / 365.0)
+                # black_scholes_{call,put} accept array S via numpy broadcasting
+                if leg.option_type == 'call':
+                    theo = black_scholes_call(prices, leg.strike, T, req.r, req.sigma)
+                else:
+                    theo = black_scholes_put(prices, leg.strike, T, req.r, req.sigma)
+                sign = 1.0 if leg.side == 'buy' else -1.0
+                pnl = pnl + sign * leg.quantity * 100.0 * (np.asarray(theo) - leg.entry_price)
+            curves.append(SimCurve(date=d.isoformat(), pnl=pnl.tolist()))
+
+        return SimulateMultiLegResponse(prices=prices.tolist(), curves=curves)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Multi-leg simulation failed: {str(e)}")
+
+
 @app.get("/api/market/{ticker}/price")
 def get_current_ticker_price(ticker: str):
     """Get current spot price for any ticker via Yahoo Finance."""
@@ -557,6 +624,24 @@ def get_ticker_detail_endpoint(ticker: str):
         return get_ticker_detail(ticker.upper())
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Detail fetch failed for {ticker}: {str(e)}")
+
+
+@app.get("/api/market/{ticker}/short-interest")
+def get_short_interest_endpoint(ticker: str):
+    """Short-interest snapshot (current + prior month) for the stock detail page."""
+    try:
+        return get_short_interest(ticker.upper())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Short interest fetch failed for {ticker}: {str(e)}")
+
+
+@app.get("/api/market/{ticker}/ownership")
+def get_ownership_endpoint(ticker: str):
+    """Top institutional holders + retail/institutional/insider breakdown."""
+    try:
+        return get_ownership(ticker.upper())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ownership fetch failed for {ticker}: {str(e)}")
 
 
 @app.get("/api/market/{ticker}/fundamentals")
@@ -725,56 +810,18 @@ def get_hv_confidence(ticker: str, window: int = 30, confidence: float = 0.95):
 def get_option_expirations(ticker: str):
     """Available expiration dates for a ticker, with ATM IV + total OI summary.
 
-    Powers the horizontal expiration strip on /options-chain. yfinance returns
-    a list of YYYY-MM-DD strings; we enrich each with DTE, an ATM IV proxy
-    (the call closest to spot), and total open interest across both legs so
-    the user can see at a glance which expiries are liquid.
+    Powers the horizontal expiration strip on /options-chain. The body lives
+    in `market_data.get_option_expirations_summary` so the vol-term-spike
+    detector can reuse the same yfinance round-trip.
     """
-    import yfinance as yf
-    from datetime import date as _date
+    from data.market_data import get_option_expirations_summary
 
     sym = ticker.upper()
     try:
-        t = yf.Ticker(sym)
-        expiries = list(t.options or [])
-        if not expiries:
-            return {"ticker": sym, "spot": None, "expirations": []}
-
-        spot_hist = t.history(period="1d")
-        spot = float(spot_hist["Close"].iloc[-1]) if not spot_hist.empty else None
-
-        out: List[Dict[str, Any]] = []
-        today = _date.today()
-        for exp_str in expiries:
-            try:
-                exp_d = _date.fromisoformat(exp_str)
-            except ValueError:
-                continue
-            dte = (exp_d - today).days
-            atm_iv: Optional[float] = None
-            total_oi = 0
-            try:
-                chain = t.option_chain(exp_str)
-                # ATM IV from the call whose strike is closest to spot.
-                if spot is not None and not chain.calls.empty:
-                    closest = chain.calls.iloc[
-                        (chain.calls["strike"] - spot).abs().argsort().iloc[0]
-                    ]
-                    iv = closest.get("impliedVolatility")
-                    if iv is not None and not pd.isna(iv):
-                        atm_iv = float(iv)
-                for leg in (chain.calls, chain.puts):
-                    if "openInterest" in leg.columns:
-                        total_oi += int(leg["openInterest"].fillna(0).sum())
-            except Exception:
-                pass
-            out.append({
-                "expiration": exp_str,
-                "dte": dte,
-                "atm_iv": round(atm_iv, 4) if atm_iv is not None else None,
-                "total_oi": total_oi,
-            })
-        return {"ticker": sym, "spot": spot, "expirations": out}
+        result = get_option_expirations_summary(sym)
+        if result is None:
+            raise RuntimeError("yfinance summary failed")
+        return result
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -789,8 +836,8 @@ def get_market_option_chain(ticker: str, expiration: str):
     `expiration` must be YYYY-MM-DD and must appear in
     /api/market/{ticker}/option-expirations.
     """
-    import yfinance as yf
     from datetime import date as _date
+    from data.market_provider import get_history, get_option_chain, get_option_expirations
 
     sym = ticker.upper()
     try:
@@ -798,54 +845,34 @@ def get_market_option_chain(ticker: str, expiration: str):
     except ValueError:
         raise HTTPException(status_code=422, detail="expiration must be YYYY-MM-DD")
     try:
-        t = yf.Ticker(sym)
-        spot_hist = t.history(period="1d")
-        spot = float(spot_hist["Close"].iloc[-1]) if not spot_hist.empty else None
-        if expiration not in (t.options or []):
+        spot_bars = get_history(sym, period="1d")
+        spot = float(spot_bars[-1].close) if spot_bars else None
+        if expiration not in get_option_expirations(sym):
             raise HTTPException(
                 status_code=404,
                 detail=f"Expiration {expiration} not available for {sym}",
             )
-        chain = t.option_chain(expiration)
+        chain = get_option_chain(sym, expiration)
 
-        def _row(r) -> Dict[str, Any]:
-            def _f(v):
-                try:
-                    if v is None or pd.isna(v):
-                        return None
-                    return float(v)
-                except (TypeError, ValueError):
-                    return None
-
-            def _i(v):
-                try:
-                    if v is None or pd.isna(v):
-                        return 0
-                    return int(v)
-                except (TypeError, ValueError):
-                    return 0
-
-            bid = _f(r.get("bid"))
-            ask = _f(r.get("ask"))
+        def _contract_row(c) -> Dict[str, Any]:
             mid: Optional[float] = None
-            if bid is not None and ask is not None and bid > 0 and ask > 0:
-                mid = round((bid + ask) / 2, 4)
+            if c.bid is not None and c.ask is not None and c.bid > 0 and c.ask > 0:
+                mid = round((c.bid + c.ask) / 2, 4)
             return {
-                "contract_symbol": r.get("contractSymbol"),
-                "strike": _f(r.get("strike")),
-                "bid": bid,
-                "ask": ask,
-                "last": _f(r.get("lastPrice")),
+                "contract_symbol": None,  # not exposed by adapter
+                "strike": c.strike,
+                "bid": c.bid,
+                "ask": c.ask,
+                "last": c.last_price,
                 "mid": mid,
-                "iv": _f(r.get("impliedVolatility")),
-                "volume": _i(r.get("volume")),
-                "open_interest": _i(r.get("openInterest")),
-                "in_the_money": bool(r.get("inTheMoney")) if r.get("inTheMoney") is not None else None,
+                "iv": c.implied_volatility,
+                "volume": c.volume or 0,
+                "open_interest": c.open_interest or 0,
+                "in_the_money": c.in_the_money,
             }
 
-        calls = [_row(r) for _, r in chain.calls.iterrows()]
-        puts = [_row(r) for _, r in chain.puts.iterrows()]
-        # Sort ascending by strike for the table render.
+        calls = [_contract_row(c) for c in chain.calls]
+        puts = [_contract_row(c) for c in chain.puts]
         calls.sort(key=lambda x: (x["strike"] is None, x["strike"]))
         puts.sort(key=lambda x: (x["strike"] is None, x["strike"]))
 
@@ -2462,6 +2489,51 @@ def robinhood_drawdown(account: str = "all", limit: float = 0.10):
 
 
 # =============================================
+# Per-ticker positions report + Gemini chat
+# =============================================
+
+from robinhood.ticker_report import build_ticker_report  # noqa: E402
+from ai.ticker_chat import chat_about_ticker  # noqa: E402
+from pydantic import BaseModel as _ChatBaseModel  # noqa: E402
+
+
+class _TickerChatMessage(_ChatBaseModel):
+    role: str
+    content: str
+
+
+class TickerChatRequest(_ChatBaseModel):
+    ticker: str
+    message: str
+    history: List[_TickerChatMessage] = []
+    account: Optional[str] = None
+
+
+class TickerChatResponse(_ChatBaseModel):
+    reply: str
+    model: str
+    latency_ms: int
+    error: Optional[str] = None
+
+
+@app.get("/api/robinhood/analytics/ticker-report/{ticker}")
+def robinhood_ticker_report(ticker: str, account: Optional[str] = None):
+    """All positions + aggregate Greeks + recent activity for one ticker."""
+    try:
+        return build_ticker_report(ticker, account)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Ticker report failed: {exc}")
+
+
+@app.post("/api/robinhood/analytics/ticker-chat", response_model=TickerChatResponse)
+def robinhood_ticker_chat(req: TickerChatRequest):
+    """One-shot Gemini answer grounded in the live ticker report."""
+    history = [m.model_dump() for m in req.history]
+    out = chat_about_ticker(req.ticker, req.message, history=history, account=req.account)
+    return TickerChatResponse(**out)
+
+
+# =============================================
 # Robinhood Crypto endpoints
 # =============================================
 
@@ -3440,6 +3512,23 @@ def dismiss_all_notifications():
     from notifications import service as _svc  # type: ignore
     n = _svc.dismiss_all()
     return {"dismissed": n}
+
+
+# =============================================
+# Macro news (homepage world-affairs feed)
+# =============================================
+
+@app.get("/api/macro-news/feed", response_model=MacroNewsResponse)
+def get_macro_news(categories: Optional[str] = None, limit: int = 30):
+    """Aggregated macro headlines (geopolitical conflict, health/disease,
+    macro economy, political events). GDELT 2.0 + curated RSS feeds.
+    Server-cached for 5 min."""
+    if categories:
+        cats = [c.strip().lower() for c in categories.split(",") if c.strip()]
+    else:
+        cats = list(_MACRO_CATEGORIES)
+    limit = max(1, min(int(limit), 100))
+    return aggregate_macro_news(cats, limit=limit)
 
 
 if __name__ == "__main__":

@@ -9,8 +9,7 @@ Implements bias-free backtesting with:
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 from dataclasses import dataclass, field
 
@@ -21,6 +20,20 @@ sys.path.append(str(Path(__file__).parent.parent))
 from pricing.black_scholes import black_scholes
 from pricing.greeks import calculate_greeks
 from backtest.price_analysis import calculate_price_metrics, analyze_price_sensitivity
+from data.market_provider import get_history, history_to_dataframe
+
+
+def _to_date(value) -> Optional[date]:
+    """Coerce ISO string / datetime / date inputs to a `date` for the adapter."""
+    if value is None:
+        return None
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, str):
+        return date.fromisoformat(value[:10])
+    return None
 
 
 @dataclass
@@ -90,8 +103,8 @@ def run_backtest(config: BacktestConfig) -> BacktestResult:
     buy options when IV/HV < threshold (underpriced vol).
     """
     # Fetch historical data
-    stock = yf.Ticker(config.ticker)
-    hist = stock.history(start=config.start_date, end=config.end_date)
+    bars = get_history(config.ticker, start=_to_date(config.start_date), end=_to_date(config.end_date))
+    hist = history_to_dataframe(bars)
 
     if hist.empty or len(hist) < 60:
         return BacktestResult(

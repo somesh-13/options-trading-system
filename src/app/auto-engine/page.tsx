@@ -131,7 +131,7 @@ export default function AutoEnginePage() {
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, rowGap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
         <h2 className="rv-h1" style={{ margin: 0 }}>Auto engine</h2>
         <span className={`rv-chip ${chipClass}`}>
           <span

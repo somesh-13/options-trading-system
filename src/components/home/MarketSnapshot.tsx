@@ -136,19 +136,19 @@ export function MarketSnapshot() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
           gap: 0,
         }}
       >
-        {quotes.map((q, i) => (
-          <Tile key={q.symbol} quote={q} isLast={i === quotes.length - 1} />
+        {quotes.map((q) => (
+          <Tile key={q.symbol} quote={q} />
         ))}
       </div>
     </div>
   );
 }
 
-function Tile({ quote, isLast }: { quote: Quote; isLast: boolean }) {
+function Tile({ quote }: { quote: Quote }) {
   const isUp = (quote.changePct ?? 0) >= 0;
   const color = quote.changePct == null
     ? 'var(--ink-mute)'
@@ -160,11 +160,13 @@ function Tile({ quote, isLast }: { quote: Quote; isLast: boolean }) {
     <div
       style={{
         padding: '10px 14px',
-        borderRight: isLast ? undefined : '1px solid var(--line)',
+        borderRight: '1px solid var(--line)',
+        borderBottom: '1px solid var(--line)',
         display: 'flex',
         flexDirection: 'column',
         gap: 4,
         minHeight: 64,
+        minWidth: 0,
       }}
     >
       <div
@@ -173,6 +175,9 @@ function Tile({ quote, isLast }: { quote: Quote; isLast: boolean }) {
           letterSpacing: '0.05em',
           textTransform: 'uppercase',
           color: 'var(--ink-mute)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}
       >
         {quote.label}

@@ -6,12 +6,13 @@ Also implements Parkinson volatility estimator using high/low prices.
 """
 
 import numpy as np
-import yfinance as yf
 from typing import Dict
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
+
+from data.market_provider import get_history, history_to_dataframe
 
 
 def hv_with_confidence(
@@ -36,11 +37,10 @@ def hv_with_confidence(
             ci_width: float, reliable: bool
         }
     """
-    stock = yf.Ticker(ticker)
-    hist = stock.history(period=f"{window + 30}d")
-
-    if len(hist) < window:
-        raise ValueError(f"Insufficient data: need {window} days, got {len(hist)}")
+    bars = get_history(ticker, period=f"{window + 30}d")
+    if len(bars) < window:
+        raise ValueError(f"Insufficient data: need {window} days, got {len(bars)}")
+    hist = history_to_dataframe(bars)
 
     # Calculate log returns
     returns = np.log(hist['Close'] / hist['Close'].shift(1)).dropna().values

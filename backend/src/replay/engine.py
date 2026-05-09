@@ -174,12 +174,13 @@ class ReplayEngine:
     # ---------------------------- helpers -----------------------------------
 
     def _fetch_ohlcv(self, ticker: str, start: date, end: date) -> Optional[pd.DataFrame]:
-        import yfinance as yf
+        from data.market_provider import get_history, history_to_dataframe
 
         pad_start = start - timedelta(days=60)  # buffer so rolling windows are warm from day 1
-        hist = yf.Ticker(ticker).history(start=pad_start.isoformat(), end=(end + timedelta(days=1)).isoformat())
-        if hist is None or hist.empty:
+        bars = get_history(ticker, start=pad_start, end=end + timedelta(days=1))
+        if not bars:
             return None
+        hist = history_to_dataframe(bars)
         # Keep only rows within the requested window for simulation; the warm-up days
         # contributed to rolling statistics but aren't evaluated as trading days.
         return hist[hist.index.date >= start]

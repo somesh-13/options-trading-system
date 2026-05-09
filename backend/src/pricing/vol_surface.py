@@ -6,7 +6,6 @@ X-axis: Strike, Y-axis: Expiration, Z-axis: Implied Volatility
 """
 
 import numpy as np
-import yfinance as yf
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -16,6 +15,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from pricing.implied_vol import implied_volatility
 from data.cifr_data import get_options_chain_yahoo
+from data.market_provider import get_history, get_option_chain, get_option_expirations
 
 
 def generate_vol_smile(ticker: str, expiration_index: int = 0) -> Dict:
@@ -29,8 +29,7 @@ def generate_vol_smile(ticker: str, expiration_index: int = 0) -> Dict:
     Returns:
         {strikes: [], ivs: [], spot_price: float, expiration: str}
     """
-    stock = yf.Ticker(ticker)
-    expirations = stock.options
+    expirations = get_option_expirations(ticker)
 
     if not expirations:
         raise ValueError(f"No options data for {ticker}")
@@ -39,33 +38,34 @@ def generate_vol_smile(ticker: str, expiration_index: int = 0) -> Dict:
         expiration_index = len(expirations) - 1
 
     exp_date = expirations[expiration_index]
-    chain = stock.option_chain(exp_date)
+    chain = get_option_chain(ticker, exp_date)
 
-    # Get spot price
-    hist = stock.history(period="1d")
-    spot = float(hist['Close'].iloc[-1])
+    bars = get_history(ticker, period="1d")
+    if not bars:
+        raise ValueError(f"Unable to fetch spot price for {ticker}")
+    spot = float(bars[-1].close)
 
-    # Calculate time to expiration
     exp_dt = datetime.strptime(exp_date, "%Y-%m-%d")
     T = max((exp_dt - datetime.now()).days / 365.0, 1/365)
 
-    calls = chain.calls
     strikes = []
     ivs = []
 
-    for _, row in calls.iterrows():
-        mid_price = (row['bid'] + row['ask']) / 2
-        if mid_price > 0.01 and row['bid'] > 0:
+    for c in chain.calls:
+        if c.bid is None or c.ask is None:
+            continue
+        mid_price = (c.bid + c.ask) / 2
+        if mid_price > 0.01 and c.bid > 0:
             iv = implied_volatility(
                 market_price=mid_price,
                 S=spot,
-                K=row['strike'],
+                K=c.strike,
                 T=T,
                 r=0.05,
                 option_type='call'
             )
             if iv is not None and 0.01 < iv < 5.0:
-                strikes.append(float(row['strike']))
+                strikes.append(float(c.strike))
                 ivs.append(float(iv))
 
     return {
@@ -88,16 +88,17 @@ def generate_vol_surface(ticker: str, max_expirations: int = 6) -> Dict:
     Returns:
         {strikes: [], expirations: [], iv_matrix: [[]], spot_price: float}
     """
-    stock = yf.Ticker(ticker)
-    expirations = stock.options
+    expirations = get_option_expirations(ticker)
 
     if not expirations:
         raise ValueError(f"No options data for {ticker}")
 
     n_exp = min(len(expirations), max_expirations)
 
-    hist = stock.history(period="1d")
-    spot = float(hist['Close'].iloc[-1])
+    bars = get_history(ticker, period="1d")
+    if not bars:
+        raise ValueError(f"Unable to fetch spot price for {ticker}")
+    spot = float(bars[-1].close)
 
     all_strikes = set()
     exp_data = []
@@ -105,27 +106,28 @@ def generate_vol_surface(ticker: str, max_expirations: int = 6) -> Dict:
     for i in range(n_exp):
         exp_date = expirations[i]
         try:
-            chain = stock.option_chain(exp_date)
+            chain = get_option_chain(ticker, exp_date)
             exp_dt = datetime.strptime(exp_date, "%Y-%m-%d")
             T = max((exp_dt - datetime.now()).days / 365.0, 1/365)
 
-            calls = chain.calls
             strike_iv_map = {}
 
-            for _, row in calls.iterrows():
-                mid_price = (row['bid'] + row['ask']) / 2
-                if mid_price > 0.01 and row['bid'] > 0:
+            for c in chain.calls:
+                if c.bid is None or c.ask is None:
+                    continue
+                mid_price = (c.bid + c.ask) / 2
+                if mid_price > 0.01 and c.bid > 0:
                     iv = implied_volatility(
                         market_price=mid_price,
                         S=spot,
-                        K=row['strike'],
+                        K=c.strike,
                         T=T,
                         r=0.05,
                         option_type='call'
                     )
                     if iv is not None and 0.01 < iv < 5.0:
-                        strike_iv_map[float(row['strike'])] = float(iv)
-                        all_strikes.add(float(row['strike']))
+                        strike_iv_map[float(c.strike)] = float(iv)
+                        all_strikes.add(float(c.strike))
 
             exp_data.append({
                 'expiration': exp_date,

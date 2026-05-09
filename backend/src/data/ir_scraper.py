@@ -4,57 +4,36 @@ Scrapes publicly available financial news and IR data using BeautifulSoup.
 Extracts earnings call highlights, SEC filing summaries, and news headlines.
 """
 
-import requests
-from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
-from typing import Optional
-import yfinance as yf
-import re
+from datetime import datetime
+
+from data.market_provider import (
+    get_company_info as _provider_company_info,
+    get_news as _provider_news,
+)
 
 
 def scrape_yahoo_news(ticker: str, max_articles: int = 10) -> list[dict]:
-    """Scrape recent news headlines and summaries from Yahoo Finance.
+    """Recent news headlines + summaries via the market provider.
 
-    yfinance's `Ticker.news` shape changed in late 2025: every field now lives
-    under `item["content"]` rather than at the top level, and the Unix-epoch
-    `providerPublishTime` was replaced with an ISO-8601 `pubDate`. Read both
-    layouts so older yfinance versions still work on machines that haven't
-    upgraded yet.
+    The provider's `get_news` already handles yfinance's late-2025 shape change
+    (fields nested under `content.*`) and normalizes to NewsItem objects. We
+    project those back to the dict shape downstream callers expect.
     """
     try:
-        stock = yf.Ticker(ticker)
-        news = stock.news or []
+        items = _provider_news(ticker, limit=max_articles)
         articles = []
-        for item in news[:max_articles]:
-            content = item.get("content") or {}
-            # Fields can live either nested (new yfinance) or top-level (old).
-            title = content.get("title") or item.get("title") or ""
-            summary = content.get("summary") or content.get("description") or item.get("summary", "")
-            content_type = content.get("contentType") or item.get("type", "STORY")
-            published = content.get("pubDate") or content.get("displayTime") or item.get("providerPublishTime", 0)
-
-            provider = content.get("provider") or {}
-            publisher = (
-                provider.get("displayName")
-                or item.get("publisher")
-                or ""
-            )
-
-            link_obj = (
-                content.get("clickThroughUrl")
-                or content.get("canonicalUrl")
-                or {}
-            )
-            link = link_obj.get("url") if isinstance(link_obj, dict) else item.get("link") or ""
-
+        for n in items:
+            published_raw: object = ""
+            if n.published_at is not None:
+                published_raw = n.published_at.isoformat()
             articles.append({
-                "title": title,
-                "publisher": publisher,
-                "link": link,
-                "published": published,
-                "summary": summary,
-                "type": content_type,
-                "related_tickers": item.get("relatedTickers") or content.get("finance", {}).get("stockTickers", []),
+                "title": n.title,
+                "publisher": n.publisher or "",
+                "link": n.url or "",
+                "published": published_raw,
+                "summary": n.summary or "",
+                "type": "STORY",
+                "related_tickers": [],
             })
         return articles
     except Exception:
@@ -62,57 +41,37 @@ def scrape_yahoo_news(ticker: str, max_articles: int = 10) -> list[dict]:
 
 
 def scrape_sec_filings(ticker: str, filing_types: list[str] = None) -> list[dict]:
-    """Fetch recent SEC filings metadata from EDGAR."""
+    """Fetch recent SEC filings via the EDGAR submissions API.
+
+    For 8-Ks, also attaches `body_excerpt` populated from exhibit 99.1 (the
+    earnings press release). Bodies are disk-cached, so only the first refresh
+    per filing pays the network cost.
+    """
     if filing_types is None:
         filing_types = ["10-K", "10-Q", "8-K"]
 
-    headers = {"User-Agent": "TradingDashboard/1.0 research@example.com"}
-    filings = []
-
     try:
-        # Get CIK from ticker
-        url = f"https://efts.sec.gov/LATEST/search-index?q=%22{ticker}%22&dateRange=custom&startdt={(datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')}&enddt={datetime.now().strftime('%Y-%m-%d')}&forms={','.join(filing_types)}"
-        # Use EDGAR full-text search API
-        search_url = f"https://efts.sec.gov/LATEST/search-index?q={ticker}&forms={','.join(filing_types)}&dateRange=custom&startdt={(datetime.now() - timedelta(days=180)).strftime('%Y-%m-%d')}&enddt={datetime.now().strftime('%Y-%m-%d')}"
-
-        # Simpler approach: use EDGAR company search
-        cik_url = f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company={ticker}&type=&dateb=&owner=include&count=5&search_text=&action=getcompany&output=atom"
-        resp = requests.get(cik_url, headers=headers, timeout=10)
-
-        if resp.status_code == 200:
-            soup = BeautifulSoup(resp.text, "html.parser")
-            entries = soup.find_all("entry")
-            for entry in entries[:5]:
-                title = entry.find("title")
-                updated = entry.find("updated")
-                link = entry.find("link")
-                filings.append({
-                    "title": title.text if title else "",
-                    "date": updated.text if updated else "",
-                    "link": link.get("href", "") if link else "",
-                    "type": "SEC_FILING",
-                })
+        from data.sec_exhibits import scrape_filings_with_bodies  # type: ignore
+        return scrape_filings_with_bodies(ticker, forms=tuple(filing_types), limit=10)
     except Exception:
-        pass
-
-    return filings
+        return []
 
 
 def get_company_info(ticker: str) -> dict:
-    """Get company fundamental info for context."""
+    """Get company fundamental info for context (provider-backed)."""
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info or {}
+        company = _provider_company_info(ticker)
+        info = company.raw or {}
         return {
-            "name": info.get("longName", ticker),
-            "sector": info.get("sector", "Unknown"),
-            "industry": info.get("industry", "Unknown"),
-            "market_cap": info.get("marketCap", 0),
-            "pe_ratio": info.get("trailingPE"),
-            "forward_pe": info.get("forwardPE"),
+            "name": company.long_name or ticker,
+            "sector": company.sector or "Unknown",
+            "industry": company.industry or "Unknown",
+            "market_cap": company.market_cap or 0,
+            "pe_ratio": company.trailing_pe,
+            "forward_pe": company.forward_pe,
             "earnings_date": str(info.get("earningsDate", "")),
             "recommendation": info.get("recommendationKey", ""),
-            "target_price": info.get("targetMeanPrice"),
+            "target_price": company.target_mean_price,
             "current_price": info.get("currentPrice", info.get("regularMarketPrice")),
             "52w_high": info.get("fiftyTwoWeekHigh"),
             "52w_low": info.get("fiftyTwoWeekLow"),

@@ -6,18 +6,18 @@ a comparative results table.
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
 from datetime import datetime
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from backtest.engine import compute_metrics, _compute_rolling_hv, _compute_monthly_returns
+from backtest.engine import compute_metrics, _compute_rolling_hv, _compute_monthly_returns, _to_date
 from backtest.strategies import (
     BarData, BaseStrategy, STRATEGY_MAP,
 )
 from backtest.price_analysis import calculate_price_metrics, analyze_price_sensitivity
+from data.market_provider import get_history, history_to_dataframe
 
 
 def _compute_synthetic_iv_seeded(hv: pd.Series, seed: int, noise_factor: float = 0.15) -> pd.Series:
@@ -34,8 +34,8 @@ def _prepare_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame:
         date, spot, hv, iv, iv_hv_ratio, iv_hv_rolling_mean, iv_hv_rolling_std
     Rows with NaN are dropped.
     """
-    stock = yf.Ticker(ticker)
-    hist = stock.history(start=start_date, end=end_date)
+    bars = get_history(ticker, start=_to_date(start_date), end=_to_date(end_date))
+    hist = history_to_dataframe(bars)
 
     if hist.empty or len(hist) < 60:
         return pd.DataFrame()

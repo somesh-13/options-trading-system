@@ -182,6 +182,8 @@ type DeltaGammaRow = {
     strike: number;
     dte_days: number;
     iv_used: number;
+    delta_per_contract: number;
+    gamma_per_contract: number;
   } | null;
   hedge_contracts: number;
   hedge_contracts_action: string;

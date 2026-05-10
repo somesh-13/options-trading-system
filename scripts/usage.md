@@ -57,7 +57,7 @@ Top-level fields:
 | `top_candidates` | object | Best contract for **each** strategy regardless of verdict |
 | `strategy_window` | object \| null | Active strategy params + gate state |
 | `polling_recommendation` | object | Suggested cron cadence |
-| `notes` | string[] | Warnings / context (e.g. "no candidates within DTE window") |
+| `notes` | string[] | Warnings / context. Two formats: `"<STRATEGY>: no candidates within …"` (strict window empty) or `"SELL_COVERED_CALL: relaxed — <reason>."` (a fallback tier produced the strike — see below). |
 
 ### `regime`
 
@@ -103,6 +103,23 @@ or `null`.
 | `pop` | float `[0, 1]` | Probability of profit (~`|delta|`) |
 | `annualized_return` | float | Annualized expected return |
 | `capital` | float | Cash needed per contract: `SELL_CSP → strike*100`; `BUY_LEAP → mid*100`; `SELL_COVERED_CALL → 0` (shares already held) |
+| `fallback_reason` | string \| null | Set only on `SELL_COVERED_CALL` when a relaxed tier was used (see "Covered-call fallback tiers" below). `null` for strict-tier picks and for the other two strategies. |
+
+#### Covered-call fallback tiers
+
+`SELL_COVERED_CALL` is treated as a "must-pick" when its gate fires — selling
+premium against shares you already hold beats sitting on idle theta. So when
+the strict window is empty the picker walks down two relaxed tiers before
+giving up:
+
+| Tier | Window | `fallback_reason` shape |
+|---|---|---|
+| 1 (strict) | 21–35 DTE, \|Δ−0.30\| ≤ 0.10 | `null` |
+| 2 (widened) | 14–50 DTE, \|Δ−0.30\| ≤ 0.10 | `"DTE widened to 14-50; strict 21-35 was empty"` |
+| 3 (nearest-delta) | OTM (strike ≥ spot), live mid > 0, 7–60 DTE | `"nearest-delta fallback: Δ=0.31, 12 DTE"` |
+
+`SELL_CSP` and `BUY_LEAP` have **no** fallback — they return `null` if the
+strict window is empty.
 
 ### `strategy_window`
 
@@ -146,43 +163,67 @@ flipped?" planning.
 
 ## Worked example — CIFR
 
-Captured response (`asof` 2026-04-26):
+Captured response (`asof` 2026-05-10):
 
 ```json
 {
   "ticker": "CIFR",
-  "spot": 18.20,
+  "asof": "2026-05-10T05:01:23.736490",
+  "spot": 20.55,
   "regime": {
+    "ticker": "CIFR",
     "regime": "Low Vol",
-    "probability": 0.9999,
-    "regime_probs": [0.9999, 0.0001, 0.0001],
+    "probability": 0.9462,
+    "regime_means": [-0.6768, -1.5423, 40.4158],
+    "regime_vols": [0.9553, 1.0377, 1.1549],
+    "regime_probs": [0.9462, 0.051, 0.0028],
     "regime_labels": ["Low Vol", "Medium Vol", "High Vol"],
     "n_regimes": 3,
     "lookback_days": 120
   },
   "mispricing": {
-    "iv": 1.176,
-    "hv": 0.937,
-    "iv_hv_ratio": 1.255,
+    "iv": 1.0625,
+    "hv": 1.0140,
+    "iv_hv_ratio": 1.0478,
     "iv_percentile": null,
-    "keltner_position": "MIDDLE"
+    "keltner_position": "TOP"
   },
   "verdict": "HOLD",
-  "confluence_score": 0.6501,
+  "confluence_score": 0.6965,
   "top_contract": null,
   "top_candidates": {
     "SELL_CSP": null,
-    "SELL_COVERED_CALL": null,
+    "SELL_COVERED_CALL": {
+      "occ_symbol": "CIFR260522C00023000",
+      "expiry": "2026-05-22",
+      "dte": 12,
+      "strike": 23.0,
+      "mid": 0.7,
+      "delta": 0.3087,
+      "iv": 1.0474,
+      "pop": 0.6913,
+      "annualized_return": 1.0361,
+      "capital": 2055.0,
+      "fallback_reason": "nearest-delta fallback: Δ=0.31, 12 DTE"
+    },
     "BUY_LEAP": null
   },
   "strategy_window": {
     "strategy": null,
+    "delta_target": null,
+    "dte_min": null,
+    "dte_max": null,
     "gate": {},
     "gate_status": "HOLD - no active gate"
   },
+  "polling_recommendation": {
+    "primary": "Once daily at 16:30 ET (post-close, Mon-Fri).",
+    "optional_intraday": "Every 60-90 min during 09:30-16:00 ET if you want IV-spike sweeps.",
+    "note": "Polling more often than every ~60 min returns mostly identical results — Keltner uses EMA-20 of closes and HV is rolling daily, so the gate updates ~once per day."
+  },
   "notes": [
     "SELL_CSP: no candidates within 30-45 DTE and delta target -0.30 (±0.10).",
-    "SELL_COVERED_CALL: no candidates within 21-35 DTE and delta target +0.30 (±0.10).",
+    "SELL_COVERED_CALL: relaxed — nearest-delta fallback: Δ=0.31, 12 DTE.",
     "BUY_LEAP: no candidates within 60-90 DTE and delta target +0.70 (±0.10)."
   ]
 }
@@ -190,13 +231,18 @@ Captured response (`asof` 2026-04-26):
 
 How to read this:
 
-- HMM is 99.99% confident CIFR is in **Low Vol** — the calmest of the three states.
-- Options are rich (`iv_hv_ratio = 1.26`) but price sits in the middle of the
-  Keltner band, so neither the "sell premium at the top" nor the "buy leaps
-  at the bottom" gate fires.
-- Verdict is `HOLD`, so `top_contract` and every `top_candidates` entry are
-  `null`. The `notes` explain the candidate-selection misses (the chain just
-  didn't have contracts inside the target DTE/delta windows today).
+- HMM puts CIFR in **Low Vol** with 94.6% confidence.
+- Options are mildly rich (`iv_hv_ratio = 1.05`) and price is at the **TOP** of
+  the Keltner band, but the covered-call gate needs `iv_hv_ratio > 1.3`, so the
+  gate is **BLOCKED** — verdict drops to `HOLD`.
+- `top_contract` is `null` (no gate fired), but `top_candidates.SELL_COVERED_CALL`
+  is populated by the **Tier-3 nearest-delta fallback** — strict 21–35 DTE was
+  empty, so the picker reached down to a 12-DTE OTM call so a consumer always
+  has a "what would I do if the gate fired" strike on hand. `fallback_reason`
+  documents the tier used; the matching `notes` entry uses the `"relaxed —"`
+  prefix.
+- `SELL_CSP` and `BUY_LEAP` have no fallback path, so their `top_candidates`
+  entries are `null` and `notes` use the strict-empty wording.
 
 ## Architecture
 

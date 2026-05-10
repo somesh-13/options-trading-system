@@ -774,6 +774,387 @@ class YFinanceProvider:
 
 
 # ---------------------------------------------------------------------------
+# RobinhoodProvider — implements the methods Robinhood exposes natively
+# (quote, history ≤5y, company info, option expirations + chain). Anything
+# Robinhood doesn't carry raises NotImplementedError so CompositeProvider
+# can fall through to yfinance.
+# ---------------------------------------------------------------------------
+
+# Mapping from yfinance-style `period=` strings to Robinhood `(span, interval)`.
+# RH's get_stock_historicals supports spans {day, week, month, 3month, year, 5year}
+# and intervals {5minute, 10minute, hour, day, week}. Anything outside this set
+# (custom date ranges, multi-year horizons, intraday > 5y) drops back to yfinance.
+_RH_PERIOD_MAP: Dict[str, Tuple[str, str]] = {
+    "1d":  ("day",    "5minute"),
+    "5d":  ("week",   "day"),
+    "1wk": ("week",   "day"),
+    "1mo": ("month",  "day"),
+    "30d": ("month",  "day"),
+    "60d": ("3month", "day"),
+    "3mo": ("3month", "day"),
+    "6mo": ("year",   "day"),  # RH has no 6-month span; year + day works
+    "1y":  ("year",   "day"),
+    "ytd": ("year",   "day"),
+    "5y":  ("5year",  "day"),
+}
+
+
+class RobinhoodProvider:
+    """robin_stocks-backed MarketProvider for the calls Robinhood exposes
+    cleanly. Authenticated → much higher rate limits than yfinance.
+
+    Anything Robinhood doesn't expose (financial statements, ownership,
+    insider, ETF profile, news, >5y history, FX) raises NotImplementedError;
+    CompositeProvider catches that and routes to yfinance.
+    """
+
+    # ---- Login plumbing (delegated to brokers.robinhood_api) ----
+
+    def _ensure_login(self) -> bool:
+        """Force authentication so subsequent rh.X() calls have a token."""
+        try:
+            from brokers.robinhood_api import login as _rh_login
+            return _rh_login()
+        except Exception:
+            return False
+
+    def _rh(self):
+        """Lazy-import the robin_stocks namespace, after ensuring login."""
+        if not self._ensure_login():
+            raise RuntimeError("Robinhood not configured / login failed")
+        import robin_stocks.robinhood as rh
+        return rh
+
+    # ---- Quote / history ----
+
+    @cached_method(ttl=60, stale_after=300, negative_ttl=30)
+    def get_quote(self, symbol: str) -> Quote:
+        sym = symbol.upper()
+        rh = self._rh()
+        from brokers.robinhood_api import _call_with_reauth
+
+        quotes = _call_with_reauth(rh.stocks.get_quotes, [sym]) or []
+        q = quotes[0] if quotes else None
+        if not q:
+            raise ValueError(f"Robinhood returned no quote for {sym}")
+
+        last_px = _safe_float(q.get("last_trade_price") or q.get("last_extended_hours_trade_price"))
+        prev_close = _safe_float(q.get("previous_close") or q.get("adjusted_previous_close"))
+        if last_px is None or last_px <= 0:
+            raise ValueError(f"Robinhood returned invalid last_trade_price for {sym}")
+
+        change = (last_px - prev_close) if prev_close is not None else 0.0
+        change_pct = (change / prev_close * 100.0) if prev_close else 0.0
+
+        return Quote(
+            symbol=sym,
+            price=round(last_px, 4),
+            change=round(change, 4),
+            change_percent=round(change_pct, 4),
+            open=None,
+            high=None,
+            low=None,
+            previous_close=round(prev_close, 4) if prev_close is not None else None,
+            volume=None,
+            last_updated=str(q.get("updated_at") or ""),
+        )
+
+    @cached_method(ttl=60, stale_after=300, negative_ttl=30)
+    def get_history(
+        self,
+        symbol: str,
+        *,
+        period: Optional[str] = None,
+        interval: str = "1d",
+        start: Optional[date] = None,
+        end: Optional[date] = None,
+    ) -> List[OHLCBar]:
+        # Custom date ranges aren't supported by RH directly — punt to yfinance.
+        if start is not None or end is not None:
+            raise NotImplementedError("Robinhood does not support custom date ranges")
+
+        period_key = (period or "1mo").lower()
+        if period_key not in _RH_PERIOD_MAP:
+            raise NotImplementedError(f"Robinhood does not support period={period!r}")
+
+        sym = symbol.upper()
+        span, rh_interval = _RH_PERIOD_MAP[period_key]
+        rh = self._rh()
+        from brokers.robinhood_api import _call_with_reauth
+
+        rows = _call_with_reauth(
+            rh.stocks.get_stock_historicals,
+            [sym],
+            interval=rh_interval,
+            span=span,
+        ) or []
+
+        bars: List[OHLCBar] = []
+        for row in rows:
+            if not row:
+                continue
+            try:
+                bd_raw = row.get("begins_at") or ""
+                # Robinhood timestamps come back as ISO datetimes; we only need the date.
+                d = date.fromisoformat(bd_raw[:10])
+                bars.append(OHLCBar(
+                    date=d,
+                    open=float(row.get("open_price") or 0.0),
+                    high=float(row.get("high_price") or 0.0),
+                    low=float(row.get("low_price") or 0.0),
+                    close=float(row.get("close_price") or 0.0),
+                    volume=int(float(row.get("volume") or 0)),
+                ))
+            except (TypeError, ValueError, KeyError):
+                continue
+        return bars
+
+    # ---- Company info ----
+
+    @cached_method(ttl=600, stale_after=1800, negative_ttl=60)
+    def get_company_info(self, symbol: str) -> CompanyInfo:
+        sym = symbol.upper()
+        rh = self._rh()
+        from brokers.robinhood_api import _call_with_reauth
+
+        # rh.stocks.get_fundamentals returns a list[dict] with one entry per symbol.
+        fund_list = _call_with_reauth(rh.stocks.get_fundamentals, [sym]) or []
+        fund = fund_list[0] if fund_list and isinstance(fund_list, list) else {}
+
+        # Pull instrument data for the long/short name + share count.
+        try:
+            inst_list = _call_with_reauth(rh.stocks.get_instruments_by_symbols, [sym]) or []
+            inst = inst_list[0] if inst_list and isinstance(inst_list, list) else {}
+        except Exception:
+            inst = {}
+
+        market_cap = _safe_float(fund.get("market_cap"))
+        pe = _safe_float(fund.get("pe_ratio"))
+        div_yield_pct = _safe_float(fund.get("dividend_yield"))
+        # Robinhood reports dividend yield as a percentage already (e.g. 1.45 = 1.45%);
+        # callers expect a decimal (0.0145), so divide by 100.
+        div_yield = (div_yield_pct / 100.0) if div_yield_pct is not None else None
+
+        long_name = _safe_str(inst.get("name") or inst.get("simple_name"))
+
+        return CompanyInfo(
+            symbol=sym,
+            long_name=long_name,
+            short_name=_safe_str(inst.get("simple_name") or long_name),
+            sector=_safe_str(fund.get("sector")),
+            industry=_safe_str(fund.get("industry")),
+            market_cap=market_cap,
+            trailing_pe=pe,
+            forward_pe=None,
+            beta=None,
+            dividend_yield=div_yield,
+            shares_outstanding=_safe_float(fund.get("shares_outstanding")),
+            held_pct_institutions=None,
+            held_pct_insiders=None,
+            total_revenue=None,
+            operating_margins=None,
+            profit_margins=None,
+            revenue_growth=None,
+            total_debt=None,
+            total_cash=None,
+            ebitda=None,
+            target_mean_price=None,
+            quote_type="EQUITY",
+            currency="USD",
+            raw=dict(fund),
+        )
+
+    # ---- Options ----
+
+    @cached_method(ttl=60, stale_after=300, negative_ttl=30)
+    def get_option_expirations(self, symbol: str) -> List[str]:
+        sym = symbol.upper()
+        rh = self._rh()
+        from brokers.robinhood_api import _call_with_reauth
+
+        chains = _call_with_reauth(rh.options.get_chains, sym) or {}
+        exps = chains.get("expiration_dates") or []
+        return [str(e) for e in exps if e]
+
+    @cached_method(ttl=60, stale_after=300, negative_ttl=30)
+    def get_option_chain(self, symbol: str, expiration: str) -> OptionChain:
+        sym = symbol.upper()
+        rh = self._rh()
+        from brokers.robinhood_api import _call_with_reauth
+
+        def _fetch(side: str) -> List[OptionContract]:
+            raw = _call_with_reauth(
+                rh.options.find_options_by_expiration,
+                sym,
+                expirationDate=expiration,
+                optionType=side,
+            ) or []
+            out: List[OptionContract] = []
+            for opt in raw:
+                if not opt:
+                    continue
+                out.append(OptionContract(
+                    strike=float(opt.get("strike_price") or 0.0),
+                    last_price=_safe_float(opt.get("last_trade_price")),
+                    bid=_safe_float(opt.get("bid_price")),
+                    ask=_safe_float(opt.get("ask_price")),
+                    implied_volatility=_safe_float(opt.get("implied_volatility")),
+                    open_interest=_safe_int(opt.get("open_interest")),
+                    volume=_safe_int(opt.get("volume")),
+                    in_the_money=False,  # RH doesn't expose this; computed downstream from spot
+                ))
+            return out
+
+        return OptionChain(
+            symbol=sym,
+            expiration=expiration,
+            calls=_fetch("call"),
+            puts=_fetch("put"),
+        )
+
+    # ---- Methods Robinhood does NOT expose — let composite fall through ----
+
+    def get_income_statement(self, symbol: str, *, quarterly: bool = False) -> FinancialStatement:
+        raise NotImplementedError("Robinhood does not expose financial statements")
+
+    def get_balance_sheet(self, symbol: str, *, quarterly: bool = False) -> FinancialStatement:
+        raise NotImplementedError("Robinhood does not expose financial statements")
+
+    def get_cash_flow(self, symbol: str, *, quarterly: bool = False) -> FinancialStatement:
+        raise NotImplementedError("Robinhood does not expose financial statements")
+
+    def get_earnings_calendar(self, symbol: str) -> EarningsCalendar:
+        raise NotImplementedError("Robinhood does not expose forward earnings dates")
+
+    def get_news(self, symbol: str, limit: int = 20) -> List[NewsItem]:
+        raise NotImplementedError("Robinhood news coverage is too sparse to use")
+
+    def get_institutional_holders(self, symbol: str) -> List[InstitutionalHolder]:
+        raise NotImplementedError("Robinhood does not expose 13F holders")
+
+    def get_insider_holders(self, symbol: str) -> List[InsiderHolder]:
+        raise NotImplementedError("Robinhood does not expose insider holders")
+
+    def get_insider_transactions(self, symbol: str) -> List[InsiderTransaction]:
+        raise NotImplementedError("Robinhood does not expose Form 4 filings")
+
+    def get_etf_profile(self, symbol: str) -> EtfProfile:
+        raise NotImplementedError("Robinhood does not expose ETF profile data")
+
+    def get_short_interest_raw(self, symbol: str) -> ShortInterestRaw:
+        raise NotImplementedError("Robinhood does not expose short interest")
+
+    def get_fx_spot(self, pair: str) -> Optional[float]:
+        raise NotImplementedError("Robinhood does not expose FX")
+
+
+# ---------------------------------------------------------------------------
+# CompositeProvider — RH primary, yfinance fallback. Used when the user wants
+# the speed/rate-limit advantages of authenticated RH calls without losing
+# the long-tail data only yfinance carries.
+# ---------------------------------------------------------------------------
+
+class CompositeProvider:
+    """Try Robinhood first; on NotImplementedError or any other failure, fall
+    back to the yfinance provider. Caching lives on each underlying provider
+    (so a successful RH call is cached as RH; a fall-through to yf is cached
+    as yf), which lets us correctly attribute and debug per-call sources.
+    """
+
+    def __init__(self, rh: "RobinhoodProvider", yf: "YFinanceProvider"):
+        self._rh = rh
+        self._yf = yf
+
+    def _try_rh(self, method: str, *args, **kwargs):
+        fn = getattr(self._rh, method)
+        try:
+            return fn(*args, **kwargs)
+        except NotImplementedError:
+            raise  # signal to caller: RH genuinely doesn't carry this
+        except Exception:
+            # Any other error (auth, network, schema mismatch): fall through.
+            return None
+
+    def _delegate(self, method: str, *args, **kwargs):
+        """RH-primary, yf-fallback dispatcher for methods both sides implement."""
+        try:
+            result = self._try_rh(method, *args, **kwargs)
+        except NotImplementedError:
+            result = None
+        if result is not None:
+            return result
+        # RH errored or returned None — fall back to yfinance.
+        return getattr(self._yf, method)(*args, **kwargs)
+
+    # ---- RH-supported methods (try RH first) ----
+
+    def get_quote(self, symbol: str) -> Quote:
+        return self._delegate("get_quote", symbol)
+
+    def get_history(
+        self,
+        symbol: str,
+        *,
+        period: Optional[str] = None,
+        interval: str = "1d",
+        start: Optional[date] = None,
+        end: Optional[date] = None,
+    ) -> List[OHLCBar]:
+        return self._delegate(
+            "get_history",
+            symbol,
+            period=period,
+            interval=interval,
+            start=start,
+            end=end,
+        )
+
+    def get_company_info(self, symbol: str) -> CompanyInfo:
+        return self._delegate("get_company_info", symbol)
+
+    def get_option_expirations(self, symbol: str) -> List[str]:
+        return self._delegate("get_option_expirations", symbol)
+
+    def get_option_chain(self, symbol: str, expiration: str) -> OptionChain:
+        return self._delegate("get_option_chain", symbol, expiration)
+
+    # ---- yfinance-only methods (skip RH; it raises NotImplementedError) ----
+
+    def get_income_statement(self, symbol: str, *, quarterly: bool = False) -> FinancialStatement:
+        return self._yf.get_income_statement(symbol, quarterly=quarterly)
+
+    def get_balance_sheet(self, symbol: str, *, quarterly: bool = False) -> FinancialStatement:
+        return self._yf.get_balance_sheet(symbol, quarterly=quarterly)
+
+    def get_cash_flow(self, symbol: str, *, quarterly: bool = False) -> FinancialStatement:
+        return self._yf.get_cash_flow(symbol, quarterly=quarterly)
+
+    def get_earnings_calendar(self, symbol: str) -> EarningsCalendar:
+        return self._yf.get_earnings_calendar(symbol)
+
+    def get_news(self, symbol: str, limit: int = 20) -> List[NewsItem]:
+        return self._yf.get_news(symbol, limit=limit)
+
+    def get_institutional_holders(self, symbol: str) -> List[InstitutionalHolder]:
+        return self._yf.get_institutional_holders(symbol)
+
+    def get_insider_holders(self, symbol: str) -> List[InsiderHolder]:
+        return self._yf.get_insider_holders(symbol)
+
+    def get_insider_transactions(self, symbol: str) -> List[InsiderTransaction]:
+        return self._yf.get_insider_transactions(symbol)
+
+    def get_etf_profile(self, symbol: str) -> EtfProfile:
+        return self._yf.get_etf_profile(symbol)
+
+    def get_short_interest_raw(self, symbol: str) -> ShortInterestRaw:
+        return self._yf.get_short_interest_raw(symbol)
+
+    def get_fx_spot(self, pair: str) -> Optional[float]:
+        return self._yf.get_fx_spot(pair)
+
+
+# ---------------------------------------------------------------------------
 # Provider selection (env-driven) + module-level dispatch functions
 # ---------------------------------------------------------------------------
 
@@ -782,11 +1163,14 @@ _PROVIDER_NAME = os.environ.get("MARKET_PROVIDER", "yfinance").lower()
 _provider: MarketProvider
 if _PROVIDER_NAME == "yfinance":
     _provider = YFinanceProvider()
+elif _PROVIDER_NAME in ("rh", "robinhood"):
+    _provider = RobinhoodProvider()
+elif _PROVIDER_NAME == "composite":
+    _provider = CompositeProvider(RobinhoodProvider(), YFinanceProvider())
 else:
     raise RuntimeError(
         f"Unknown MARKET_PROVIDER={_PROVIDER_NAME!r}. "
-        "Currently supported: 'yfinance'. Add a Provider class to "
-        "data/market_provider.py to extend."
+        "Supported: 'yfinance', 'rh', 'composite'."
     )
 
 

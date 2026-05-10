@@ -83,6 +83,61 @@ export async function calculatePriceAndGreeks(params: OptionParams): Promise<Pri
   return response.json();
 }
 
+// === Multi-leg returns simulator ===
+
+export interface SimLeg {
+  strike: number;
+  option_type: 'call' | 'put';
+  side: 'buy' | 'sell';
+  quantity: number;
+  entry_price: number;
+  expiration: string; // YYYY-MM-DD
+}
+
+export interface SimPriceRange {
+  min?: number;
+  max?: number;
+  steps?: number;
+}
+
+export interface SimulateMultiLegRequest {
+  legs: SimLeg[];
+  spot: number;
+  r?: number;
+  sigma: number;
+  evaluation_dates: string[]; // YYYY-MM-DD list
+  price_range?: SimPriceRange;
+}
+
+export interface SimCurve {
+  date: string;
+  pnl: number[];
+}
+
+export interface SimulateMultiLegResponse {
+  prices: number[];
+  curves: SimCurve[];
+}
+
+export async function simulateMultiLeg(
+  req: SimulateMultiLegRequest,
+): Promise<SimulateMultiLegResponse> {
+  const response = await fetch(`${PRICING_API_URL}/api/pricing/simulate-multi-leg`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    let detail = `${response.status} ${response.statusText}`;
+    try {
+      const body = await response.json();
+      if (body?.detail) detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail);
+    } catch { /* not JSON */ }
+    throw new Error(detail);
+  }
+  return response.json();
+}
+
 export async function calculateImpliedVol(
   market_price: number,
   S: number,
@@ -297,6 +352,30 @@ export async function getMispricing(ticker: string): Promise<MispricingData> {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || 'Mispricing detection failed');
+  }
+  return response.json();
+}
+
+export interface BatchMispricingResponse {
+  results: Record<string, MispricingData>;
+  errors: Record<string, string>;
+}
+
+/**
+ * One-shot mispricing fetch for many tickers. Replaces N parallel
+ * /api/market/{T}/mispricing calls with a single POST. Backend caches
+ * each ticker for 60s, so callers should still be tolerant of stale
+ * results across rapid re-fetches.
+ */
+export async function getBatchMispricing(tickers: string[]): Promise<BatchMispricingResponse> {
+  const response = await fetch(`${PRICING_API_URL}/api/market/batch/mispricing`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tickers }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || 'Batch mispricing failed');
   }
   return response.json();
 }

@@ -116,6 +116,26 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_outcomes_outcome ON signal_outcomes(outcome);
         CREATE INDEX IF NOT EXISTS idx_memory_agent_ticker_ts ON agent_memory(agent_id, ticker, timestamp DESC);
         CREATE INDEX IF NOT EXISTS idx_memory_signal_id ON agent_memory(signal_id);
+
+        -- Flow: full option-chain snapshot per scheduled run. The /flow page
+        -- and the OI-buildup/premium-flow detectors compare today's row to
+        -- the prior day's row keyed on (ticker, expiration, strike, side).
+        CREATE TABLE IF NOT EXISTS option_chain_snapshot (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            snapshot_at TEXT NOT NULL,        -- ISO timestamp
+            ticker TEXT NOT NULL,
+            expiration TEXT NOT NULL,         -- YYYY-MM-DD
+            strike REAL NOT NULL,
+            side TEXT NOT NULL,               -- 'call' | 'put'
+            bid REAL, ask REAL, mid REAL,
+            iv REAL,
+            oi INTEGER, volume INTEGER,
+            spot REAL                         -- underlying price at snapshot time
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_ocs_ticker_at ON option_chain_snapshot(ticker, snapshot_at);
+        CREATE INDEX IF NOT EXISTS idx_ocs_at ON option_chain_snapshot(snapshot_at);
+        CREATE INDEX IF NOT EXISTS idx_ocs_contract ON option_chain_snapshot(ticker, expiration, strike, side, snapshot_at);
     """)
     conn.commit()
 

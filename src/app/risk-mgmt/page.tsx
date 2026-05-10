@@ -7,8 +7,11 @@ import type { RobinhoodHolding, RobinhoodSummary } from '@/lib/robinhood-api';
 import type { LimitsCheckResult, DrawdownResult, VaRResult } from '@/lib/robinhood-analytics-api';
 import { PortfolioRiskSummary } from '@/components/risk/PortfolioRiskSummary';
 import { PerTickerRiskTable } from '@/components/risk/PerTickerRiskTable';
+import { TickerPositionsReport } from '@/components/risk/TickerPositionsReport';
+import { TickerChatPanel } from '@/components/risk/TickerChatPanel';
 import TCAMonitor from '@/components/TCAMonitor';
 import StressTestPanel from '@/components/StressTestPanel';
+import { throttledAllSettled } from '@/lib/throttle';
 
 const REFRESH_MS = 60_000;
 
@@ -23,27 +26,6 @@ const RISK_LIMITS = {
   maxPositionSizePctOfNav: 0.10,
   maxDrawdownPct: 0.10,
 } as const;
-
-/** Run at most `concurrency` promises at once. */
-async function throttledAllSettled<T>(
-  fns: Array<() => Promise<T>>,
-  concurrency = 6,
-): Promise<PromiseSettledResult<T>[]> {
-  const results: PromiseSettledResult<T>[] = new Array(fns.length);
-  let nextIdx = 0;
-  async function worker() {
-    while (nextIdx < fns.length) {
-      const idx = nextIdx++;
-      try {
-        results[idx] = { status: 'fulfilled', value: await fns[idx]() };
-      } catch (e) {
-        results[idx] = { status: 'rejected', reason: e };
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(concurrency, fns.length) }, () => worker()));
-  return results;
-}
 
 export default function RiskManagementPage() {
   const [equities, setEquities] = useState<RobinhoodHolding[]>([]);
@@ -199,6 +181,12 @@ export default function RiskManagementPage() {
             </button>
           </form>
           <TCAMonitor ticker={tcaTicker} />
+        </section>
+
+        {/* Per-ticker positions report + Gemini chat (driven by tcaTicker) */}
+        <section className="mt-4 sm:mt-6">
+          <TickerPositionsReport ticker={tcaTicker} />
+          <TickerChatPanel ticker={tcaTicker} />
         </section>
 
         {/* Stress testing */}

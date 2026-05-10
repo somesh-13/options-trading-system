@@ -52,6 +52,15 @@ _DETAIL_NEGATIVE_CACHE_SEC = 30
 _detail_cache: Dict[str, Tuple[float, Dict]] = {}
 _detail_negative_cache: Dict[str, Tuple[float, str]] = {}
 
+# Mispricing cache. The scanner fans out one call per ticker per refresh, so
+# without a cache a 50-position portfolio drives 50 yfinance round-trips every
+# scanner refresh. 60s positive + 30s negative is plenty — the upstream
+# options chain barely changes within a minute.
+_MISPRICING_TTL_SEC = 60
+_MISPRICING_NEGATIVE_TTL_SEC = 30
+_mispricing_cache: Dict[str, Tuple[float, Dict]] = {}
+_mispricing_negative_cache: Dict[str, Tuple[float, str]] = {}
+
 
 def get_ticker_price(ticker: str) -> float:
     """
@@ -552,7 +561,34 @@ def detect_mispricing(ticker: str) -> Dict:
     """
     Detect IV vs HV mispricing for any ticker.
     Generalized version of detect_mispricing_cifr().
+
+    60s TTL cache + 30s negative cache. The scanner fans out one call per
+    ticker per refresh; without this each scanner load drives N yfinance
+    round-trips and is the dominant source of rate-limit pain.
     """
+    key = ticker.upper()
+    now = time.time()
+    cached = _mispricing_cache.get(key)
+    if cached and (now - cached[0]) < _MISPRICING_TTL_SEC:
+        return cached[1]
+
+    neg = _mispricing_negative_cache.get(key)
+    if neg and (now - neg[0]) < _MISPRICING_NEGATIVE_TTL_SEC and not cached:
+        raise ValueError(f"mispricing recently failed for {ticker} ({neg[1]}); negative-cached")
+
+    try:
+        result = _detect_mispricing_uncached(ticker)
+    except Exception as e:
+        _mispricing_negative_cache[key] = (now, str(e)[:80])
+        raise
+
+    _mispricing_cache[key] = (now, result)
+    _mispricing_negative_cache.pop(key, None)
+    return result
+
+
+def _detect_mispricing_uncached(ticker: str) -> Dict:
+    """Uncached fetch — split out so the cache wrapper above stays readable."""
     # Pull a 5d window so we get spot + prev close in one provider call.
     # Falls back to today's open if we only have a single bar (first listing
     # day, holiday-adjacent windows). Mirrors get_ticker_detail's logic.

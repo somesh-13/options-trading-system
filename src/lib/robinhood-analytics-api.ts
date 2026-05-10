@@ -126,6 +126,87 @@ export function getHedgeRatio(
   );
 }
 
+// ---- Per-ticker positions report (drives the risk-page report panel + Gemini chat) ----
+
+export interface TickerReportEquityRow {
+  account: string;
+  quantity: number;
+  avg_cost: number;
+  cost_basis: number;
+  mark: number | null;
+  market_value: number | null;
+  unrealized_pnl: number | null;
+}
+
+export interface TickerReportOptionLeg {
+  underlying: string;
+  side: 'Call' | 'Put';
+  strike: number;
+  expiry: string;
+  position: 'long' | 'short';
+  quantity: number;
+  avg_cost: number;
+  cost_basis: number;
+  market_value: number | null;
+  unrealized_pnl: number | null;
+  realized_pnl: number;
+  account: string;
+  greeks: {
+    delta: number;
+    gamma: number;
+    vega: number;
+    theta: number;
+    rho: number;
+  } | null;
+}
+
+export interface TickerReportActivityRow {
+  activity_date: string;
+  process_date: string | null;
+  instrument: string | null;
+  description: string | null;
+  trans_code: string;
+  quantity: number | null;
+  price: number | null;
+  amount: number | null;
+}
+
+export interface TickerReport {
+  ticker: string;
+  as_of: string;
+  account_filter: string;
+  accounts_seen: string[];
+  spot: number | null;
+  iv_assumption: { hv_window_days: number; sigma: number; risk_free_rate: number };
+  equity: {
+    quantity: number;
+    avg_cost: number;
+    cost_basis: number;
+    mark: number | null;
+    market_value: number;
+    unrealized_pnl: number;
+    by_account: TickerReportEquityRow[];
+  };
+  options: TickerReportOptionLeg[];
+  aggregate_greeks: {
+    delta: number;
+    gamma: number;
+    vega: number;
+    theta: number;
+    rho: number;
+  };
+  activity: TickerReportActivityRow[];
+}
+
+export function getTickerReport(
+  ticker: string,
+  account: RobinhoodAccount = 'all',
+): Promise<TickerReport> {
+  const t = encodeURIComponent(ticker.toUpperCase());
+  const q = account && account !== 'all' ? `?account=${account}` : '';
+  return getJson(`/api/robinhood/analytics/ticker-report/${t}${q}`);
+}
+
 export interface HedgeRatioByUnderlyingRow {
   underlying: string;
   spot: number | null;
@@ -359,6 +440,19 @@ export interface MispricingResult {
 
 export function getMispricing(ticker: string): Promise<MispricingResult> {
   return getJson(`/api/market/${encodeURIComponent(ticker)}/mispricing`);
+}
+
+export interface BatchMispricingResult {
+  results: Record<string, MispricingResult>;
+  errors: Record<string, string>;
+}
+
+/**
+ * Single round-trip mispricing fetch for a list of tickers. Used by the
+ * scanner so a 50-symbol portfolio refresh becomes one request instead of N.
+ */
+export function getBatchMispricing(tickers: string[]): Promise<BatchMispricingResult> {
+  return postJson(`/api/market/batch/mispricing`, { tickers });
 }
 
 export interface RegimeResult {

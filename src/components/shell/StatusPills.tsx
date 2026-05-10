@@ -1,34 +1,7 @@
 'use client';
 
-/**
- * Phase-1 placeholder pills — visual shell only.
- * Live data wiring (regime poll, VaR poll, paper/live confirm modal, websocket
- * health) lands in Phase 1.4 follow-up once the corresponding endpoints
- * (/api/regime, /api/risk/var, /api/auto-engine/state) are confirmed wired.
- */
-
-export function RegimePill({ state = 'high-vol' as 'normal' | 'high-vol' | 'crash' }) {
-  const cls = state === 'crash' ? 'crash' : state === 'normal' ? 'normal' : '';
-  const label = state === 'crash' ? 'CRASH' : state === 'normal' ? 'NORMAL' : 'HIGH VOL';
-  return (
-    <span className={`rv-pill regime ${cls}`}>
-      <span className="dot" style={{ background: 'currentColor' }} />
-      HMM · {label}
-    </span>
-  );
-}
-
-export function VarPill({ value = '$2.8k' }: { value?: string }) {
-  return <span className="rv-pill var">VaR 1d · <b>{value}</b></span>;
-}
-
-export function PaperLivePill({ mode = 'paper' as 'paper' | 'live' }) {
-  return mode === 'live' ? (
-    <span className="rv-pill" style={{ color: 'var(--pink)', borderColor: 'rgba(255,0,110,.35)', background: 'rgba(255,0,110,.08)' }}>LIVE</span>
-  ) : (
-    <span className="rv-pill paper">PAPER</span>
-  );
-}
+import { useEffect, useState } from 'react';
+import { PRICING_API_URL } from '@/lib/pricing-api';
 
 export function LiveDataPill({ connected = true }: { connected?: boolean }) {
   return (
@@ -39,13 +12,74 @@ export function LiveDataPill({ connected = true }: { connected?: boolean }) {
   );
 }
 
+interface RhSessionStatus {
+  configured: boolean;
+  logged_in: boolean;
+  last_login: number | null;
+  age_seconds: number | null;
+  refresh_after_seconds: number;
+}
+
+function formatAge(seconds: number | null): string {
+  if (seconds === null || seconds < 0) return '—';
+  if (seconds < 60) return `${Math.floor(seconds)}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86400)}d`;
+}
+
+export function RhSessionPill() {
+  const [status, setStatus] = useState<RhSessionStatus | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch(`${PRICING_API_URL}/api/robinhood/session`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as RhSessionStatus;
+        if (!cancelled) setStatus(data);
+      } catch {
+        /* ignore */
+      }
+    };
+    load();
+    const id = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  if (!status || !status.configured) return null;
+
+  const isStale =
+    status.age_seconds !== null && status.age_seconds > status.refresh_after_seconds;
+  const tone = !status.logged_in ? 'off' : isStale ? 'warn' : 'live';
+  const label = !status.logged_in
+    ? 'rh: logged out'
+    : `rh: ${formatAge(status.age_seconds)}`;
+
+  const dotColor =
+    tone === 'live'
+      ? undefined
+      : tone === 'warn'
+        ? { background: 'var(--gold, #FFD700)' }
+        : { background: 'var(--ink-mute)' };
+
+  return (
+    <span className={`rv-pill ${tone === 'live' ? 'live' : ''}`} title="Robinhood session age (clears at 20h)">
+      <span className="dot" style={dotColor} />
+      {label}
+    </span>
+  );
+}
+
 export function StatusPills() {
   return (
     <>
-      <RegimePill />
-      <VarPill />
-      <PaperLivePill />
       <LiveDataPill />
+      <RhSessionPill />
     </>
   );
 }

@@ -1,4 +1,21 @@
-import VolatilitySurface3D from '@/components/VolatilitySurface3D';
+'use client';
+
+import dynamic from 'next/dynamic';
+
+// Plotly weighs in at ~1.2MB gzipped. Dynamically import the surface
+// component so the chunk only ships when the user visits this route,
+// and never as part of any shared layout/server bundle.
+const VolatilitySurface3D = dynamic(
+  () => import('@/components/VolatilitySurface3D'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rv-card p-6 text-sm" style={{ color: 'var(--ink-mute)' }}>
+        Loading volatility surface…
+      </div>
+    ),
+  },
+);
 
 export default function VolSurfacePage() {
   return (

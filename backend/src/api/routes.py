@@ -4,8 +4,9 @@ from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import sys
+import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -72,6 +73,11 @@ from api.models import (
     RobinhoodAccountsResponse,
     RobinhoodSyncResponse,
     RobinhoodSyncStatus,
+    RobinhoodSessionStatus,
+    FlowContractRow,
+    FlowLeaderboardRow,
+    FlowScanResponse,
+    FlowTickerResponse,
     CryptoHoldingResponse,
     CryptoQuoteResponse,
     CryptoOrderRequest,
@@ -491,11 +497,22 @@ def compare_iv_solvers(params: ImpliedVolParams):
         raise HTTPException(status_code=500, detail=f"IV comparison failed: {str(e)}")
 
 
+_vol_surface_cache: Dict[str, Tuple[float, Dict]] = {}
+_VOL_SURFACE_TTL_SEC = 300  # vol surface aggregates the whole option chain;
+                            # 5 min is plenty for an interactive UI.
+
+
 @app.get("/api/pricing/vol-surface/{ticker}")
 def get_vol_surface(ticker: str):
-    """Generate volatility surface for a ticker."""
+    """Generate volatility surface for a ticker (5-minute cached)."""
+    key = ticker.upper()
+    now = time.time()
+    cached = _vol_surface_cache.get(key)
+    if cached and (now - cached[0]) < _VOL_SURFACE_TTL_SEC:
+        return cached[1]
     try:
-        surface = generate_vol_surface(ticker.upper())
+        surface = generate_vol_surface(key)
+        _vol_surface_cache[key] = (now, surface)
         return surface
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Vol surface generation failed: {str(e)}")
@@ -624,6 +641,60 @@ def get_ticker_detail_endpoint(ticker: str):
         return get_ticker_detail(ticker.upper())
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Detail fetch failed for {ticker}: {str(e)}")
+
+
+_BATCH_MAX_TICKERS = 100  # cap so a runaway client can't ask for 10k tickers
+
+
+@app.post("/api/market/batch/mispricing")
+def batch_mispricing(body: Dict[str, List[str]]):
+    """Compute mispricing for many tickers in one round-trip.
+
+    Request:  {"tickers": ["AAPL", "MSFT", ...]}
+    Response: {"results": {"AAPL": {...}, "MSFT": {...}}, "errors": {"XYZ": "..."}}
+
+    Each ticker is independently cached (60s) by detect_mispricing, so a portfolio
+    refresh that hits this endpoint right after the per-ticker cache populated
+    serves entirely from cache. The scanner page uses this to replace its 50×
+    per-ticker fan-out.
+    """
+    tickers = [t.upper() for t in (body.get("tickers") or []) if t]
+    if not tickers:
+        raise HTTPException(status_code=400, detail="tickers list is required")
+    if len(tickers) > _BATCH_MAX_TICKERS:
+        raise HTTPException(status_code=400, detail=f"max {_BATCH_MAX_TICKERS} tickers per call")
+
+    results: Dict[str, Dict] = {}
+    errors: Dict[str, str] = {}
+    for t in tickers:
+        try:
+            results[t] = detect_mispricing(t)
+        except Exception as e:
+            errors[t] = str(e)
+    return {"results": results, "errors": errors}
+
+
+@app.post("/api/market/batch/detail")
+def batch_detail(body: Dict[str, List[str]]):
+    """Rich ticker snapshots for many tickers in one round-trip.
+
+    Same shape as /batch/mispricing. get_ticker_detail is already 60s-cached,
+    so calling this right after a single-ticker fetch is essentially free.
+    """
+    tickers = [t.upper() for t in (body.get("tickers") or []) if t]
+    if not tickers:
+        raise HTTPException(status_code=400, detail="tickers list is required")
+    if len(tickers) > _BATCH_MAX_TICKERS:
+        raise HTTPException(status_code=400, detail=f"max {_BATCH_MAX_TICKERS} tickers per call")
+
+    results: Dict[str, Dict] = {}
+    errors: Dict[str, str] = {}
+    for t in tickers:
+        try:
+            results[t] = get_ticker_detail(t)
+        except Exception as e:
+            errors[t] = str(e)
+    return {"results": results, "errors": errors}
 
 
 @app.get("/api/market/{ticker}/short-interest")
@@ -2314,6 +2385,14 @@ def robinhood_sync_status(account: Optional[str] = None):
     )
 
 
+@app.get("/api/robinhood/session", response_model=RobinhoodSessionStatus)
+def robinhood_session():
+    """Current Robinhood in-process auth state (used by StatusPills)."""
+    from brokers import robinhood_api as rh_api
+
+    return RobinhoodSessionStatus(**rh_api.session_status())
+
+
 @app.get("/api/robinhood/accounts", response_model=RobinhoodAccountsResponse)
 def robinhood_accounts():
     """Distinct account tags present in the activity DB."""
@@ -3470,6 +3549,202 @@ def get_analytics_run(run_id: int):
         ticker_count=row["ticker_count"],
         payload=payload,
         notes=row["notes"],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Flow scanner — daily option-chain snapshots, leaderboard, per-ticker rows
+# ---------------------------------------------------------------------------
+
+
+def _days_to_expiry(expiration: Optional[str]) -> Optional[int]:
+    """Calendar days until expiration (None on parse failure)."""
+    if not expiration:
+        return None
+    try:
+        from datetime import date
+        exp = date.fromisoformat(expiration[:10])
+        return max((exp - date.today()).days, 0)
+    except Exception:
+        return None
+
+
+def _build_contract_row(c: Dict, *, prior_oi: Optional[int] = None) -> FlowContractRow:
+    """Convert a snapshot row dict to a FlowContractRow, computing derived fields."""
+    vol = int(c.get("volume") or 0)
+    mid = c.get("mid")
+    premium = (float(vol) * float(mid) * 100.0) if (mid and vol > 0) else None
+    vol_oi_ratio = None
+    base_oi = prior_oi if prior_oi is not None else c.get("oi")
+    if base_oi is not None and base_oi > 0:
+        vol_oi_ratio = round(vol / float(base_oi), 3)
+    elif vol > 0 and (base_oi == 0):
+        vol_oi_ratio = float("inf")  # all new positioning
+    return FlowContractRow(
+        expiration=c.get("expiration") or "",
+        strike=float(c.get("strike") or 0.0),
+        side=(c.get("side") or "").lower(),
+        bid=c.get("bid"),
+        ask=c.get("ask"),
+        mid=mid,
+        iv=c.get("iv"),
+        oi=c.get("oi"),
+        prior_oi=prior_oi,
+        volume=vol,
+        vol_oi_ratio=vol_oi_ratio if vol_oi_ratio != float("inf") else None,
+        premium_dollars=round(premium, 2) if premium is not None else None,
+        spot=c.get("spot"),
+        days_to_expiry=_days_to_expiry(c.get("expiration")),
+    )
+
+
+@app.get("/api/flow/scan", response_model=FlowScanResponse)
+def flow_scan(min_premium: float = 0.0, top: int = 30):
+    """Premium-ranked leaderboard from the most recent option-chain snapshots.
+
+    Filters out tickers below `min_premium` total dollars (default 0 = include
+    everything we have data for) and returns up to `top` rows ranked by today's
+    option premium.
+    """
+    from data.option_snapshots import (
+        _latest_two_snapshot_timestamps,
+        get_atm_iv_history,
+        get_latest_chain,
+        get_prior_chain,
+    )
+    from notifications.detectors import IV_RANK_MIN_HISTORY, chain_premium_dollars
+    from journal.database import _get_conn
+
+    conn = _get_conn()
+    # Set of tickers with at least one row anywhere — keeps the scan bounded
+    # without forcing the caller to pass a watchlist.
+    rows = conn.execute(
+        "SELECT DISTINCT ticker FROM option_chain_snapshot"
+    ).fetchall()
+    tickers = sorted({r["ticker"] for r in rows})
+
+    out_rows: List[FlowLeaderboardRow] = []
+    latest_overall: Optional[str] = None
+    for sym in tickers:
+        chain = get_latest_chain(sym)
+        if not chain:
+            continue
+        prior = get_prior_chain(sym)
+        today_premium = chain_premium_dollars(chain)
+        if today_premium < float(min_premium):
+            continue
+
+        prior_premium = chain_premium_dollars(prior) if prior else None
+        multiplier = (today_premium / prior_premium) if (prior_premium and prior_premium > 0) else None
+
+        # Top contract by vol/OI (with prior OI fallback to today's OI).
+        prior_oi_map: Dict[tuple, int] = {}
+        for c in prior or []:
+            prior_oi_map[(c.get("expiration"), float(c.get("strike") or 0), (c.get("side") or "").lower())] = int(c.get("oi") or 0)
+        top_contract: Optional[FlowContractRow] = None
+        best_score = 0.0
+        for c in chain:
+            vol = int(c.get("volume") or 0)
+            if vol < 100:
+                continue
+            key = (c.get("expiration"), float(c.get("strike") or 0), (c.get("side") or "").lower())
+            poi = prior_oi_map.get(key)
+            score = (vol / poi) if (poi and poi > 0) else float(vol)
+            if score > best_score:
+                best_score = score
+                top_contract = _build_contract_row(c, prior_oi=poi)
+
+        # IV rank — null until we have enough history.
+        iv_history = get_atm_iv_history(sym, limit=30)
+        iv_pct: Optional[float] = None
+        if len(iv_history) >= IV_RANK_MIN_HISTORY and iv_history[0].get("atm_iv") is not None:
+            today_iv = float(iv_history[0]["atm_iv"])
+            series = [float(r["atm_iv"]) for r in iv_history[1:] if r.get("atm_iv") is not None]
+            if series:
+                below = sum(1 for v in series if v <= today_iv)
+                iv_pct = round(below / len(series), 3)
+
+        snapshot_ts_list = _latest_two_snapshot_timestamps(sym)
+        snapshot_at = snapshot_ts_list[0] if snapshot_ts_list else ""
+        if snapshot_at and (latest_overall is None or snapshot_at > latest_overall):
+            latest_overall = snapshot_at
+
+        out_rows.append(FlowLeaderboardRow(
+            ticker=sym,
+            today_premium_dollars=round(today_premium, 2),
+            avg_prior_premium_dollars=round(prior_premium, 2) if prior_premium else None,
+            premium_multiplier=round(multiplier, 2) if multiplier else None,
+            top_contract=top_contract,
+            iv_percentile=iv_pct,
+            spot=chain[0].get("spot") if chain else None,
+            snapshot_at=snapshot_at,
+        ))
+
+    out_rows.sort(key=lambda r: r.today_premium_dollars, reverse=True)
+    return FlowScanResponse(
+        snapshot_at=latest_overall,
+        rows=out_rows[: int(top)],
+        tickers_scanned=len(tickers),
+        tickers_with_data=len(out_rows),
+    )
+
+
+@app.get("/api/flow/{ticker}", response_model=FlowTickerResponse)
+def flow_ticker(ticker: str, top: int = 20):
+    """Per-ticker contract leaderboard: top contracts by vol/OI ratio.
+
+    Returns up to `top` rows. Uses prior-day OI for the ratio when available;
+    falls back to today's OI on first-snapshot-ever days.
+    """
+    from data.option_snapshots import (
+        _latest_two_snapshot_timestamps,
+        get_atm_iv_history,
+        get_latest_chain,
+        get_prior_chain,
+    )
+    from notifications.detectors import IV_RANK_MIN_HISTORY, chain_premium_dollars
+
+    sym = ticker.upper()
+    chain = get_latest_chain(sym)
+    if not chain:
+        raise HTTPException(status_code=404, detail=f"No flow snapshots yet for {sym}")
+
+    prior = get_prior_chain(sym)
+    prior_oi_map: Dict[tuple, int] = {
+        (c.get("expiration"), float(c.get("strike") or 0), (c.get("side") or "").lower()): int(c.get("oi") or 0)
+        for c in prior or []
+    }
+
+    rows: List[FlowContractRow] = []
+    for c in chain:
+        key = (c.get("expiration"), float(c.get("strike") or 0), (c.get("side") or "").lower())
+        rows.append(_build_contract_row(c, prior_oi=prior_oi_map.get(key)))
+
+    # Rank by vol/OI ratio (None last); secondary key = volume desc.
+    rows.sort(
+        key=lambda r: (
+            -(r.vol_oi_ratio or 0.0),
+            -(r.volume or 0),
+        )
+    )
+
+    iv_history = get_atm_iv_history(sym, limit=30)
+    iv_pct: Optional[float] = None
+    if len(iv_history) >= IV_RANK_MIN_HISTORY and iv_history[0].get("atm_iv") is not None:
+        today_iv = float(iv_history[0]["atm_iv"])
+        series = [float(r["atm_iv"]) for r in iv_history[1:] if r.get("atm_iv") is not None]
+        if series:
+            below = sum(1 for v in series if v <= today_iv)
+            iv_pct = round(below / len(series), 3)
+
+    snapshot_ts_list = _latest_two_snapshot_timestamps(sym)
+    return FlowTickerResponse(
+        ticker=sym,
+        snapshot_at=snapshot_ts_list[0] if snapshot_ts_list else None,
+        spot=chain[0].get("spot") if chain else None,
+        today_premium_dollars=round(chain_premium_dollars(chain), 2),
+        iv_percentile=iv_pct,
+        contracts=rows[: int(top)],
     )
 
 

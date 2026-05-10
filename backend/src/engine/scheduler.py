@@ -91,6 +91,24 @@ def start_scheduler() -> AsyncIOScheduler:
         replace_existing=True,
     )
 
+    # Overnight EDGAR cache warmup for portfolio + S&P 500. Daily at 02:00 ET —
+    # post-close, low SEC traffic, gives after-hours 8-Ks time to settle.
+    sched.add_job(
+        run_sp500_sync,
+        trigger=CronTrigger(hour=2, minute=0),
+        id="sec_sync_overnight",
+        replace_existing=True,
+    )
+
+    # Daily option-chain snapshot for the /flow page + UOA detectors.
+    # Runs 5 minutes after the close so OI numbers have settled.
+    sched.add_job(
+        run_flow_snapshot,
+        trigger=CronTrigger(day_of_week="mon-fri", hour=16, minute=5),
+        id="flow_snapshot_405pm_et",
+        replace_existing=True,
+    )
+
     sched.start()
     log.info("Scheduler started with jobs: %s", [j.id for j in sched.get_jobs()])
     return sched
@@ -263,4 +281,96 @@ def refresh_ir_for_holdings() -> dict:
         if i + 1 < len(tickers):
             _time.sleep(1.5)
     log.info("refresh_ir_for_holdings done: %s", summary)
+    return summary
+
+
+# Default flow watchlist when FLOW_WATCHLIST isn't set: liquid ETFs + the
+# mega-cap names that dominate options volume on any given day. Stable
+# membership; the exact ranking shifts but the set is what every flow tracker
+# in this price tier follows. RH holdings are union'd on top per-run.
+_FLOW_DEFAULT_WATCHLIST = (
+    # Index ETFs
+    "SPY", "QQQ", "IWM", "DIA",
+    # Mega-cap tech
+    "NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "AVGO",
+    # Other high-flow names
+    "AMD", "NFLX", "COIN", "PLTR", "SOFI", "MARA", "RIOT", "MSTR",
+    # Financials
+    "JPM", "BAC", "GS", "V",
+    # Industrials / consumer
+    "WMT", "COST", "DIS", "BA",
+    # Energy / commodities
+    "XOM", "GLD", "USO",
+)
+
+
+def _flow_watchlist() -> list[str]:
+    """Compose the daily flow watchlist: holdings ∪ env-override-or-defaults.
+
+    Resolution order:
+      1. FLOW_WATCHLIST env var (comma-separated) replaces the default set.
+      2. Live RH holdings are appended on top (so the user's actual book
+         is always covered even when FLOW_WATCHLIST is set).
+      3. Final list is uppercased and de-duplicated, preserving order.
+    """
+    raw = os.getenv("FLOW_WATCHLIST", "")
+    if raw.strip():
+        base = [t.strip().upper() for t in raw.split(",") if t.strip()]
+    else:
+        base = list(_FLOW_DEFAULT_WATCHLIST)
+
+    try:
+        from data.ir_ingest import held_tickers_from_snapshots
+        holdings = held_tickers_from_snapshots() or []
+    except Exception:
+        holdings = []
+
+    seen: set = set()
+    out: list[str] = []
+    for t in [*base, *holdings]:
+        u = (t or "").upper()
+        if u and u not in seen:
+            out.append(u)
+            seen.add(u)
+    return out
+
+
+def run_flow_snapshot() -> dict:
+    """Daily option-chain snapshot fan-out for the /flow page.
+
+    Pulls the current flow watchlist (env + holdings) and writes one row per
+    contract per ticker into `option_chain_snapshot`. Throttles 1.5s/ticker
+    to mirror refresh_ir_for_holdings — keeps RH happy and gives the
+    provider 60s cache time to settle between calls.
+    """
+    from data.option_snapshots import snapshot_watchlist
+
+    tickers = _flow_watchlist()
+    log.info("run_flow_snapshot: %d tickers", len(tickers))
+    summary = snapshot_watchlist(tickers, throttle_sec=1.5)
+    log.info(
+        "run_flow_snapshot done: rows=%d tickers=%d errors=%d",
+        summary.get("rows_total", 0),
+        summary.get("tickers", 0),
+        len(summary.get("errors", {})),
+    )
+    return summary
+
+
+def run_sp500_sync() -> dict:
+    """Overnight SEC EDGAR cache warmup for portfolio + S&P 500.
+
+    Idempotent: cache hits are no-ops, so subsequent runs only pay for new
+    filings. Runs synchronously inside the scheduler thread (no fan-out) since
+    `sec_edgar.http_get` already serializes requests behind a 10 req/s lock.
+    """
+    from data.sp500_sync import sync_sp500
+
+    log.info("run_sp500_sync: starting")
+    try:
+        summary = sync_sp500(include_portfolio=True, include_sp500=True)
+    except Exception:
+        log.exception("run_sp500_sync crashed")
+        return {"started": False, "reason": "exception"}
+    log.info("run_sp500_sync done: %s", summary)
     return summary

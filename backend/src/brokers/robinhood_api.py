@@ -54,7 +54,7 @@ def _get_crypto_quote_cached(symbol: str) -> Optional[float]:
             return price
     try:
         import robin_stocks.robinhood as rh
-        data = rh.crypto.get_crypto_quote(symbol)
+        data = _call_with_reauth(rh.crypto.get_crypto_quote, symbol)
         if data:
             mark = data.get("mark_price") or data.get("last_trade_price")
             if mark is not None:
@@ -75,7 +75,7 @@ def _get_equity_quote_cached(symbol: str) -> Optional[float]:
             return price
     try:
         import robin_stocks.robinhood as rh
-        prices = rh.stocks.get_latest_price(symbol)
+        prices = _call_with_reauth(rh.stocks.get_latest_price, symbol)
         if prices and prices[0] is not None:
             price = float(prices[0])
             _EQUITY_QUOTE_CACHE[symbol] = (now, price)
@@ -209,17 +209,48 @@ _TOKEN_DIR = Path.home() / ".tokens"
 _TOKEN_FILE = _TOKEN_DIR / "vegaedge_rh.pickle"
 
 _logged_in = False
+_last_login_ts: float = 0.0
+
+# Robinhood access tokens nominally last ~24h. Re-login proactively a bit
+# before that so we never hand a stale token to a request.
+SESSION_REFRESH_AFTER = 20 * 3600.0  # 20 hours
+
+_AUTH_ERROR_PATTERNS = (
+    "unauthorized",
+    "401",
+    "expired",
+    "invalid token",
+    "login_required",
+    "not authenticated",
+)
 
 
 def _is_configured() -> bool:
     return bool(ROBINHOOD_USERNAME and ROBINHOOD_PASSWORD)
 
 
-def login() -> bool:
-    """Authenticate to Robinhood. Caches the session token. Idempotent."""
-    global _logged_in
-    if _logged_in:
-        return True
+def _is_auth_error(exc: BaseException) -> bool:
+    """Heuristically detect a Robinhood auth/session error.
+
+    robin_stocks raises both `requests.exceptions.HTTPError` (with `.response`)
+    and bare `Exception(str)` depending on the call path, so we have to cover
+    both: status code on the response, and string-match on the message.
+    """
+    try:
+        import requests
+        if isinstance(exc, requests.exceptions.HTTPError):
+            resp = getattr(exc, "response", None)
+            if resp is not None and getattr(resp, "status_code", None) == 401:
+                return True
+    except Exception:
+        pass
+    msg = str(exc).lower()
+    return any(p in msg for p in _AUTH_ERROR_PATTERNS)
+
+
+def _do_login() -> bool:
+    """Run the actual rh.login() call. Sets _logged_in + _last_login_ts on success."""
+    global _logged_in, _last_login_ts
     if not _is_configured():
         return False
 
@@ -240,11 +271,76 @@ def login() -> bool:
         pickle_name="vegaedge_rh",
     )
     _logged_in = True
+    _last_login_ts = time.time()
     return True
 
 
+def login() -> bool:
+    """Authenticate to Robinhood, re-logging-in if the cached session is stale.
+
+    Idempotent within SESSION_REFRESH_AFTER seconds — that window's worth of
+    repeated calls reuse the existing token. After 20h, the next call forces
+    a fresh login so we don't hand expired tokens to API requests.
+    """
+    if not _is_configured():
+        return False
+    now = time.time()
+    if _logged_in and (now - _last_login_ts) < SESSION_REFRESH_AFTER:
+        return True
+    return _do_login()
+
+
+def _force_relogin() -> bool:
+    """Clear in-memory + on-disk session state and authenticate fresh.
+
+    Used when an API call returns 401: the cached pickle is presumed stale,
+    so we delete it and re-run the full login flow with TOTP.
+    """
+    global _logged_in, _last_login_ts
+    _logged_in = False
+    _last_login_ts = 0.0
+    try:
+        if _TOKEN_FILE.exists():
+            _TOKEN_FILE.unlink()
+    except OSError:
+        pass
+    return _do_login()
+
+
+def _call_with_reauth(fn, *args, **kwargs):
+    """Run an RH library call with one automatic re-auth retry on 401.
+
+    Pre-emptive refresh handled by login(); this wrapper catches the case
+    where the token got invalidated mid-window (force-logout from the RH
+    UI, server-side revocation, etc.) and retries the call once.
+    """
+    if not login():
+        raise RuntimeError("Robinhood not configured")
+    try:
+        return fn(*args, **kwargs)
+    except BaseException as exc:
+        if not _is_auth_error(exc):
+            raise
+        if not _force_relogin():
+            raise
+        return fn(*args, **kwargs)
+
+
+def session_status() -> Dict[str, Optional[float]]:
+    """Return current Robinhood session state for health endpoints."""
+    now = time.time()
+    age = (now - _last_login_ts) if _last_login_ts else None
+    return {
+        "configured": _is_configured(),
+        "logged_in": _logged_in,
+        "last_login": _last_login_ts if _last_login_ts else None,
+        "age_seconds": age,
+        "refresh_after_seconds": SESSION_REFRESH_AFTER,
+    }
+
+
 def logout() -> None:
-    global _logged_in
+    global _logged_in, _last_login_ts
     if not _logged_in:
         return
     import robin_stocks.robinhood as rh
@@ -252,6 +348,7 @@ def logout() -> None:
         rh.logout()
     finally:
         _logged_in = False
+        _last_login_ts = 0.0
 
 
 # Maps Robinhood account `type` field → internal account tag used in our DB.
@@ -299,11 +396,12 @@ def enumerate_accounts() -> Tuple[List[Dict], Optional[str]]:
         # load_account_profile() with no account_number + dataType='results'
         # returns all accounts in data['results']; default dataType='indexzero'
         # only returns results[0].
-        raw = rh.profiles.load_account_profile(dataType="results") or []
+        raw = _call_with_reauth(rh.profiles.load_account_profile, dataType="results") or []
     except Exception as exc:  # noqa: BLE001
         # Fall back to direct REST call if the helper misbehaves
         try:
-            resp = rh.helper.request_get(
+            resp = _call_with_reauth(
+                rh.helper.request_get,
                 "https://api.robinhood.com/accounts/?default_to_all_accounts=true",
                 "results",
             ) or []
@@ -335,7 +433,7 @@ def enumerate_accounts() -> Tuple[List[Dict], Optional[str]]:
     # using the default account number so we still get data.
     if not accounts:
         try:
-            default_num = rh.account.load_account_profile(info="account_number")
+            default_num = _call_with_reauth(rh.account.load_account_profile, info="account_number")
             if default_num:
                 accounts.append({
                     "account_number": default_num,
@@ -358,7 +456,7 @@ def _fetch_equity_positions_for_account(
     import robin_stocks.robinhood as rh
 
     try:
-        raw_positions = rh.account.get_open_stock_positions(account_number=account_number)
+        raw_positions = _call_with_reauth(rh.account.get_open_stock_positions, account_number=account_number)
     except Exception as exc:  # noqa: BLE001
         return [], f"get_open_stock_positions({account_number}) failed: {exc}"
 
@@ -379,10 +477,10 @@ def _fetch_equity_positions_for_account(
             equity: Optional[float] = None
             if instrument_url:
                 try:
-                    inst = rh.helper.request_get(instrument_url)
+                    inst = _call_with_reauth(rh.helper.request_get, instrument_url)
                     symbol = inst.get("symbol")
                     # Fetch live price for this symbol
-                    prices = rh.stocks.get_latest_price(symbol)
+                    prices = _call_with_reauth(rh.stocks.get_latest_price, symbol)
                     if prices and prices[0]:
                         current_price = float(prices[0])
                         equity = round(current_price * qty, 2)
@@ -421,7 +519,7 @@ def _fetch_equity_positions_for_account(
     if out:
         try:
             symbols = [h.symbol for h in out]
-            quotes = rh.stocks.get_quotes(symbols) or []
+            quotes = _call_with_reauth(rh.stocks.get_quotes, symbols) or []
             quote_map: Dict[str, float] = {}
             for q in quotes:
                 if not q:
@@ -455,7 +553,7 @@ def _fetch_option_positions_for_account(
     import robin_stocks.robinhood as rh
 
     try:
-        raw = rh.options.get_open_option_positions(account_number=account_number)
+        raw = _call_with_reauth(rh.options.get_open_option_positions, account_number=account_number)
     except Exception as exc:  # noqa: BLE001
         return [], f"get_open_option_positions({account_number}) failed: {exc}"
 
@@ -476,7 +574,7 @@ def _fetch_option_positions_for_account(
 
             if instrument_url:
                 try:
-                    inst = rh.helper.request_get(instrument_url)
+                    inst = _call_with_reauth(rh.helper.request_get, instrument_url)
                     side = "Call" if inst.get("type") == "call" else "Put"
                     strike = float(inst.get("strike_price") or 0.0)
                     expiry = inst.get("expiration_date") or ""
@@ -486,7 +584,7 @@ def _fetch_option_positions_for_account(
             try:
                 opt_id = instrument_url.rstrip("/").split("/")[-1] if instrument_url else None
                 if opt_id:
-                    md = rh.options.get_option_market_data_by_id(opt_id)
+                    md = _call_with_reauth(rh.options.get_option_market_data_by_id, opt_id)
                     if md:
                         mp = (md[0] if isinstance(md, list) else md).get("adjusted_mark_price")
                         if mp is not None:
@@ -551,7 +649,7 @@ def fetch_crypto_positions() -> Tuple[List[CryptoHolding], Optional[str]]:
     import robin_stocks.robinhood as rh
 
     try:
-        raw = rh.crypto.get_crypto_positions() or []
+        raw = _call_with_reauth(rh.crypto.get_crypto_positions) or []
     except Exception as exc:  # noqa: BLE001
         return [], f"get_crypto_positions failed: {exc}"
 
@@ -676,7 +774,7 @@ def fetch_all_accounts_positions() -> Tuple[
         if tag == "brokerage":
             try:
                 import robin_stocks.robinhood as rh
-                port = rh.profiles.load_portfolio_profile() or {}
+                port = _call_with_reauth(rh.profiles.load_portfolio_profile) or {}
                 portfolio_value = float(port.get("equity") or 0.0) or None
             except Exception:
                 pass
@@ -758,8 +856,8 @@ def fetch_account_summary() -> Tuple[dict, Optional[str]]:
     import robin_stocks.robinhood as rh
 
     try:
-        profile = rh.profiles.load_account_profile() or {}
-        portfolio = rh.profiles.load_portfolio_profile() or {}
+        profile = _call_with_reauth(rh.profiles.load_account_profile) or {}
+        portfolio = _call_with_reauth(rh.profiles.load_portfolio_profile) or {}
     except Exception as exc:  # noqa: BLE001
         return {}, f"profile fetch failed: {exc}"
 

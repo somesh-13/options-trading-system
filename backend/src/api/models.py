@@ -77,6 +77,48 @@ class HedgeForecastResponse(BaseModel):
     rehedge: Dict
 
 
+# === Multi-Leg Returns Simulator ===
+
+class SimLeg(BaseModel):
+    """One leg of a multi-leg simulated position."""
+    strike: float = Field(..., gt=0)
+    option_type: Literal['call', 'put']
+    side: Literal['buy', 'sell']
+    quantity: int = Field(..., ge=1, le=100)
+    entry_price: float = Field(..., ge=0, description="Premium paid/received per share (cost basis)")
+    expiration: str = Field(..., description="YYYY-MM-DD")
+
+
+class SimPriceRange(BaseModel):
+    """Underlying price grid for the simulator. min/max default to spot * [0.7, 1.3]."""
+    min: Optional[float] = Field(None, gt=0)
+    max: Optional[float] = Field(None, gt=0)
+    steps: int = Field(80, ge=10, le=400)
+
+
+class SimulateMultiLegRequest(BaseModel):
+    """Request for the returns simulator."""
+    legs: List[SimLeg] = Field(..., min_length=1, max_length=4)
+    spot: float = Field(..., gt=0, description="Current underlying price")
+    r: float = Field(0.05, ge=0, le=1)
+    sigma: float = Field(..., gt=0, le=5, description="Annualized volatility for re-pricing")
+    evaluation_dates: List[str] = Field(
+        ..., min_length=1, max_length=64,
+        description="YYYY-MM-DD list spanning today through max(expiration)",
+    )
+    price_range: SimPriceRange = SimPriceRange()
+
+
+class SimCurve(BaseModel):
+    date: str
+    pnl: List[float]
+
+
+class SimulateMultiLegResponse(BaseModel):
+    prices: List[float]
+    curves: List[SimCurve]
+
+
 class RegimeResponse(BaseModel):
     """Response from HMM regime detection"""
     ticker: str
@@ -472,6 +514,71 @@ class RobinhoodSyncStatus(BaseModel):
     configured: bool = False  # are RH credentials present in the env
 
 
+class RobinhoodSessionStatus(BaseModel):
+    """Response from GET /api/robinhood/session.
+
+    Reports the in-process Robinhood auth state. `age_seconds` is the time
+    since the last successful login(); when it crosses `refresh_after_seconds`
+    the next API call will trigger a re-login. `logged_in=False` with
+    `configured=true` means the next call will perform the initial login.
+    """
+    configured: bool
+    logged_in: bool
+    last_login: Optional[float] = None
+    age_seconds: Optional[float] = None
+    refresh_after_seconds: float
+
+
+# === Flow page (options flow scanner) ===
+
+class FlowContractRow(BaseModel):
+    """Per-contract row on the /flow page detail panel."""
+    expiration: str
+    strike: float
+    side: str                    # 'call' | 'put'
+    bid: Optional[float] = None
+    ask: Optional[float] = None
+    mid: Optional[float] = None
+    iv: Optional[float] = None
+    oi: Optional[int] = None
+    prior_oi: Optional[int] = None
+    volume: Optional[int] = None
+    vol_oi_ratio: Optional[float] = None
+    premium_dollars: Optional[float] = None  # volume × mid × 100
+    spot: Optional[float] = None
+    days_to_expiry: Optional[int] = None
+
+
+class FlowLeaderboardRow(BaseModel):
+    """Per-ticker row on the leaderboard. One per ticker in latest snapshot."""
+    ticker: str
+    today_premium_dollars: float
+    avg_prior_premium_dollars: Optional[float] = None
+    premium_multiplier: Optional[float] = None
+    top_contract: Optional[FlowContractRow] = None
+    iv_percentile: Optional[float] = None     # null until ≥ 14 snapshots
+    spot: Optional[float] = None
+    snapshot_at: str
+
+
+class FlowScanResponse(BaseModel):
+    """Response from GET /api/flow/scan."""
+    snapshot_at: Optional[str] = None
+    rows: List[FlowLeaderboardRow]
+    tickers_scanned: int
+    tickers_with_data: int
+
+
+class FlowTickerResponse(BaseModel):
+    """Response from GET /api/flow/{ticker}."""
+    ticker: str
+    snapshot_at: Optional[str] = None
+    spot: Optional[float] = None
+    today_premium_dollars: float
+    iv_percentile: Optional[float] = None
+    contracts: List[FlowContractRow]
+
+
 # === Crypto Models ===
 
 class CryptoHoldingResponse(BaseModel):
@@ -685,3 +792,19 @@ class IRFilingCountsResponse(BaseModel):
     ticker: str
     counts: Dict[str, int]
     total: int
+
+
+class MacroNewsArticle(BaseModel):
+    title: str
+    url: str
+    source: str
+    published_at: Optional[str] = None
+    category: str
+    image_url: Optional[str] = None
+
+
+class MacroNewsResponse(BaseModel):
+    articles: List[MacroNewsArticle]
+    updated_at: str
+    by_category: Dict[str, int]
+    cached: bool = False

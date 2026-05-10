@@ -8,6 +8,7 @@ type RailItem = { icon: string; label: string; tooltip: string; href: string } |
 const ITEMS: RailItem[] = [
   { icon: '◎', label: 'Home',       tooltip: 'Today — opportunities ranked by EV', href: '/' },
   { icon: '⊞', label: 'Scanner',    tooltip: 'Multi-ticker IV/HV mispricing scanner', href: '/scanner' },
+  { icon: '⇉', label: 'Flow',       tooltip: 'Options flow leaderboard — premium $ + OI buildup', href: '/flow' },
   { icon: '≣', label: 'Chain',      tooltip: 'Option chain with inline ticket',       href: '/options-chain' },
   { icon: 'ƒ', label: 'Pricing',    tooltip: 'Black-Scholes calculator + Greeks',     href: '/pricing' },
   { sep: true },

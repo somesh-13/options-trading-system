@@ -7,7 +7,7 @@ import { NLScannerBar, type ScannerParseResult, type ScannerSubmitPayload } from
 import { InflectionTable, type InflectionCandidate } from './InflectionTable';
 import { PremiumPicksOverlay } from './PremiumPicksOverlay';
 import { getRobinhoodHoldings } from '@/lib/robinhood-api';
-import { getMispricing } from '@/lib/robinhood-analytics-api';
+import { getBatchMispricing } from '@/lib/robinhood-analytics-api';
 import INFLECTION_DATA from '@/data/inflection-candidates.json';
 
 const INFLECTION_CANDIDATES = (INFLECTION_DATA.candidates as InflectionCandidate[]) ?? [];
@@ -119,30 +119,6 @@ function deriveRegime(ivHvRatio: number): Regime {
   return ivHvRatio > 1.3 ? 'high-vol' : 'normal';
 }
 
-/** Run at most `concurrency` promises at once. */
-async function throttledAllSettled<T>(
-  fns: Array<() => Promise<T>>,
-  concurrency = 6,
-): Promise<PromiseSettledResult<T>[]> {
-  const results: PromiseSettledResult<T>[] = new Array(fns.length);
-  let nextIdx = 0;
-
-  async function worker() {
-    while (nextIdx < fns.length) {
-      const idx = nextIdx++;
-      try {
-        results[idx] = { status: 'fulfilled', value: await fns[idx]() };
-      } catch (e) {
-        results[idx] = { status: 'rejected', reason: e };
-      }
-    }
-  }
-
-  const workers = Array.from({ length: Math.min(concurrency, fns.length) }, () => worker());
-  await Promise.all(workers);
-  return results;
-}
-
 type FetchState =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -191,40 +167,42 @@ export function ScannerShell() {
       qtyMap.set(h.symbol, (qtyMap.get(h.symbol) ?? 0) + h.quantity);
     }
 
-    const results = await throttledAllSettled(
-      uniqueSymbols.map((sym) => () => getMispricing(sym)),
-      6,
-    );
+    let batch;
+    try {
+      batch = await getBatchMispricing(uniqueSymbols);
+    } catch (e) {
+      if (!cancelRef.current) {
+        console.warn('[Scanner] batch mispricing failed:', e);
+        setFetchState({ status: 'fallback', reason: String(e) });
+      }
+      return;
+    }
 
     if (cancelRef.current) return;
 
     const rows: Opportunity[] = [];
-    const errors: string[] = [];
+    const errors: string[] = Object.keys(batch.errors);
 
-    results.forEach((result, i) => {
-      const sym = uniqueSymbols[i];
-      if (result.status === 'rejected') {
-        errors.push(sym);
-        return;
-      }
-      const m = result.value;
-      const iv = m.implied_vol_atm ?? 0;
-      const hv = m.historical_vol ?? 0;
-      const ratio = m.iv_hv_ratio ?? (hv > 0 ? iv / hv : 1);
+    for (const sym of uniqueSymbols) {
+      const m = batch.results[sym];
+      if (!m) continue;
+      const iv = (m.implied_vol_atm as number | undefined) ?? 0;
+      const hv = (m.historical_vol as number | undefined) ?? 0;
+      const ratio = (m.iv_hv_ratio as number | undefined) ?? (hv > 0 ? iv / hv : 1);
       const seed = sym.charCodeAt(0) + (sym.charCodeAt(1) ?? 0);
       rows.push({
         ticker: sym,
-        spot: m.spot_price ?? 0,
+        spot: (m.spot_price as number | undefined) ?? 0,
         iv,
         hv,
         ratio,
-        signal: (m.signal as Signal) ?? 'NEUTRAL',
+        signal: ((m.signal as Signal | undefined)) ?? 'NEUTRAL',
         regime: deriveRegime(ratio),
         ev: 0,
         hitRate: 0.5,
         seed,
       });
-    });
+    }
 
     // Sort by ratio desc (highest IV/HV first — most actionable)
     rows.sort((a, b) => b.ratio - a.ratio);

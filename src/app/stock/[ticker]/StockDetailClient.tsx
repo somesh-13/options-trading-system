@@ -115,12 +115,20 @@ function makeStubDetail(ticker: string): StockDetailData {
   };
 }
 
+// Short ranges need finer-grained bars than the 5Y weekly history provides.
+// Backend maps: 1D -> 5m bars, 5D -> 30m bars. Others fall back to the 5Y cache.
+const SHORT_RANGE_PERIOD: Partial<Record<TimeRange, string>> = {
+  '1D': '1D',
+  '5D': '5D',
+};
+
 export default function StockDetailClient({ ticker }: StockDetailClientProps) {
   const [stockData, setStockData] = useState<StockDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailWarning, setDetailWarning] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>('1M');
   const [fullHistoricalData, setFullHistoricalData] = useState<HistoricalDataPoint[] | null>(null);
+  const [shortRangeData, setShortRangeData] = useState<Partial<Record<TimeRange, HistoricalDataPoint[]>>>({});
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   const fetchDetail = useCallback(async () => {
@@ -159,6 +167,7 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
     }
 
     setFullHistoricalData(history);
+    setShortRangeData({});
     setStockData({ ...detail, historicalData: filterByRange(history, '1M') });
     setLoading(false);
   }, [ticker]);
@@ -168,10 +177,39 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
   }, [ticker, fetchDetail]);
 
   useEffect(() => {
+    const shortPeriod = SHORT_RANGE_PERIOD[timeRange];
+    if (shortPeriod && !shortRangeData[timeRange]) {
+      let cancelled = false;
+      (async () => {
+        try {
+          const res = await fetch(
+            `/api/market/${ticker}/price-history?period=${shortPeriod}`,
+            { cache: 'no-store' },
+          );
+          if (!res.ok || cancelled) return;
+          const body = (await res.json()) as PriceHistoryResponse;
+          if (cancelled) return;
+          setShortRangeData((prev) => ({ ...prev, [timeRange]: body.data ?? [] }));
+        } catch {
+          /* fall back to weekly cache */
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [ticker, timeRange, shortRangeData]);
+
+  useEffect(() => {
+    const shortBars = shortRangeData[timeRange];
+    if (shortBars && shortBars.length > 0) {
+      setStockData((prev) => (prev ? { ...prev, historicalData: shortBars } : prev));
+      return;
+    }
     if (!fullHistoricalData) return;
     const filtered = filterByRange(fullHistoricalData, timeRange);
     setStockData((prev) => (prev ? { ...prev, historicalData: filtered } : prev));
-  }, [timeRange, fullHistoricalData]);
+  }, [timeRange, fullHistoricalData, shortRangeData]);
 
   // Layout hooks must run on every render — keep above the early returns.
   const overviewMain = usePanelLayout(
@@ -378,6 +416,7 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
                   data={stockData.historicalData}
                   timeRange={timeRange}
                   onTimeRangeChange={setTimeRange}
+                  initialChartStyle="line"
                 />
               ) : (
                 <div className="rv-card">

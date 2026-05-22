@@ -29,6 +29,9 @@ const EXAMPLES = [
   'Should I buy MARA today?',
   'Compare AAPL and MSFT volatility',
   'Show me stocks with ratio > 1.3',
+  'Is NVDA a good calendar spread candidate today?',
+  'Which tickers have the steepest IV term structure?',
+  'Show me calendar opportunities with F/B ratio > 1.3',
 ];
 
 const COMBINE_SEPARATOR = ' AND ';

@@ -18,3 +18,29 @@ export function bsD1(S: number, K: number, T: number, r: number, sigma: number):
 export function bsD2(S: number, K: number, T: number, r: number, sigma: number): number {
   return bsD1(S, K, T, r, sigma) - sigma * Math.sqrt(T);
 }
+
+/**
+ * Black-Scholes call price (no-dividend). Returns per-share price (not ×100
+ * contract value). Falls back to intrinsic value when inputs are degenerate
+ * (T → 0 or σ → 0) so the caller doesn't see NaN.
+ */
+export function bsCallPrice(
+  S: number, K: number, T: number, r: number, sigma: number,
+): number {
+  if (!Number.isFinite(S) || !Number.isFinite(K) || S <= 0 || K <= 0) return 0;
+  if (T <= 0 || sigma <= 0) return Math.max(0, S - K);
+  const d1 = bsD1(S, K, T, r, sigma);
+  const d2 = bsD2(S, K, T, r, sigma);
+  return S * normCdf(d1) - K * Math.exp(-r * T) * normCdf(d2);
+}
+
+/** Black-Scholes put price (no-dividend), same fallback semantics as bsCallPrice. */
+export function bsPutPrice(
+  S: number, K: number, T: number, r: number, sigma: number,
+): number {
+  if (!Number.isFinite(S) || !Number.isFinite(K) || S <= 0 || K <= 0) return 0;
+  if (T <= 0 || sigma <= 0) return Math.max(0, K - S);
+  const d1 = bsD1(S, K, T, r, sigma);
+  const d2 = bsD2(S, K, T, r, sigma);
+  return K * Math.exp(-r * T) * normCdf(-d2) - S * normCdf(-d1);
+}

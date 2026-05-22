@@ -8,6 +8,7 @@ import { InflectionTable, type InflectionCandidate } from './InflectionTable';
 import { PremiumPicksOverlay } from './PremiumPicksOverlay';
 import { getRobinhoodHoldings } from '@/lib/robinhood-api';
 import { getBatchMispricing } from '@/lib/robinhood-analytics-api';
+import { getCalendarSignals } from '@/lib/pricing-api';
 import INFLECTION_DATA from '@/data/inflection-candidates.json';
 
 const INFLECTION_CANDIDATES = (INFLECTION_DATA.candidates as InflectionCandidate[]) ?? [];
@@ -222,6 +223,37 @@ export function ScannerShell() {
       errors,
       usedFallback: false,
       fetchedAt,
+    });
+
+    // Fan out calendar-signals fetches in the background and stream F/B ratios
+    // into the rows as they arrive. Backend caches per-ticker so subsequent
+    // scanner refreshes are cheap. Failures are silent — fbRatio stays
+    // undefined, and the Calendar Opp predicate treats that as not-matching.
+    void Promise.all(
+      uniqueSymbols.map(async (sym) => {
+        try {
+          const sig = await getCalendarSignals(sym);
+          return { sym, ratio: sig.best?.ratio };
+        } catch {
+          return { sym, ratio: undefined };
+        }
+      }),
+    ).then((updates) => {
+      if (cancelRef.current) return;
+      const ratioBySym = new Map<string, number>();
+      for (const u of updates) {
+        if (typeof u.ratio === 'number') ratioBySym.set(u.sym, u.ratio);
+      }
+      setFetchState((prev) =>
+        prev.status === 'ok'
+          ? {
+              ...prev,
+              rows: prev.rows.map((r) =>
+                ratioBySym.has(r.ticker) ? { ...r, fbRatio: ratioBySym.get(r.ticker) } : r,
+              ),
+            }
+          : prev,
+      );
     });
   }, []);
 

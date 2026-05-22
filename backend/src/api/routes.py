@@ -2,6 +2,7 @@
 
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+import math
 import os
 import sys
 import time
@@ -1002,6 +1003,100 @@ def get_option_expirations(ticker: str):
             status_code=500,
             detail=f"Option expirations fetch failed for {sym}: {str(e)}",
         )
+
+
+# Best-pair search window for calendar signals.
+_CAL_FRONT_MAX_DTE = 7
+_CAL_BACK_MAX_DTE = 21
+
+
+def _calendar_status(best: Optional[Dict]) -> str:
+    if best is None:
+        return 'WEAK'
+    if best['ratio'] >= 1.2 and best['differential'] >= 10:
+        return 'FAVORABLE'
+    if best['ratio'] >= 1.05:
+        return 'NEUTRAL'
+    return 'WEAK'
+
+
+def _compute_calendar_pairs(term: List[Dict]) -> Tuple[Optional[Dict], List[Dict]]:
+    """Server-side mirror of src/lib/calendar.ts:computeBestPair.
+
+    Iterates (front, back) over a term structure, keeps pairs that satisfy
+    the front-DTE / back-DTE windows + a positive numeric ATM IV on both
+    legs, and returns the highest-ratio pair plus the full sorted list.
+    """
+    valid = [
+        p for p in term
+        if isinstance(p.get('atm_iv'), (int, float)) and p['atm_iv'] > 0
+    ]
+    pairs: List[Dict] = []
+    for s in valid:
+        if s['dte'] > _CAL_FRONT_MAX_DTE:
+            continue
+        for l in valid:
+            if l['dte'] <= s['dte']:
+                continue
+            if l['dte'] > _CAL_BACK_MAX_DTE:
+                continue
+            ratio = float(s['atm_iv']) / float(l['atm_iv'])
+            # Match src/lib/calendar.ts edgeScoreFromRatio: floor((r-0.70)/0.10), clamped to [0,5].
+            edge = max(0, min(5, math.floor((ratio - 0.70) / 0.10)))
+            pairs.append({
+                'short': {'expiration': s['expiration'], 'dte': s['dte'], 'atm_iv': s['atm_iv']},
+                'long': {'expiration': l['expiration'], 'dte': l['dte'], 'atm_iv': l['atm_iv']},
+                'ratio': ratio,
+                'differential': (float(s['atm_iv']) - float(l['atm_iv'])) * 100.0,
+                'edgeScore': edge,
+            })
+    pairs.sort(key=lambda p: p['ratio'], reverse=True)
+    return (pairs[0] if pairs else None), pairs
+
+
+@app.get("/api/calendar/signals/{ticker}")
+def get_calendar_signals(ticker: str):
+    """Calendar-spread signals — IV term structure + HV + best (short, long) pair.
+
+    Bundles `get_option_expirations_summary` (term structure) with
+    `detect_mispricing` (HV30 + ATM strike) into a single response so the
+    stock detail page only does one round-trip on ticker load.
+    """
+    from data.market_data import get_option_expirations_summary
+
+    sym = ticker.upper()
+    try:
+        summary = get_option_expirations_summary(sym) or {'expirations': []}
+        mp = detect_mispricing(sym)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Calendar signals fetch failed for {sym}: {str(e)}",
+        )
+
+    # detect_mispricing returns `{ticker, error}` on yfinance failure rather
+    # than raising — fall back to HV=0 so the response still renders the term
+    # structure and the client can show a WEAK / degraded state.
+    if isinstance(mp, dict) and mp.get('error'):
+        hv = 0.0
+        atm_strike = None
+    else:
+        hv = float(mp.get('historical_vol') or 0.0)
+        atm_strike = mp.get('atm_strike')
+
+    term = summary.get('expirations') or []
+    best, all_pairs = _compute_calendar_pairs(term)
+
+    return {
+        'ticker': sym,
+        'hv': hv,
+        'lastUpdated': datetime.utcnow().isoformat() + 'Z',
+        'termStructure': term,
+        'best': best,
+        'all': all_pairs,
+        'status': _calendar_status(best),
+        'atmStrike': atm_strike,
+    }
 
 
 @app.get("/api/market/{ticker}/option-chain")

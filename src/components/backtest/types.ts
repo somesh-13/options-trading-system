@@ -17,7 +17,7 @@ export type StrategyId =
 
 export type BenchmarkId = 'SPY' | 'QQQ' | 'IWM' | 'BTC';
 
-export type BacktestMode = 'comparison' | 'single' | 'wheel';
+export type BacktestMode = 'comparison' | 'single' | 'wheel' | 'calendar';
 
 export type AssetType = 'options' | 'stocks' | 'multi-asset';
 export type Cadence = 'daily' | 'weekly' | 'monthly';

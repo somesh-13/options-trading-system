@@ -415,6 +415,12 @@ class EngineConfigRequest(BaseModel):
     max_total_contracts: Optional[int] = Field(None, ge=1, le=500)
     max_daily_trades: Optional[int] = Field(None, ge=1, le=100)
     max_daily_loss: Optional[float] = Field(None, ge=0)
+    # Calendar-spread roll logic — see engine/config.py for semantics.
+    roll_enabled: Optional[bool] = None
+    roll_trigger_dte: Optional[int] = Field(None, ge=0, le=14)
+    roll_requires_iv_hv: Optional[bool] = None
+    roll_to: Optional[Literal['nearest-weekly', '+7d', '+14d']] = None
+    roll_strike: Optional[Literal['same', 'atm-at-roll']] = None
 
 
 class RobinhoodHolding(BaseModel):
@@ -826,3 +832,34 @@ class MacroNewsResponse(BaseModel):
     updated_at: str
     by_category: Dict[str, int]
     cached: bool = False
+
+
+# ---------------------------------------------------------------------------
+# Calendar spread signals — powers the /stock/[ticker] CALENDAR SIGNALS card
+# and the /calendar analyzer page. One bundling endpoint serves both so the
+# stock page only pays for one round-trip per ticker load.
+# ---------------------------------------------------------------------------
+
+class IvTermPoint(BaseModel):
+    expiration: str
+    dte: int
+    atm_iv: Optional[float] = None  # decimal fraction (0.45 = 45%)
+
+
+class CalendarPairModel(BaseModel):
+    short: IvTermPoint
+    long: IvTermPoint
+    ratio: float          # short.atm_iv / long.atm_iv
+    differential: float   # (short.atm_iv - long.atm_iv) * 100, percentage points
+    edgeScore: int        # min(5, floor(ratio * 2.5)), bounded [0..5]
+
+
+class CalendarSignalsResponse(BaseModel):
+    ticker: str
+    hv: float             # HV30 as decimal fraction
+    lastUpdated: str      # ISO timestamp
+    termStructure: List[IvTermPoint]
+    best: Optional[CalendarPairModel] = None
+    all: List[CalendarPairModel]
+    status: Literal['FAVORABLE', 'NEUTRAL', 'WEAK']
+    atmStrike: Optional[float] = None

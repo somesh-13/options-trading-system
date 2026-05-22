@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Guardrails } from '@/components/auto/Guardrails';
 import { EventStream } from '@/components/auto/EventStream';
+import { RollLogic } from '@/components/auto/RollLogic';
 
 type StatusBody = {
   state?: string;
@@ -189,7 +190,10 @@ export default function AutoEnginePage() {
       </div>
 
       <div className="rv-engine-grid">
-        <Guardrails />
+        <div>
+          <Guardrails />
+          <RollLogic />
+        </div>
         <EventStream />
       </div>
     </>

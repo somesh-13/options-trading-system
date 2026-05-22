@@ -26,6 +26,7 @@ import {
   type RobinhoodActivityRow,
   type CryptoHolding,
 } from '@/lib/robinhood-api';
+import { setCachedHoldings, setCachedSummary } from '@/lib/robinhoodCache';
 
 const ACCOUNT_LABEL: Record<RobinhoodAccount, string> = {
   all: 'All accounts',
@@ -117,6 +118,12 @@ function RobinhoodPageInner() {
         setHoldings(h);
         setSummary(s);
         setActivity(a);
+        // Mirror into the shared cache so Home + Risk pages can hydrate
+        // instantly from the same live data on their next mount.
+        if (acc === 'all') {
+          setCachedHoldings(h);
+          setCachedSummary(s);
+        }
       } catch (e) {
         setErr((e as Error).message);
       } finally {
@@ -146,6 +153,10 @@ function RobinhoodPageInner() {
         ]);
         setHoldings(h);
         setSummary(s);
+        if (acc === 'all') {
+          setCachedHoldings(h);
+          setCachedSummary(s);
+        }
       } catch {
         /* swallow background errors so the visible state isn't clobbered */
       }

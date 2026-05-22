@@ -14,6 +14,13 @@ import { VolSmile } from '@/components/pricing/VolSmile';
 import { ExpirationStrip, type Expiration } from '@/components/chain/ExpirationStrip';
 import { IvHvScale } from '@/components/charts/IvHvScale';
 import { OptionsTradePanel } from '@/components/robinhood/OptionsTradePanel';
+import CalendarLegsPanel from '@/components/pricing/CalendarLegsPanel';
+import NetGreeksRow from '@/components/pricing/NetGreeksRow';
+import SecondOrderSpreadGreeksRow from '@/components/pricing/SecondOrderSpreadGreeksRow';
+import CalendarNetSummaryStrip from '@/components/pricing/CalendarNetSummaryStrip';
+import CalendarPnLScenarios from '@/components/pricing/CalendarPnLScenarios';
+import CalendarIvDifferentialPanel from '@/components/pricing/CalendarIvDifferentialPanel';
+import { aggregateCalendarGreeks } from '@/lib/calendar';
 import {
   calculateImpliedVol,
   calculatePriceAndGreeks,
@@ -77,12 +84,18 @@ function PricingPageInner() {
     const s = searchParams?.get('strike');
     const ty = searchParams?.get('type');
     const ex = searchParams?.get('expiry');
+    const md = searchParams?.get('mode');
+    const sx = searchParams?.get('short_expiry');
+    const lx = searchParams?.get('long_expiry');
     const sNum = s != null ? Number(s) : NaN;
     return {
       ticker: t && /^[A-Z0-9.\-]+$/i.test(t) ? t.toUpperCase() : null,
       strike: Number.isFinite(sNum) && sNum > 0 ? sNum : null,
       type: ty === 'call' || ty === 'put' ? (ty as 'call' | 'put') : null,
       expiry: ex && /^\d{4}-\d{2}-\d{2}$/.test(ex) ? ex : null,
+      mode: md === 'calendar' ? ('calendar' as const) : ('single' as const),
+      shortExpiry: sx && /^\d{4}-\d{2}-\d{2}$/.test(sx) ? sx : null,
+      longExpiry: lx && /^\d{4}-\d{2}-\d{2}$/.test(lx) ? lx : null,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -108,6 +121,24 @@ function PricingPageInner() {
 
   const [pricing, setPricing] = useState<PricingResponse | null>(null);
   const [solvedIV, setSolvedIV] = useState<number | null>(null);
+
+  // Calendar-spread mode. When active, the inputs panel + Greek rows render
+  // a two-leg pure-calendar view (shared strike, separate front/back expiries)
+  // instead of the single-leg form. Net Greeks are aggregated client-side
+  // from two parallel /api/pricing/greeks calls.
+  const [spreadMode, setSpreadMode] = useState<'single' | 'calendar'>(
+    initialFromUrl.mode,
+  );
+  const [shortExpiry, setShortExpiry] = useState<string | null>(initialFromUrl.shortExpiry);
+  const [longExpiry, setLongExpiry] = useState<string | null>(initialFromUrl.longExpiry);
+  const [netGreeks, setNetGreeks] = useState<Greeks | null>(null);
+  // Per-leg premiums (one share) — needed for Net Debit, breakeven, P&L scenarios.
+  const [legPrices, setLegPrices] = useState<{ short: number; long: number } | null>(null);
+  // Per-leg sigma actually used (front_iv / back_iv) — needed for residual-DTE
+  // long-leg BS repricing in the P&L scenarios table.
+  const [legSigmas, setLegSigmas] = useState<{ short: number; long: number } | null>(null);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
   const [surface, setSurface] = useState<VolSurfaceData | null>(null);
   // Order panel is hidden by default; opens when the user actively picks a
   // strike from the StrikeStrip (or clicks the "Place order" CTA). Keeps the
@@ -324,6 +355,74 @@ function PricingPageInner() {
     };
   }, [spot, strike, days, sigma, r, optType, marketPrice, mode]);
 
+  // Default the two calendar legs once expirations land. Picks the
+  // shortest-DTE expiry for the front leg and the next-shortest-but-greater
+  // (≤ 30d) for the back leg. URL-supplied values take precedence and aren't
+  // overwritten here.
+  useEffect(() => {
+    if (spreadMode !== 'calendar') return;
+    if (!fullExpirations || fullExpirations.length === 0) return;
+    const sorted = [...fullExpirations].sort((a, b) => a.dte - b.dte);
+    if (!shortExpiry) {
+      const first = sorted.find((e) => e.dte >= 0) ?? sorted[0];
+      if (first) setShortExpiry(first.expiration);
+    }
+    if (!longExpiry) {
+      const frontDte = sorted.find((e) => e.expiration === (shortExpiry ?? sorted[0]?.expiration))?.dte ?? 0;
+      const back = sorted.find((e) => e.dte > frontDte) ?? sorted[1] ?? sorted[0];
+      if (back) setLongExpiry(back.expiration);
+    }
+  }, [spreadMode, fullExpirations, shortExpiry, longExpiry]);
+
+  // Calendar Greeks: fire two parallel /api/pricing/greeks calls (one per
+  // leg), then aggregate (LONG − SHORT) client-side.
+  useEffect(() => {
+    if (spreadMode !== 'calendar') {
+      setNetGreeks(null);
+      setLegPrices(null);
+      setLegSigmas(null);
+      setCalendarError(null);
+      return;
+    }
+    if (spot == null || !shortExpiry || !longExpiry) return;
+    const shortMeta = fullExpirations?.find((e) => e.expiration === shortExpiry);
+    const longMeta = fullExpirations?.find((e) => e.expiration === longExpiry);
+    if (!shortMeta || !longMeta) return;
+    const shortT = Math.max(shortMeta.dte, 1) / 365;
+    const longT = Math.max(longMeta.dte, 1) / 365;
+    const shortSigma = shortMeta.atm_iv ?? sigma;
+    const longSigma = longMeta.atm_iv ?? sigma;
+    if (shortT <= 0 || longT <= 0 || shortSigma <= 0 || longSigma <= 0) return;
+
+    let cancelled = false;
+    setCalendarLoading(true);
+    setCalendarError(null);
+    (async () => {
+      try {
+        const [shortRes, longRes] = await Promise.all([
+          calculatePriceAndGreeks({
+            S: spot, K: strike, T: shortT, r, sigma: shortSigma, option_type: optType,
+          }),
+          calculatePriceAndGreeks({
+            S: spot, K: strike, T: longT, r, sigma: longSigma, option_type: optType,
+          }),
+        ]);
+        if (cancelled) return;
+        setNetGreeks(aggregateCalendarGreeks(longRes.greeks, shortRes.greeks));
+        setLegPrices({ short: shortRes.price, long: longRes.price });
+        setLegSigmas({ short: shortSigma, long: longSigma });
+      } catch (e) {
+        if (!cancelled) {
+          setCalendarError(e instanceof Error ? e.message : 'Calendar Greeks failed');
+          setNetGreeks(null);
+        }
+      } finally {
+        if (!cancelled) setCalendarLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [spreadMode, spot, strike, shortExpiry, longExpiry, fullExpirations, sigma, r, optType]);
+
   const greeks: Greeks | null = pricing?.greeks ?? null;
   const theoretical = pricing?.price ?? 0;
   const effectiveSigma = mode === 'iv-from-price' && solvedIV != null ? solvedIV : sigma;
@@ -446,11 +545,13 @@ function PricingPageInner() {
         {(effectiveSigma * 100).toFixed(1)}% · r {(r * 100).toFixed(2)}%
       </div>
 
-      <ExpirationStrip
-        expirations={expirations}
-        selectedIdx={safeExpiryIdx}
-        onSelect={setExpiryIdx}
-      />
+      {spreadMode === 'single' && (
+        <ExpirationStrip
+          expirations={expirations}
+          selectedIdx={safeExpiryIdx}
+          onSelect={setExpiryIdx}
+        />
+      )}
       <StrikeStrip
         strikes={strikeWindow}
         selected={strike}
@@ -462,28 +563,59 @@ function PricingPageInner() {
         }}
       />
 
+      {spreadMode === 'calendar' && (
+        <CalendarNetSummaryStrip
+          shortPrice={legPrices?.short ?? null}
+          longPrice={legPrices?.long ?? null}
+          strike={strike}
+        />
+      )}
+
       <div className="rv-pricing-grid">
         <div className="rv-card" style={{ opacity: loading ? 0.7 : 1, transition: 'opacity .12s' }}>
           <div className="rv-card-head">
             <h3>Inputs</h3>
             <div className="tools">
               <span
-                className={optType === 'call' ? 'on' : ''}
-                onClick={() => setOptType('call')}
+                className={spreadMode === 'single' && optType === 'call' ? 'on' : ''}
+                onClick={() => { setSpreadMode('single'); setOptType('call'); }}
                 style={{ cursor: 'pointer' }}
               >
                 call
               </span>
               <span
-                className={optType === 'put' ? 'on' : ''}
-                onClick={() => setOptType('put')}
+                className={spreadMode === 'single' && optType === 'put' ? 'on' : ''}
+                onClick={() => { setSpreadMode('single'); setOptType('put'); }}
                 style={{ cursor: 'pointer' }}
               >
                 put
               </span>
+              <span
+                className={spreadMode === 'calendar' ? 'on' : ''}
+                onClick={() => { setSpreadMode('calendar'); setOptType('call'); }}
+                style={{ cursor: 'pointer' }}
+                title="Calendar spread · same strike, two expiries"
+              >
+                calendar
+              </span>
             </div>
           </div>
 
+          {spreadMode === 'calendar' && (
+            <CalendarLegsPanel
+              ticker={ticker}
+              spot={spot}
+              strike={strike}
+              onStrikeChange={setStrike}
+              expirations={fullExpirations ?? []}
+              shortExpiry={shortExpiry}
+              longExpiry={longExpiry}
+              onShortExpiryChange={setShortExpiry}
+              onLongExpiryChange={setLongExpiry}
+            />
+          )}
+
+          {spreadMode === 'single' && (<>
           <div style={{ marginTop: 4, marginBottom: 4 }}>
             <SideToggle side={side} onChange={setSide} />
           </div>
@@ -731,9 +863,85 @@ function PricingPageInner() {
               {error}
             </div>
           )}
+          </>)}
+          {spreadMode === 'calendar' && calendarError && (
+            <div
+              className="rv-chip warn"
+              style={{ marginTop: 10, display: 'inline-block', fontSize: 10 }}
+            >
+              {calendarError}
+            </div>
+          )}
+          {spreadMode === 'calendar' && calendarLoading && (
+            <div className="rv-sub" style={{ marginTop: 8, fontSize: 10 }}>
+              pricing both legs…
+            </div>
+          )}
         </div>
 
         <div>
+          {spreadMode === 'calendar' && (
+            <>
+              <div
+                className="rv-sub"
+                style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <span>Net Greeks · Calendar Spread</span>
+                <span className="rv-chip" style={{ fontSize: 9, color: 'var(--ink-mute)' }}>
+                  LONG − SHORT
+                </span>
+              </div>
+              <NetGreeksRow net={netGreeks} />
+              <div className="rv-sub" style={{ margin: '14px 0 6px' }}>
+                Second-order Spread Greeks <span style={{ color: 'var(--gold)' }}>· your edge</span>
+              </div>
+              <SecondOrderSpreadGreeksRow net={netGreeks} />
+
+              <CalendarPnLScenarios
+                spot={spot}
+                strike={strike}
+                shortPrice={legPrices?.short ?? null}
+                longPrice={legPrices?.long ?? null}
+                shortDte={
+                  fullExpirations?.find((e) => e.expiration === shortExpiry)?.dte ?? 0
+                }
+                longDte={
+                  fullExpirations?.find((e) => e.expiration === longExpiry)?.dte ?? 0
+                }
+                longSigma={legSigmas?.long ?? 0}
+                r={r}
+              />
+
+              <CalendarIvDifferentialPanel
+                shortLeg={
+                  shortExpiry
+                    ? {
+                        expiration: shortExpiry,
+                        dte:
+                          fullExpirations?.find((e) => e.expiration === shortExpiry)?.dte ?? 0,
+                        iv:
+                          fullExpirations?.find((e) => e.expiration === shortExpiry)?.atm_iv ??
+                          null,
+                      }
+                    : null
+                }
+                longLeg={
+                  longExpiry
+                    ? {
+                        expiration: longExpiry,
+                        dte:
+                          fullExpirations?.find((e) => e.expiration === longExpiry)?.dte ?? 0,
+                        iv:
+                          fullExpirations?.find((e) => e.expiration === longExpiry)?.atm_iv ??
+                          null,
+                      }
+                    : null
+                }
+                hv30={mispricing?.historical_vol ?? null}
+              />
+            </>
+          )}
+          {spreadMode === 'single' && (<>
           <div
             className="rv-sub"
             style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}
@@ -844,18 +1052,37 @@ function PricingPageInner() {
               premiumSource={premiumSource}
             />
           )}
+          </>)}
 
+          {/* Vol Surface — visible in both single-leg and calendar modes.
+              Calendar mode passes the short/long leg expiries as dashed
+              red/green highlight curves so the trader can see both legs
+              in context on the smile. */}
           <div className="rv-card" style={{ marginTop: 14 }}>
             <div className="rv-card-head">
               <h3>Vol surface · {ticker}</h3>
               <span className="rv-sub" style={{ marginBottom: 0, fontSize: 10 }}>
-                smile by expiration · selected highlighted
+                {spreadMode === 'calendar'
+                  ? 'smile · short (red) + long (green) highlighted'
+                  : 'smile by expiration · selected highlighted'}
               </span>
             </div>
             <VolSmile
               surface={surface}
               selectedStrike={strike}
-              selectedExpiration={expSel.rawDate || undefined}
+              selectedExpiration={
+                spreadMode === 'calendar'
+                  ? undefined
+                  : expSel.rawDate || undefined
+              }
+              highlights={
+                spreadMode === 'calendar' && shortExpiry && longExpiry
+                  ? [
+                      { expiration: shortExpiry, color: '#ef4444', label: 'SHORT' },
+                      { expiration: longExpiry, color: '#22c55e', label: 'LONG' },
+                    ]
+                  : undefined
+              }
             />
             <div
               style={{
@@ -873,7 +1100,11 @@ function PricingPageInner() {
               <MiniVolSurface
                 surface={surface}
                 selectedStrike={strike}
-                selectedExpiration={expSel.rawDate || undefined}
+                selectedExpiration={
+                  spreadMode === 'calendar'
+                    ? longExpiry || undefined
+                    : expSel.rawDate || undefined
+                }
               />
             </div>
           </div>
@@ -885,6 +1116,7 @@ function PricingPageInner() {
           (StrikeStrip onSelect) or clicks the CTA — keeps the mobile page
           short, surfaces the panel on intent. The panel remounts on every
           ticker change so its initial fields stay in sync. */}
+      {spreadMode === 'single' && (
       <div style={{ marginTop: 14 }}>
         {!orderPanelOpen ? (
           <button
@@ -944,6 +1176,7 @@ function PricingPageInner() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

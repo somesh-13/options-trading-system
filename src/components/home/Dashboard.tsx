@@ -13,6 +13,14 @@ import {
   getPortfolioGreeks,
   type PortfolioGreeksResult,
 } from '@/lib/robinhood-analytics-api';
+import {
+  getCachedGreeks,
+  getCachedHoldings,
+  getCachedSummary,
+  setCachedGreeks,
+  setCachedHoldings,
+  setCachedSummary,
+} from '@/lib/robinhoodCache';
 
 /**
  * Home dashboard.
@@ -60,6 +68,15 @@ export function Dashboard() {
 
   useEffect(() => {
     setToday(formatToday());
+    // Hydrate from the shared cache on mount so the KPI tiles show real
+    // numbers immediately if /robinhood was visited recently — the fresh
+    // loadKpis call below overwrites them when its requests return.
+    const cs = getCachedSummary();
+    const ch = getCachedHoldings();
+    const cg = getCachedGreeks();
+    if (cs) setSummary(cs);
+    if (ch) setHoldings(ch);
+    if (cg) setGreeks(cg);
   }, []);
 
   const loadKpis = useCallback(async () => {
@@ -69,9 +86,13 @@ export function Dashboard() {
       getRobinhoodHoldings(true, 'all', 'live').catch(() => null),
       getPortfolioGreeks('all').catch(() => null),
     ]);
-    setSummary(s);
-    setHoldings(h);
-    setGreeks(g);
+    if (s) { setSummary(s); setCachedSummary(s); }
+    if (h) { setHoldings(h); setCachedHoldings(h); }
+    if (g) { setGreeks(g); setCachedGreeks(g); }
+    // If every call failed, surface a single error so the user has a retry path.
+    if (!s && !h && !g) {
+      setError('All snapshot endpoints failed — check backend / tunnel');
+    }
   }, []);
 
   useEffect(() => {

@@ -3,10 +3,20 @@
 import { useRef, useState } from 'react';
 import type { VolSurfaceData } from '@/lib/pricing-api';
 
+type ExpirationHighlight = {
+  expiration: string;
+  color: string;
+  label: string;
+};
+
 type VolSmileProps = {
   surface: VolSurfaceData | null;
   selectedStrike?: number;
   selectedExpiration?: string;
+  /** Additional expirations to emphasize (e.g. calendar-spread legs).
+   *  Each is drawn as a thicker line in the supplied color with a small label
+   *  in the top-right legend area. */
+  highlights?: ExpirationHighlight[];
 };
 
 const W = 420;
@@ -37,7 +47,7 @@ function nearestIndex(arr: number[], target: number): number {
   return best;
 }
 
-export function VolSmile({ surface, selectedStrike, selectedExpiration }: VolSmileProps) {
+export function VolSmile({ surface, selectedStrike, selectedExpiration, highlights }: VolSmileProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   // hover.strikeIdx is the strike column closest to the mouse;
   // hover.px / hover.py are SVG-local coords used to position the tooltip.
@@ -201,13 +211,41 @@ export function VolSmile({ surface, selectedStrike, selectedExpiration }: VolSmi
       <g fill="none" strokeWidth={1.4}>
         {expirations.map((_, i) => {
           if (i === selExpIdx) return null;
+          // Skip — secondary highlights re-draw these expirations in their
+          // own color and a thicker stroke below.
+          const hl = highlights?.find((h) => h.expiration === expirations[i]);
+          if (hl) return null;
           const color = OTHER_COLORS[i % OTHER_COLORS.length];
           return <path key={`p-${i}`} d={buildPath(i)} stroke={color} />;
+        })}
+        {highlights?.map((hl, i) => {
+          const idx = expirations.indexOf(hl.expiration);
+          if (idx < 0) return null;
+          return (
+            <path
+              key={`hl-${i}`}
+              d={buildPath(idx)}
+              stroke={hl.color}
+              strokeWidth={2.4}
+              strokeDasharray="5 3"
+            />
+          );
         })}
         {selExpIdx >= 0 && (
           <path d={buildPath(selExpIdx)} stroke="var(--gold)" strokeWidth={2.2} />
         )}
       </g>
+
+      {highlights && highlights.length > 0 && (
+        <g fontFamily="'JetBrains Mono', monospace" fontSize={9}>
+          {highlights.map((hl, i) => (
+            <g key={`hll-${i}`} transform={`translate(${M.left + 8}, ${M.top + 4 + i * 12})`}>
+              <line x1={0} x2={14} y1={4} y2={4} stroke={hl.color} strokeWidth={2.4} strokeDasharray="5 3" />
+              <text x={18} y={7} fill={hl.color}>{hl.label}</text>
+            </g>
+          ))}
+        </g>
+      )}
 
       {selStrikeIdx >= 0 && (
         <line

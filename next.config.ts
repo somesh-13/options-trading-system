@@ -20,6 +20,7 @@ const BACKEND_PROXY_PREFIXES = [
   "analytics",
   "auth",
   "backtest",
+  "calendar",
   "flow",
   "ir",
   "macro-news",

@@ -12,6 +12,7 @@ const ITEMS: RailItem[] = [
   { icon: '⇉', label: 'Flow',       tooltip: 'Options flow leaderboard — premium $ + OI buildup', href: '/flow' },
   { icon: '≣', label: 'Chain',      tooltip: 'Option chain with inline ticket',       href: '/options-chain' },
   { icon: 'ƒ', label: 'Pricing',    tooltip: 'Black-Scholes calculator + Greeks',     href: '/pricing' },
+  { icon: '⊕', label: 'Calendar',   tooltip: 'Calendar spread analyzer · IV term + best-pair', href: '/calendar' },
   { sep: true },
   { icon: 'R', label: 'Robinhood',  tooltip: 'Live broker · NAV · holdings · activity · analytics', href: '/robinhood' },
   { icon: '◫', label: 'Positions',  tooltip: 'Per-ticker position detail + trade ticket',           href: '/positions' },

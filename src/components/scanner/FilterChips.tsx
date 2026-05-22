@@ -10,7 +10,8 @@ export type ScannerTab =
   | 'normal'
   | 'buy'
   | 'sell'
-  | 'inflection';
+  | 'inflection'
+  | 'calendar-opp';
 
 export interface TabSpec {
   id: ScannerTab;
@@ -67,6 +68,13 @@ export const SCANNER_TABS: TabSpec[] = [
     label: 'Inflection',
     description: 'Mid-cap $2B–$10B inflection candidates (Vishal methodology, static snapshot)',
     predicate: () => true,
+  },
+  {
+    id: 'calendar-opp',
+    label: 'Calendar Opp',
+    description: 'F/B IV ratio > 1.15 AND IV/HV > 1.10 — sell-the-front, buy-the-back candidates',
+    predicate: (o) =>
+      typeof o.fbRatio === 'number' && o.fbRatio > 1.15 && o.ratio > 1.10,
   },
 ];
 

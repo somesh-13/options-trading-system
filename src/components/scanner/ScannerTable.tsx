@@ -24,17 +24,20 @@ export type Opportunity = {
   ev: number;
   hitRate: number;
   seed: number;
+  /** Front-month ATM IV ÷ back-month ATM IV. Undefined when calendar signals
+   *  haven't been fetched yet (live path) or are unavailable for the ticker. */
+  fbRatio?: number;
 };
 
 export const SCANNER_ROWS: Opportunity[] = [
-  { ticker: 'MARA', spot: 19.85,  iv: 0.922, hv: 0.610, ratio: 1.51, signal: 'SELL',    regime: 'high-vol', ev: 94, hitRate: 0.66, seed: 3 },
-  { ticker: 'CIFR', spot: 15.50,  iv: 0.724, hv: 0.498, ratio: 1.45, signal: 'SELL',    regime: 'high-vol', ev: 82, hitRate: 0.61, seed: 2 },
-  { ticker: 'WULF', spot:  8.22,  iv: 0.681, hv: 0.512, ratio: 1.33, signal: 'SELL',    regime: 'high-vol', ev: 64, hitRate: 0.58, seed: 4 },
-  { ticker: 'PYPL', spot: 68.20,  iv: 0.281, hv: 0.352, ratio: 0.80, signal: 'BUY',     regime: 'normal',   ev: 41, hitRate: 0.55, seed: 5 },
-  { ticker: 'GRAB', spot:  4.85,  iv: 0.322, hv: 0.421, ratio: 0.76, signal: 'BUY',     regime: 'normal',   ev: 28, hitRate: 0.54, seed: 6 },
-  { ticker: 'RIOT', spot: 11.10,  iv: 0.711, hv: 0.918, ratio: 0.77, signal: 'BUY',     regime: 'high-vol', ev: 52, hitRate: 0.57, seed: 7 },
-  { ticker: 'HOOD', spot: 21.40,  iv: 0.412, hv: 0.381, ratio: 1.08, signal: 'NEUTRAL', regime: 'normal',   ev: 18, hitRate: 0.51, seed: 8 },
-  { ticker: 'COIN', spot: 182.40, iv: 0.505, hv: 0.488, ratio: 1.04, signal: 'NEUTRAL', regime: 'normal',   ev: 12, hitRate: 0.49, seed: 9 },
+  { ticker: 'MARA', spot: 19.85,  iv: 0.922, hv: 0.610, ratio: 1.51, signal: 'SELL',    regime: 'high-vol', ev: 94, hitRate: 0.66, seed: 3, fbRatio: 1.32 },
+  { ticker: 'CIFR', spot: 15.50,  iv: 0.724, hv: 0.498, ratio: 1.45, signal: 'SELL',    regime: 'high-vol', ev: 82, hitRate: 0.61, seed: 2, fbRatio: 1.18 },
+  { ticker: 'WULF', spot:  8.22,  iv: 0.681, hv: 0.512, ratio: 1.33, signal: 'SELL',    regime: 'high-vol', ev: 64, hitRate: 0.58, seed: 4, fbRatio: 1.25 },
+  { ticker: 'PYPL', spot: 68.20,  iv: 0.281, hv: 0.352, ratio: 0.80, signal: 'BUY',     regime: 'normal',   ev: 41, hitRate: 0.55, seed: 5, fbRatio: 0.92 },
+  { ticker: 'GRAB', spot:  4.85,  iv: 0.322, hv: 0.421, ratio: 0.76, signal: 'BUY',     regime: 'normal',   ev: 28, hitRate: 0.54, seed: 6, fbRatio: 0.88 },
+  { ticker: 'RIOT', spot: 11.10,  iv: 0.711, hv: 0.918, ratio: 0.77, signal: 'BUY',     regime: 'high-vol', ev: 52, hitRate: 0.57, seed: 7, fbRatio: 0.95 },
+  { ticker: 'HOOD', spot: 21.40,  iv: 0.412, hv: 0.381, ratio: 1.08, signal: 'NEUTRAL', regime: 'normal',   ev: 18, hitRate: 0.51, seed: 8, fbRatio: 1.07 },
+  { ticker: 'COIN', spot: 182.40, iv: 0.505, hv: 0.488, ratio: 1.04, signal: 'NEUTRAL', regime: 'normal',   ev: 12, hitRate: 0.49, seed: 9, fbRatio: 1.02 },
 ];
 
 function signalChipClass(s: Signal): string {
@@ -77,6 +80,8 @@ export function ScannerTable({ rows = SCANNER_ROWS, highlightTicker }: ScannerTa
             <th style={{ minWidth: 110 }}>EV / contract</th>
             <th className="r">Hit</th>
             <th className="r">Vol</th>
+            <th className="r" title="Front-month ATM IV ÷ Back-month ATM IV. >1.20 = strong calendar opportunity">F/B RATIO</th>
+            <th>CAL SIGNAL</th>
             <th></th>
           </tr>
         </thead>
@@ -137,6 +142,71 @@ export function ScannerTable({ rows = SCANNER_ROWS, highlightTicker }: ScannerTa
                 </td>
                 <td className="r">{(o.hitRate * 100).toFixed(0)}%</td>
                 <td className="r" style={{ color: 'var(--ink-mute)' }}>{volK}k</td>
+                <td
+                  className="r"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    color:
+                      typeof o.fbRatio !== 'number'
+                        ? 'var(--ink-mute)'
+                        : o.fbRatio > 1.20
+                          ? '#22c55e'
+                          : o.fbRatio >= 1.05
+                            ? '#fbbf24'
+                            : 'var(--ink-mute)',
+                  }}
+                >
+                  {typeof o.fbRatio === 'number' ? `${o.fbRatio.toFixed(2)}×` : '—'}
+                </td>
+                <td>
+                  {typeof o.fbRatio === 'number' ? (
+                    o.fbRatio > 1.20 ? (
+                      <span
+                        className="rv-chip"
+                        style={{
+                          color: '#22c55e',
+                          borderColor: 'rgba(34,197,94,.45)',
+                          background: 'rgba(34,197,94,.10)',
+                          fontFamily: "'JetBrains Mono', monospace",
+                          textTransform: 'uppercase',
+                          fontSize: 10,
+                        }}
+                      >
+                        STRONG
+                      </span>
+                    ) : o.fbRatio >= 1.05 ? (
+                      <span
+                        className="rv-chip"
+                        style={{
+                          color: '#fbbf24',
+                          borderColor: 'rgba(251,191,36,.45)',
+                          background: 'rgba(251,191,36,.10)',
+                          fontFamily: "'JetBrains Mono', monospace",
+                          textTransform: 'uppercase',
+                          fontSize: 10,
+                        }}
+                      >
+                        MODERATE
+                      </span>
+                    ) : (
+                      <span
+                        className="rv-chip"
+                        style={{
+                          color: '#9ca3af',
+                          borderColor: 'rgba(156,163,175,.35)',
+                          background: 'rgba(156,163,175,.08)',
+                          fontFamily: "'JetBrains Mono', monospace",
+                          textTransform: 'uppercase',
+                          fontSize: 10,
+                        }}
+                      >
+                        WEAK
+                      </span>
+                    )
+                  ) : (
+                    <span style={{ color: 'var(--ink-mute)', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>—</span>
+                  )}
+                </td>
                 <td style={{ display: 'flex', gap: 4 }}>
                   <Link
                     href={`/options-chain?ticker=${o.ticker}`}

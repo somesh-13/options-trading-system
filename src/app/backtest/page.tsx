@@ -13,6 +13,7 @@ import ParameterDrawer from '@/components/backtest/ParameterDrawer';
 import StrategyComparisonTable from '@/components/backtest/StrategyComparisonTable';
 import TickerBreakdown from '@/components/backtest/TickerBreakdown';
 import TradeHistoryTable from '@/components/backtest/TradeHistoryTable';
+import CalendarBacktestPanel from '@/components/backtest/CalendarBacktestPanel';
 import { adaptCompareRun, adaptSingleRun, normalizeBenchmark, strategyColor } from '@/components/backtest/adapters';
 import {
   BacktestMode,
@@ -231,7 +232,7 @@ export default function BacktestPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           <StrategyModeTabs mode={mode} onChange={setMode} />
-          {mode !== 'wheel' && (
+          {mode !== 'wheel' && mode !== 'calendar' && (
             <div className="ml-auto text-[11px] text-gray-500">
               Default landing emphasizes <span className="text-gray-300">outcomes first</span>.
               Adjust parameters below the chart.
@@ -239,7 +240,11 @@ export default function BacktestPage() {
           )}
         </div>
 
-        {mode === 'wheel' ? (
+        {mode === 'calendar' ? (
+          <section className="rounded-2xl border border-[#1f2027] bg-[#0f1014] p-4">
+            <CalendarBacktestPanel />
+          </section>
+        ) : mode === 'wheel' ? (
           // Wheel mode keeps the existing renderer — already a finished sub-feature.
           <section className="rounded-2xl border border-[#1f2027] bg-[#0f1014] p-1">
             <WheelResultsTable />

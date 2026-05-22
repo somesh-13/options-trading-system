@@ -9,12 +9,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-type Filter = 'all' | 'exec' | 'signal' | 'skip' | 'error';
+type Filter = 'all' | 'exec' | 'signal' | 'skip' | 'roll' | 'error';
 
 type EventRow = {
   time: string;
   label: string;
-  cls: 'exec' | 'signal' | 'skip' | 'scan' | 'err';
+  cls: 'exec' | 'signal' | 'skip' | 'scan' | 'roll' | 'err';
   sym: string;
   msg: string;
   trace?: string;
@@ -29,12 +29,13 @@ type RawLog = {
   trade_id: string | null;
 };
 
-const FILTERS: Filter[] = ['all', 'exec', 'signal', 'skip', 'error'];
+const FILTERS: Filter[] = ['all', 'exec', 'signal', 'skip', 'roll', 'error'];
 const POLL_MS = 5000;
 
 function eventTypeForFilter(f: Filter): string | null {
   if (f === 'all') return null;
   if (f === 'exec') return 'execute';
+  if (f === 'roll') return 'roll';
   return f;
 }
 
@@ -45,12 +46,14 @@ function clsFor(eventType: string): EventRow['cls'] {
     case 'scan': return 'scan';
     case 'error': return 'err';
     case 'signal': return 'signal';
+    case 'roll': return 'roll';
     default: return 'scan';
   }
 }
 
 function labelFor(eventType: string): string {
   if (eventType === 'execute') return 'EXEC';
+  if (eventType === 'roll') return 'ROLL';
   return eventType.toUpperCase();
 }
 
@@ -106,6 +109,20 @@ function summarize(row: RawLog): { msg: string; trace?: string } {
   }
 
   if (t === 'scan') return { msg: `scan ${row.ticker ?? ''}` };
+  if (t === 'roll') {
+    const oldExp = d.old_expiration ?? d.from_expiration ?? '?';
+    const newExp = d.new_expiration ?? d.to_expiration ?? '?';
+    const oldStrike = d.old_strike ?? d.from_strike;
+    const newStrike = d.new_strike ?? d.to_strike;
+    const credit = d.net_credit;
+    const reason = d.reason ?? 'DTE trigger';
+    const parts: string[] = [`short ${oldExp} → ${newExp}`];
+    if (oldStrike != null && newStrike != null && oldStrike !== newStrike) {
+      parts.push(`strike $${oldStrike} → $${newStrike}`);
+    }
+    if (credit != null) parts.push(`net ${Number(credit) >= 0 ? '+' : ''}$${Number(credit).toFixed(2)}`);
+    return { msg: `roll · ${reason}`, trace: parts.join(' · ') };
+  }
   if (t === 'start') return { msg: 'engine started' };
   if (t === 'stop') return { msg: 'engine stopped' };
   if (t === 'config_update') return { msg: 'config updated', trace: JSON.stringify(d) };

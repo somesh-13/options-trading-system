@@ -22,6 +22,15 @@ class EngineConfig:
     max_daily_trades: int = 10
     max_daily_loss: float = 1000.0
 
+    # Calendar-spread roll logic (consumed by the future RollEvaluator).
+    # Persisted via /api/engine/config so the UI's roll settings survive
+    # restarts even before the executor wires the eval pass.
+    roll_enabled: bool = False
+    roll_trigger_dte: int = 1                # roll when short leg DTE ≤ n
+    roll_requires_iv_hv: bool = True         # only roll if IV/HV still above sell threshold
+    roll_to: str = "nearest-weekly"          # nearest-weekly | +7d | +14d
+    roll_strike: str = "same"                # same | atm-at-roll
+
     # Market hours (ET) — 9:30 to 16:00
     market_open_hour: int = 9
     market_open_minute: int = 30

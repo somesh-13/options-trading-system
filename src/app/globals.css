@@ -433,6 +433,7 @@ th.rv-sortable:hover { color: var(--gold); }
 .rv-log .ev.exec   { color: var(--pink); }
 .rv-log .ev.skip   { color: var(--ink-mute); }
 .rv-log .ev.err    { color: var(--pink); }
+.rv-log .ev.roll   { color: #22D3EE; }
 .rv-log .sym { color: var(--ink); }
 .rv-log .msg { color: var(--ink-dim); }
 .rv-log .row .trace { font-size: 10px; color: var(--ink-mute); margin-top: 3px; padding-left: 0; font-style: italic; }

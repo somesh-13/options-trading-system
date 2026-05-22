@@ -3,6 +3,9 @@
  * Connects Next.js frontend to FastAPI backend (port 8000)
  */
 
+import type { CalendarSignalsBundle } from './calendar';
+export type { CalendarSignalsBundle } from './calendar';
+
 export const PRICING_API_URL = (() => {
   if (process.env.NEXT_PUBLIC_PRICING_API_URL) {
     return process.env.NEXT_PUBLIC_PRICING_API_URL;
@@ -558,6 +561,28 @@ export interface OptionChainResponse {
 export async function getOptionExpirations(ticker: string): Promise<OptionExpirationsResponse> {
   const response = await fetch(
     `${PRICING_API_URL}/api/market/${encodeURIComponent(ticker)}/option-expirations`,
+    { cache: 'no-store' },
+  );
+  if (!response.ok) {
+    let detail = `${response.status} ${response.statusText}`;
+    try {
+      const body = await response.json();
+      if (body?.detail) detail = body.detail;
+    } catch { /* not JSON */ }
+    throw new Error(detail);
+  }
+  return response.json();
+}
+
+// ---- Calendar spread signals --------------------------------------------
+// Server-side response shape lives in `backend/src/api/models.py`
+// (CalendarSignalsResponse). The bundle type is exported from `./calendar`
+// and re-exported at the top of this file for callers that import it from
+// `@/lib/pricing-api`.
+
+export async function getCalendarSignals(ticker: string): Promise<CalendarSignalsBundle> {
+  const response = await fetch(
+    `${PRICING_API_URL}/api/calendar/signals/${encodeURIComponent(ticker)}`,
     { cache: 'no-store' },
   );
   if (!response.ok) {

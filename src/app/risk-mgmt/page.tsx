@@ -12,6 +12,12 @@ import { TickerChatPanel } from '@/components/risk/TickerChatPanel';
 import TCAMonitor from '@/components/TCAMonitor';
 import StressTestPanel from '@/components/StressTestPanel';
 import { throttledAllSettled } from '@/lib/throttle';
+import {
+  getCachedHoldings,
+  getCachedSummary,
+  setCachedHoldings,
+  setCachedSummary,
+} from '@/lib/robinhoodCache';
 
 const REFRESH_MS = 60_000;
 
@@ -36,9 +42,27 @@ export default function RiskManagementPage() {
   const [varMap, setVarMap] = useState<Map<string, VaRResult | null>>(new Map());
   const [loadingTop, setLoadingTop] = useState(false);
   const [loadingVar, setLoadingVar] = useState(false);
+  // Per-call failure messages — shown inline so a single 404/timeout doesn't
+  // leave the user staring at silent dashes.
+  const [fetchErrors, setFetchErrors] = useState<{
+    holdings?: string;
+    summary?: string;
+    limits?: string;
+    drawdown?: string;
+  }>({});
   const [tcaTicker, setTcaTicker] = useState('CIFR');
   const [tcaTickerInput, setTcaTickerInput] = useState('CIFR');
   const cancelRef = useRef(false);
+
+  // Hydrate from the shared cache on mount so NAV / per-ticker rows render
+  // immediately if /robinhood was visited recently. Background load below
+  // overwrites with fresh values.
+  useEffect(() => {
+    const ch = getCachedHoldings();
+    const cs = getCachedSummary();
+    if (ch) setEquities(ch.equities);
+    if (cs) setSummary(cs);
+  }, []);
 
   const load = useCallback(async () => {
     cancelRef.current = false;
@@ -63,12 +87,36 @@ export default function RiskManagementPage() {
 
       if (cancelRef.current) return;
 
-      const eqs =
-        holdingsData.status === 'fulfilled' ? holdingsData.value.equities : [];
-      setEquities(eqs);
-      setSummary(summaryData.status === 'fulfilled' ? summaryData.value : null);
-      setLimits(limitsData.status === 'fulfilled' ? limitsData.value : null);
-      setDrawdown(drawdownData.status === 'fulfilled' ? drawdownData.value : null);
+      // Capture per-call errors for inline display + keep the previous
+      // (cached) value when a call fails so the page doesn't blank out.
+      const errs: typeof fetchErrors = {};
+      let eqs: RobinhoodHolding[] = equities;
+      if (holdingsData.status === 'fulfilled') {
+        eqs = holdingsData.value.equities;
+        setEquities(eqs);
+        setCachedHoldings(holdingsData.value);
+      } else {
+        errs.holdings = String((holdingsData.reason as { message?: string })?.message ?? holdingsData.reason ?? 'failed');
+      }
+      if (summaryData.status === 'fulfilled') {
+        setSummary(summaryData.value);
+        setCachedSummary(summaryData.value);
+      } else {
+        errs.summary = String((summaryData.reason as { message?: string })?.message ?? summaryData.reason ?? 'failed');
+      }
+      if (limitsData.status === 'fulfilled') {
+        setLimits(limitsData.value);
+      } else {
+        setLimits(null);
+        errs.limits = String((limitsData.reason as { message?: string })?.message ?? limitsData.reason ?? 'failed');
+      }
+      if (drawdownData.status === 'fulfilled') {
+        setDrawdown(drawdownData.value);
+      } else {
+        setDrawdown(null);
+        errs.drawdown = String((drawdownData.reason as { message?: string })?.message ?? drawdownData.reason ?? 'failed');
+      }
+      setFetchErrors(errs);
       setLoadingTop(false);
 
       // Fan-out VaR per unique symbol
@@ -139,6 +187,27 @@ export default function RiskManagementPage() {
         <div className="rv-sub" style={{ marginBottom: 16 }}>
           Portfolio limits + drawdown · per-ticker VaR/CVaR 95% (1-day) · TCA + stress · auto-refresh 60s
         </div>
+
+        {Object.keys(fetchErrors).length > 0 && (
+          <div
+            style={{
+              border: '1px solid rgba(255,0,110,.35)',
+              background: 'rgba(255,0,110,.08)',
+              color: 'var(--pink)',
+              padding: '8px 12px',
+              borderRadius: 6,
+              fontSize: 11,
+              fontFamily: "'JetBrains Mono', monospace",
+              marginBottom: 12,
+            }}
+          >
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Some snapshot calls failed:</div>
+            {fetchErrors.holdings && <div>· holdings — {fetchErrors.holdings}</div>}
+            {fetchErrors.summary && <div>· summary — {fetchErrors.summary}</div>}
+            {fetchErrors.limits && <div>· limits-check — {fetchErrors.limits}</div>}
+            {fetchErrors.drawdown && <div>· drawdown — {fetchErrors.drawdown}</div>}
+          </div>
+        )}
 
         {/* Top: portfolio summary */}
         <PortfolioRiskSummary

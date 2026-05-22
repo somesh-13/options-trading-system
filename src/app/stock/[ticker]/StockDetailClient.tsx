@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import StockPriceChart from '@/components/charts/StockPriceChart';
 import MispricingDetector from '@/components/MispricingDetector';
+import CalendarSignals from '@/components/calendar/CalendarSignals';
 import DCFValuation from '@/components/DCFValuation';
 import FinancialsTabs from '@/components/financials/FinancialsTabs';
 import { PanelHost } from '@/components/ui/PanelHost';
@@ -445,6 +446,13 @@ export default function StockDetailClient({ ticker }: StockDetailClientProps) {
             <div style={{ marginTop: 14 }}>
               <PanelErrorBoundary label="Mispricing">
                 <MispricingDetector ticker={stockData.ticker} />
+              </PanelErrorBoundary>
+            </div>
+
+            {/* Calendar signals */}
+            <div style={{ marginTop: 14 }}>
+              <PanelErrorBoundary label="Calendar Signals">
+                <CalendarSignals ticker={stockData.ticker} />
               </PanelErrorBoundary>
             </div>
           </div>

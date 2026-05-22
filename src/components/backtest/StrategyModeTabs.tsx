@@ -7,10 +7,11 @@ interface Props {
   onChange: (m: BacktestMode) => void;
 }
 
-const TABS: Array<{ id: BacktestMode; label: string; hint: string }> = [
+const TABS: Array<{ id: BacktestMode; label: string; hint: string; icon?: string }> = [
   { id: 'comparison', label: 'Multi-Strategy', hint: 'Rank multiple strategies on the same universe' },
   { id: 'single', label: 'Single Strategy', hint: 'Deep-dive on one ticker / one strategy' },
   { id: 'wheel', label: 'Wheel (CSP + CC)', hint: 'Premium-selling backtest, held to expiry' },
+  { id: 'calendar', label: 'Calendar Spread', hint: 'Sell front-month, buy back-month at same strike; roll & re-enter', icon: '📅' },
 ];
 
 export default function StrategyModeTabs({ mode, onChange }: Props) {
@@ -35,6 +36,7 @@ export default function StrategyModeTabs({ mode, onChange }: Props) {
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}
           >
+            {t.icon && <span style={{ marginRight: 6 }}>{t.icon}</span>}
             {t.label}
           </button>
         );

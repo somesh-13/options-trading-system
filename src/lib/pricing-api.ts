@@ -1219,6 +1219,7 @@ export type StatementYearsSource =
   | '6-K'
   | 'yfinance'
   | 'sec-edgar'
+  | 'sec-8k-prelim'
   | 'yfinance-fallback';
 
 export interface FinancialStatementHistory {
@@ -1240,6 +1241,12 @@ export interface FinancialStatementHistory {
   /** Raw ISO end-dates, parallel to `years[]`. Backend-only metadata; the UI
    *  uses the human-formatted `years[]` strings. */
   year_ends?: string[];
+  /** Fiscal-quarter labels parallel to `years[]`, e.g. `"Q2 FY25"`. Only populated
+   *  for quarterly responses. Chart x-axis uses these; table column headers keep
+   *  the month-based `years[]` labels for cross-referencing the filing date. */
+  years_fiscal_quarter?: (string | null)[] | null;
+  /** Month (1–12) of the filer's fiscal year-end. Quarterly only. */
+  fiscal_year_end_month?: number | null;
   rows: StatementRow[];
   asOf?: string | null;
   /** Where the response as a whole came from. */

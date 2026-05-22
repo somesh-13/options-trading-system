@@ -109,6 +109,15 @@ function PricingPageInner() {
   const [pricing, setPricing] = useState<PricingResponse | null>(null);
   const [solvedIV, setSolvedIV] = useState<number | null>(null);
   const [surface, setSurface] = useState<VolSurfaceData | null>(null);
+  // Order panel is hidden by default; opens when the user actively picks a
+  // strike from the StrikeStrip (or clicks the "Place order" CTA). Keeps the
+  // mobile page short — the panel is heavy enough to push every analysis
+  // section off-screen otherwise.
+  const [orderPanelOpen, setOrderPanelOpen] = useState(false);
+  // Reset whenever the ticker changes — old strike no longer relevant.
+  useEffect(() => {
+    setOrderPanelOpen(false);
+  }, [ticker]);
   // Full expiration list (incl. LEAPS out to 2028+). The vol-surface payload
   // is intentionally short-dated for smile rendering, so the strip is built
   // from this richer source instead.
@@ -447,7 +456,10 @@ function PricingPageInner() {
         selected={strike}
         spot={spot ?? strike}
         optType={optType}
-        onSelect={setStrike}
+        onSelect={(k) => {
+          setStrike(k);
+          setOrderPanelOpen(true);
+        }}
       />
 
       <div className="rv-pricing-grid">
@@ -869,18 +881,68 @@ function PricingPageInner() {
       </div>
 
       {/* Place an order from the same context (ticker / strike / expiry / type)
-          you've been pricing. The panel mounts fresh on every ticker change so
-          its initial fields stay in sync with the deep-link or load. */}
+          you've been pricing. Hidden until the user actively picks a strike
+          (StrikeStrip onSelect) or clicks the CTA — keeps the mobile page
+          short, surfaces the panel on intent. The panel remounts on every
+          ticker change so its initial fields stay in sync. */}
       <div style={{ marginTop: 14 }}>
-        <OptionsTradePanel
-          key={ticker}
-          underlying={ticker}
-          initialStrike={strike}
-          initialOptionType={optType}
-          initialSide={side === 'short' ? 'sell' : 'buy'}
-          initialExpiration={expSel.rawDate || undefined}
-          initialLimitPrice={tradePremium > 0 ? tradePremium : undefined}
-        />
+        {!orderPanelOpen ? (
+          <button
+            type="button"
+            onClick={() => setOrderPanelOpen(true)}
+            className="rv-btn"
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: "'JetBrains Mono', monospace",
+              cursor: 'pointer',
+              border: '1px solid var(--line)',
+              borderRadius: 6,
+              background: '#0d0e11',
+              color: 'var(--ink)',
+              letterSpacing: '.04em',
+            }}
+            title="Open the Robinhood order ticket for the current ticker/strike/expiry"
+          >
+            Place order · {ticker} {optType.toUpperCase()} ${strike.toFixed(2)} ·{' '}
+            {expSel.date || expSel.dte || '—'}
+          </button>
+        ) : (
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setOrderPanelOpen(false)}
+              aria-label="Close order panel"
+              style={{
+                position: 'absolute',
+                top: 6,
+                right: 6,
+                zIndex: 4,
+                background: 'transparent',
+                border: '1px solid var(--line)',
+                borderRadius: 4,
+                color: 'var(--ink-mute)',
+                cursor: 'pointer',
+                fontSize: 14,
+                padding: '4px 10px',
+                lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+            <OptionsTradePanel
+              key={ticker}
+              underlying={ticker}
+              initialStrike={strike}
+              initialOptionType={optType}
+              initialSide={side === 'short' ? 'sell' : 'buy'}
+              initialExpiration={expSel.rawDate || undefined}
+              initialLimitPrice={tradePremium > 0 ? tradePremium : undefined}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

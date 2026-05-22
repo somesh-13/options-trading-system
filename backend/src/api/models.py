@@ -514,6 +514,24 @@ class RobinhoodSyncStatus(BaseModel):
     configured: bool = False  # are RH credentials present in the env
 
 
+class LoginRequest(BaseModel):
+    """Body for POST /api/auth/login."""
+    password: str
+
+
+class AuthStatus(BaseModel):
+    """Response for GET /api/auth/me + POST /api/auth/login.
+
+    `configured=false` means the server has no APP_PASSWORD_HASH set —
+    every protected endpoint will fail closed with 503 in that state.
+    `expires_at` is the unix-seconds expiry of the current cookie when
+    authenticated, omitted otherwise.
+    """
+    configured: bool
+    authenticated: bool
+    expires_at: Optional[int] = None
+
+
 class RobinhoodSessionStatus(BaseModel):
     """Response from GET /api/robinhood/session.
 

@@ -5,7 +5,12 @@
 
 import { PRICING_API_URL } from './pricing-api';
 
-export type AlertType = 'high_iv' | 'cc_opportunity' | 'csp_opportunity' | string;
+export type AlertType =
+  | 'high_iv'
+  | 'cc_opportunity'
+  | 'csp_opportunity'
+  | 'vol_term_spike'
+  | string;
 export type AlertSeverity = 'info' | 'warn' | 'critical';
 
 export interface NotificationRow {

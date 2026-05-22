@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChainTable, type ChainSelectPayload } from '@/components/chain/ChainTable';
 import { ExpirationStrip, type Expiration } from '@/components/chain/ExpirationStrip';
@@ -180,7 +180,7 @@ function OptionsChainInner() {
           </span>
         )}
         <span className="rv-sub" style={{ margin: 0 }}>
-          live yfinance chain · click Bid (sell) / Ask (buy) to populate the order ticket
+          live yfinance chain · tap a contract to open the order ticket pre-filled with strike + last traded price
         </span>
       </div>
 
@@ -274,47 +274,93 @@ function OptionsChainInner() {
         />
       )}
 
-      <div className="rv-chain-wrap">
-        <div className="rv-card" style={{ padding: 0 }}>
-          {chainLoading && (
-            <div className="rv-sub" style={{ padding: 16, fontSize: 12 }}>loading chain…</div>
-          )}
-          {chainErr && (
-            <div
-              role="alert"
-              style={{
-                padding: 16,
-                fontSize: 12,
-                color: 'var(--pink)',
-                fontFamily: "'JetBrains Mono', monospace",
-              }}
-            >
-              {chainErr}
-            </div>
-          )}
-          {chain && !chainLoading && (
-            <ChainTable
-              expiration={chain.expiration}
-              spot={chain.spot}
-              calls={chain.calls}
-              puts={chain.puts}
-              onSelect={handleChainSelect}
-            />
-          )}
-        </div>
-        <div>
+      <div className="rv-card" style={{ padding: 0 }}>
+        {chainLoading && (
+          <div className="rv-sub" style={{ padding: 16, fontSize: 12 }}>loading chain…</div>
+        )}
+        {chainErr && (
+          <div
+            role="alert"
+            style={{
+              padding: 16,
+              fontSize: 12,
+              color: 'var(--pink)',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {chainErr}
+          </div>
+        )}
+        {chain && !chainLoading && (
+          <ChainTable
+            expiration={chain.expiration}
+            spot={chain.spot}
+            calls={chain.calls}
+            puts={chain.puts}
+            onSelect={handleChainSelect}
+          />
+        )}
+      </div>
+
+      {/* Order ticket opens as an overlay (centered modal on desktop, bottom
+          sheet on mobile) the moment the user highlights a contract — taps
+          Bid / Ask / strike in ChainTable. Dismiss via the × button, the
+          backdrop, or the ESC key. */}
+      {tradeSel && (
+        <TradeOverlay onClose={() => setTradeSel(null)}>
           <OptionsTradePanel
             key={tradeKey}
             underlying={ticker}
             initialExpiration={selectedExp ?? ''}
-            initialStrike={tradeSel?.strike}
-            initialOptionType={tradeSel?.optionType ?? 'call'}
-            initialSide={tradeSel?.side}
-            initialLimitPrice={tradeSel?.price}
+            initialStrike={tradeSel.strike}
+            initialOptionType={tradeSel.optionType ?? 'call'}
+            initialSide={tradeSel.side}
+            initialLimitPrice={tradeSel.price}
           />
-        </div>
-      </div>
+        </TradeOverlay>
+      )}
     </>
+  );
+}
+
+function TradeOverlay({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  // ESC dismiss + body-scroll lock while the overlay is open.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="rv-trade-overlay-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Place order"
+      onClick={onClose}
+    >
+      <div
+        className="rv-trade-overlay-panel"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close order panel"
+          className="rv-trade-overlay-close"
+        >
+          ×
+        </button>
+        {children}
+      </div>
+    </div>
   );
 }
 

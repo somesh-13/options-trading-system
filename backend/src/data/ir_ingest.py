@@ -81,7 +81,7 @@ def _normalize_filings(ticker: str, filings: List[dict]) -> List[dict]:
             "publisher": "SEC EDGAR",
             "link": link,
             "published_at": (f.get("date") or None) or None,
-            "body_excerpt": None,
+            "body_excerpt": f.get("body_excerpt"),
             "raw_json": json.dumps(f, default=str),
         })
     return rows

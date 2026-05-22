@@ -81,11 +81,16 @@ _TABULAR_VALUE = re.compile(
     # Bare 1-2 digit ints are rejected so footnote markers like ``(1)`` and
     # cosmetic small numbers don't pollute the column list. 4-digit years
     # (1900–2099) are filtered post-match.
+    # Paren variants allow a small amount of inner whitespace because the HTML
+    # cleaner sometimes leaves a space before the closing paren (CLSK: the cell
+    # ``(316,554 )`` survives _clean_html as ``(316,554 )``). Without the
+    # tolerance, the bare-digit alternative matches ``316,554`` and the sign
+    # gets dropped.
     r"(?:"
     r"\$\s*\d{1,3}(?:,\d{3})*(?:\.\d+)?"          # $-prefixed
+    r"|\(\s{0,3}\d{3,}(?:,\d{3})*(?:\.\d+)?\s{0,3}\)"   # parens-loss 3+ digits
+    r"|\(\s{0,3}\d{1,3}(?:,\d{3})+(?:\.\d+)?\s{0,3}\)"  # parens-loss comma-grouped
     r"|\d{1,3}(?:,\d{3})+(?:\.\d+)?"               # comma-grouped
-    r"|\(\d{3,}(?:,\d{3})*(?:\.\d+)?\)"            # parens-loss 3+ digits
-    r"|\(\d{1,3}(?:,\d{3})+(?:\.\d+)?\)"           # parens-loss comma-grouped
     r"|\d+\.\d+"                                    # decimal (EPS, etc.)
     r"|\d{3,}"                                      # bare 3+ digit int
     r")"
@@ -108,8 +113,8 @@ _ROW_BREAK = re.compile(
 # $3.17 billion". Tabular rows have only a category name or whitespace
 # between label and value.
 _PROSE_INTRO = re.compile(
-    r"\b(?:of|to|was|by|at|grew|fell|reached|increased|decreased|rose|dropped|"
-    r"climbed|surged|jumped|amounted)\b",
+    r"\b(?:of|to|was|were|is|are|by|at|grew|fell|reached|increased|decreased|"
+    r"rose|dropped|climbed|surged|jumped|amounted)\b",
     re.IGNORECASE,
 )
 
@@ -211,7 +216,10 @@ def _first_per_share(text: str, label_re: str, prefer_index: int = 0) -> Optiona
     if not m:
         return None
     tail = text[m.end(): m.end() + 120]
-    vals = re.findall(r"\$?\s*(\(?\d+\.\d{2}\)?)", tail)
+    # Parens variant matched first so loss-position rows like ``$ (1.35 ) $ 0.85``
+    # (CLSK; the HTML cleaner leaves a space before the closing paren) yield
+    # ``(1.35 )`` as the first captured value, not the prior-year ``0.85``.
+    vals = re.findall(r"\$?\s*(\(\s{0,3}\d+\.\d{2}\s{0,3}\)|\d+\.\d{2})", tail)
     if not vals:
         return None
     parsed = [_parse_money(v) for v in vals]
@@ -356,6 +364,42 @@ def _quarter_label(period_end: datetime) -> str:
     return f"Q{q} {period_end.year}"
 
 
+# Issuers with non-calendar fiscal years (CLSK fiscal year ends Sep 30; their
+# Dec-31 quarter is fiscal Q1, not calendar Q4) usually announce the right
+# label in the press-release title — "First Quarter Fiscal 2026 Results".
+# When that's present, trust it; otherwise fall back to calendar.
+_QNUM_FROM_WORD = {
+    "first": 1, "second": 2, "third": 3, "fourth": 4,
+    "1st": 1, "2nd": 2, "3rd": 3, "4th": 4,
+    "q1": 1, "q2": 2, "q3": 3, "q4": 4,
+}
+_FISCAL_Q_TITLE = re.compile(
+    r"(?i)\b(First|Second|Third|Fourth|1st|2nd|3rd|4th|Q1|Q2|Q3|Q4)\s+"
+    r"Quarter\s+(?:of\s+)?Fiscal\s+(?:Year\s+)?(\d{4})\b"
+)
+_FISCAL_Q_ALT = re.compile(
+    r"(?i)\bFiscal\s+(?:Year\s+)?(\d{4})\s+"
+    r"(First|Second|Third|Fourth|Q1|Q2|Q3|Q4)\s+Quarter\b"
+)
+
+
+def _detect_fiscal_quarter_label(text: str) -> Optional[str]:
+    """Returns 'Q1 FY2026' if the press release labels itself with a fiscal
+    quarter. None when no fiscal-year wording is present — caller falls back
+    to a calendar-quarter label."""
+    m = _FISCAL_Q_TITLE.search(text)
+    if m:
+        q = _QNUM_FROM_WORD.get(m.group(1).lower())
+        if q:
+            return f"Q{q} FY{m.group(2)}"
+    m = _FISCAL_Q_ALT.search(text)
+    if m:
+        q = _QNUM_FROM_WORD.get(m.group(2).lower())
+        if q:
+            return f"Q{q} FY{m.group(1)}"
+    return None
+
+
 def parse_earnings_release(text: str) -> Optional[Dict]:
     """Extract the structured headline numbers from a cleaned press release.
 
@@ -439,19 +483,28 @@ def parse_earnings_release(text: str) -> Optional[Dict]:
         r"Total revenues?",
         r"Net revenues?",
         r"Total net revenues",
+        # Bitcoin miners (CLSK, CIFR, RIOT, MARA, …) report top-line under
+        # ``Bitcoin mining revenue, net`` rather than a generic ``Revenues``
+        # row. Match the table label directly so prose mentions don't win.
+        r"Bitcoin mining revenues?(?:,?\s*net)?",
+        r"Mining revenues?(?:,?\s*net)?",
         r"Revenues?",
     )
     operating_income = _money(
         r"Operating income",
         r"Income from operations",
+        r"\(Loss\)\s*income from operations",  # CLSK loss-position label
+        r"Loss from operations",
         r"Operating profit",
     )
     # "Net income (loss)" is the standard GAAP-table label; loss-position
     # quarters use "Net loss" (SHOP Q1'26 was a $581M net loss). Prefer GAAP
     # variants over the plain "Net income" fallback, which can collide with
-    # non-GAAP reconciliation rows.
+    # non-GAAP reconciliation rows. CLSK reverses the parens to
+    # ``Net (loss) income``.
     net_income = _money(
         r"Net income\s*\(loss\)",
+        r"Net\s*\(loss\)\s*income",
         r"Net loss",
         r"Net earnings",
         r"Net income",
@@ -476,14 +529,22 @@ def parse_earnings_release(text: str) -> Optional[Dict]:
             r"Basic",
         )
     else:
+        # CLSK-style row labels use "per common share - diluted/basic" or
+        # "per share - diluted/basic"; bare "Diluted" / "Basic" is the
+        # last-resort fallback and matches narrative prose too eagerly, so
+        # the explicit "per (common )?share" patterns must come first.
         eps_diluted = _eps(
             r"Earnings per diluted share",
             r"Diluted earnings per share",
+            r"per common share\s*-?\s*diluted",
+            r"per share\s*-?\s*diluted",
             r"Diluted",
         )
         eps_basic = _eps(
             r"Earnings per basic share",
             r"Basic earnings per share",
+            r"per common share\s*-?\s*basic",
+            r"per share\s*-?\s*basic",
             r"Basic",
         )
 
@@ -520,7 +581,7 @@ def parse_earnings_release(text: str) -> Optional[Dict]:
 
     return {
         "period_end": period_end.strftime("%Y-%m-%d"),
-        "fiscal_period": _quarter_label(period_end),
+        "fiscal_period": _detect_fiscal_quarter_label(text) or _quarter_label(period_end),
         "revenue_M": revenue,
         "operating_income_M": operating_income,
         "net_income_M": net_income,

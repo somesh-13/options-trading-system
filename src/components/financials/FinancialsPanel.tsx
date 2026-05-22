@@ -22,6 +22,12 @@ import {
   type FinancialStatementHistory,
   type StatementRow,
 } from '@/lib/pricing-api';
+import {
+  FCF_PER_SHARE_KEY,
+  buildFcfPerShareRow,
+  injectFcfPerShareRow,
+  type FcfPerShareTooltipPayload,
+} from '@/lib/financialDerivedRows';
 import { ValuationTiles } from './ValuationTiles';
 
 ChartJS.register(
@@ -87,6 +93,15 @@ const MAX_DISPLAY_COLUMNS_BY_PERIOD: Record<Period, number> = {
 };
 
 const COLOR_POOL = ['#9FB2C5', '#FF974D', '#B07EF0', '#52B390', '#4c9aff', '#FFD700', '#FF006E'];
+
+const REVENUE_YOY_KEY = 'revenue_yoy_pct';
+const REVENUE_QOQ_KEY = 'revenue_qoq_pct';
+const STOCK_PRICE_KEY = 'stock_price';
+
+interface PricePoint {
+  date: string;
+  close: number;
+}
 
 function colorForKey(key: string, charted: string[]): string {
   const idx = charted.indexOf(key);
@@ -160,6 +175,19 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
   const [refreshKey, setRefreshKey] = useState(0);
   const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
   const [, setNowTick] = useState(0);
+  // Sibling income-statement payload, fetched only when the Cash Flow tab is
+  // active. Sourced for `weighted_avg_shares_diluted` so we can derive the
+  // client-side FCF/Share row. Backend has a 24h SEC cache so this is cheap.
+  const [incomeForDerivation, setIncomeForDerivation] =
+    useState<FinancialStatementHistory | null>(null);
+  // Price history (close + date) for the Stock Price comparison row in the
+  // income-statement table. 5y window covers the typical 5y annual table /
+  // 20q quarterly table; older columns show '—'.
+  const [priceHistory, setPriceHistory] = useState<PricePoint[] | null>(null);
+  // Tooltip breakdown payload (CFO / CapEx / FCF / shares) keyed by column
+  // index — must stay in lockstep with displayData's reversal so the chart
+  // tooltip shows the correct period's numbers.
+  const fcfTooltipsRef = useRef<FcfPerShareTooltipPayload[] | null>(null);
   // Debounce guard: a forced ratios refresh fires 4 SEC calls; SEC limits to
   // 10 req/s. 5s debounce keeps us well under and avoids accidental hammering.
   const lastForcedRefreshRef = useRef(0);
@@ -208,6 +236,59 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
     };
   }, [ticker, period, statement, refreshKey]);
 
+  // Sibling fetch: pull income statement when the Cash Flow tab is active so
+  // we can derive FCF/Share = (CFO − CapEx) ÷ diluted shares. Does NOT block
+  // the cash-flow render — if this errors or arrives late, the derived row
+  // shows '—' cells until it resolves. `refreshKey` is intentionally NOT in
+  // the deps: Scan-Latest refreshes cash flow only; SEC shares data is
+  // 24h-stable so the staleness window here is negligible.
+  useEffect(() => {
+    if (statement !== 'cash-flow') {
+      setIncomeForDerivation(null);
+      fcfTooltipsRef.current = null;
+      return;
+    }
+    let cancelled = false;
+    getIncomeStatementSec(ticker, period)
+      .then((d) => {
+        if (cancelled) return;
+        if (!d.error) setIncomeForDerivation(d);
+      })
+      .catch(() => {
+        /* swallow — derived row degrades to '—' */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ticker, period, statement]);
+
+  // Fetch price history for the Stock Price table row (income statement only).
+  // Resets when the ticker changes; period switches just re-slice client-side.
+  useEffect(() => {
+    if (statement !== 'income') {
+      setPriceHistory(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/market/${ticker}/price-history?period=5Y`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { data?: PricePoint[] } | null) => {
+        if (cancelled || !body?.data) return;
+        // Trust the backend ordering but normalize ascending by date so our
+        // year-end lookup can binary-search.
+        const points = body.data
+          .filter((p) => p && typeof p.date === 'string' && typeof p.close === 'number')
+          .sort((a, b) => a.date.localeCompare(b.date));
+        setPriceHistory(points);
+      })
+      .catch(() => {
+        /* row shows '—'; not worth surfacing */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ticker, statement]);
+
   // Re-render the "Updated Xs ago" label every 30s so it stays accurate.
   useEffect(() => {
     if (lastFetchedAt == null) return;
@@ -236,49 +317,181 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
       years: data.years.slice(0, n),
       years_source: data.years_source ? data.years_source.slice(0, n) : undefined,
       year_ends: data.year_ends ? data.year_ends.slice(0, n) : undefined,
+      years_fiscal_quarter: data.years_fiscal_quarter
+        ? data.years_fiscal_quarter.slice(0, n)
+        : data.years_fiscal_quarter,
       rows: data.rows.map((r) => ({ ...r, values: r.values.slice(0, n) })),
     };
   }, [data, period]);
 
+  // Cash Flow only: layer the client-derived FCF/Share row on top of the
+  // capped backend response. Stashes the tooltip payload into a ref so the
+  // chart tooltip callback can render the full breakdown without re-deriving.
+  // The row's values array is most-recent-first (matches cappedData.rows
+  // ordering); displayData's reversal step below also reverses the ref so
+  // tooltip[i] aligns with the chart's i-th column.
+  const withDerivedRows = useMemo<FinancialStatementHistory | null>(() => {
+    if (!cappedData) return null;
+    if (statement !== 'cash-flow') {
+      fcfTooltipsRef.current = null;
+      return cappedData;
+    }
+    const built = buildFcfPerShareRow(cappedData, incomeForDerivation);
+    if (!built) {
+      fcfTooltipsRef.current = null;
+      return cappedData;
+    }
+    fcfTooltipsRef.current = built.tooltips;
+    return { ...cappedData, rows: injectFcfPerShareRow(cappedData.rows, built.row) };
+  }, [cappedData, incomeForDerivation, statement]);
+
   const rowsByKey = useMemo(() => {
-    if (!cappedData) return new Map<string, StatementRow>();
-    return new Map(cappedData.rows.map((r) => [r.key, r]));
-  }, [cappedData]);
+    if (!withDerivedRows) return new Map<string, StatementRow>();
+    return new Map(withDerivedRows.rows.map((r) => [r.key, r]));
+  }, [withDerivedRows]);
 
   // Display view for the chart and the table:
   //   1. Drop columns where the statement's anchor row is null (e.g. BTBT's
   //      placeholder "Sep '24" with all cells null) — rendering them is just
-  //      an empty column.
+  //      an empty column. Exception: keep 8-K prelim columns even when the
+  //      anchor is null, because the prelim header itself is the signal that
+  //      the 10-Q hasn't landed yet (it's worth showing as "—").
   //   2. Reverse to oldest→newest so the table reads left→right in the same
   //      direction as the chart x-axis.
   const displayData = useMemo(() => {
-    if (!cappedData) return null;
+    if (!withDerivedRows) return null;
     const anchorKey = COLUMN_ANCHOR_BY_STATEMENT[statement];
-    const anchorRow = cappedData.rows.find((r) => r.key === anchorKey);
+    const anchorRow = withDerivedRows.rows.find((r) => r.key === anchorKey);
+    const sources = withDerivedRows.years_source;
     const keepIdx = anchorRow
-      ? anchorRow.values.map((v, i) => (v != null ? i : -1)).filter((i) => i >= 0)
-      : cappedData.years.map((_, i) => i);
+      ? anchorRow.values
+          .map((v, i) =>
+            v != null || sources?.[i] === 'sec-8k-prelim' ? i : -1,
+          )
+          .filter((i) => i >= 0)
+      : withDerivedRows.years.map((_, i) => i);
     const orderIdx = [...keepIdx].reverse();
-    const years = orderIdx.map((i) => cappedData.years[i]);
-    const yearsSource = cappedData.years_source
-      ? orderIdx.map((i) => cappedData.years_source![i])
+    const years = orderIdx.map((i) => withDerivedRows.years[i]);
+    const yearsSource = withDerivedRows.years_source
+      ? orderIdx.map((i) => withDerivedRows.years_source![i])
       : undefined;
-    const rows = cappedData.rows.map((r) => ({
+    const yearsFQ = withDerivedRows.years_fiscal_quarter
+      ? orderIdx.map((i) => withDerivedRows.years_fiscal_quarter![i] ?? null)
+      : withDerivedRows.years_fiscal_quarter;
+    const rows = withDerivedRows.rows.map((r) => ({
       ...r,
       values: orderIdx.map((i) => r.values[i] ?? null),
     }));
-    return { ...cappedData, years, years_source: yearsSource, rows };
-  }, [cappedData, statement]);
+    // Reorder the FCF tooltip payload using the same orderIdx so that
+    // tooltip[i] matches the chart's i-th (oldest-first) column. Without
+    // this, hovering the most-recent column would surface the oldest
+    // period's CFO/CapEx/shares numbers.
+    if (fcfTooltipsRef.current) {
+      const src = fcfTooltipsRef.current;
+      fcfTooltipsRef.current = orderIdx.map((i) => src[i]);
+    }
+    // Synthetic growth rows (income statement only). Stored as decimals so the
+    // existing `pct` formatting in the table and the chart's *100 logic both
+    // work without special-casing.
+    //   Revenue YoY %: vs prior year (annual) or same quarter prior year (Q)
+    //   Revenue QoQ %: vs prior quarter — quarterly only (annual already is YoY)
+    let rowsWithGrowth = rows;
+    if (statement === 'income') {
+      const rev = rows.find((r) => r.key === 'revenue');
+      if (rev) {
+        const computeGrowth = (lookback: number) =>
+          rev.values.map((v, i) => {
+            const prior = rev.values[i - lookback];
+            if (v == null || prior == null || prior === 0) return null;
+            return (v - prior) / Math.abs(prior);
+          });
+        const yoyLookback = period === 'quarterly' ? 4 : 1;
+        const yoyValues = computeGrowth(yoyLookback);
+        const synthetic: typeof rows = [];
+        if (!yoyValues.every((v) => v == null)) {
+          synthetic.push({
+            key: REVENUE_YOY_KEY,
+            label: 'Revenue YoY %',
+            format: 'pct' as const,
+            values: yoyValues,
+          });
+        }
+        if (period === 'quarterly') {
+          const qoqValues = computeGrowth(1);
+          if (!qoqValues.every((v) => v == null)) {
+            synthetic.push({
+              key: REVENUE_QOQ_KEY,
+              label: 'Revenue QoQ %',
+              format: 'pct' as const,
+              values: qoqValues,
+            });
+          }
+        }
+        // Stock Price at period end — closest close on/before each year_end.
+        // Only added when the backend ships year_ends (ISO dates) AND we have
+        // a price-history payload. Reversed via orderIdx so it aligns with
+        // the table's oldest→newest column order.
+        const yearEndsRaw = withDerivedRows.year_ends;
+        if (yearEndsRaw && priceHistory && priceHistory.length > 0) {
+          const closeOnOrBefore = (iso: string): number | null => {
+            let lo = 0;
+            let hi = priceHistory.length;
+            while (lo < hi) {
+              const mid = (lo + hi) >> 1;
+              if (priceHistory[mid].date <= iso) lo = mid + 1;
+              else hi = mid;
+            }
+            const idx = lo - 1;
+            return idx >= 0 ? priceHistory[idx].close : null;
+          };
+          const stockValues = orderIdx.map((i) => {
+            const iso = yearEndsRaw[i];
+            return iso ? closeOnOrBefore(iso) : null;
+          });
+          if (!stockValues.every((v) => v == null)) {
+            synthetic.push({
+              key: STOCK_PRICE_KEY,
+              label: 'Stock Price',
+              format: 'per_share' as const,
+              values: stockValues,
+            });
+          }
+        }
+
+        if (synthetic.length > 0) {
+          const idx = rows.findIndex((r) => r.key === 'revenue');
+          rowsWithGrowth = [
+            ...rows.slice(0, idx + 1),
+            ...synthetic,
+            ...rows.slice(idx + 1),
+          ];
+        }
+      }
+    }
+    return {
+      ...withDerivedRows,
+      years,
+      years_source: yearsSource,
+      years_fiscal_quarter: yearsFQ,
+      rows: rowsWithGrowth,
+    };
+  }, [withDerivedRows, statement, period, priceHistory]);
 
   const toggleChart = (key: string) => {
     setCharted((prev) => {
       if (prev.includes(key)) return prev.filter((k) => k !== key);
       // Cap by series type — bars and lines each get their own budget so a
       // full bar selection doesn't kick the % line off (and vice versa).
-      const isPct = (k: string) => rowsByKey.get(k)?.format === 'pct';
-      const incomingIsPct = isPct(key);
-      const cap = incomingIsPct ? MAX_LINE_SERIES : MAX_BAR_SERIES;
-      const sameType = prev.filter((k) => isPct(k) === incomingIsPct);
+      // FCF/Share is `per_share` format but renders as a line on its own
+      // axis, so it must count toward the line budget, not the bar budget.
+      const isLineSeries = (k: string) => {
+        if (k === FCF_PER_SHARE_KEY) return true;
+        if (k === STOCK_PRICE_KEY) return true;
+        return rowsByKey.get(k)?.format === 'pct';
+      };
+      const incomingIsLine = isLineSeries(key);
+      const cap = incomingIsLine ? MAX_LINE_SERIES : MAX_BAR_SERIES;
+      const sameType = prev.filter((k) => isLineSeries(k) === incomingIsLine);
       if (sameType.length >= cap) {
         // Drop the oldest of the same type, keep everything else as-is.
         const oldest = sameType[0];
@@ -297,15 +510,67 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
   // can feed its rows/years straight into Chart.js without re-reversing.
   const chartConfig = useMemo(() => {
     if (!displayData) return null;
-    const yearsAsc = displayData.years;
+    // Chart x-axis uses fiscal-quarter labels in quarterly mode ("Q2 FY25");
+    // table column headers stay on the month-based labels ("Mar '25") so the
+    // user can cross-reference filing dates. Falls back to month labels if
+    // the backend didn't ship the fiscal-quarter array.
+    const yearsAsc =
+      period === 'quarterly' && displayData.years_fiscal_quarter
+        ? displayData.years_fiscal_quarter.map((q, i) => q ?? displayData.years[i])
+        : displayData.years;
     const displayRowsByKey = new Map(displayData.rows.map((r) => [r.key, r]));
     const datasets: Array<Record<string, unknown>> = [];
     let hasPercentSeries = false;
+    let hasPerShareSeries = false;
+    let hasStockPriceSeries = false;
 
     charted.forEach((key) => {
       const row = displayRowsByKey.get(key);
       if (!row) return;
       const color = colorForKey(key, charted);
+      if (key === STOCK_PRICE_KEY) {
+        // Stock price: gold line on its own right-side axis so the $ price
+        // doesn't get squashed by revenue ($M) bars on yLeft.
+        hasStockPriceSeries = true;
+        datasets.push({
+          type: 'line' as const,
+          label: row.label,
+          data: row.values,
+          borderColor: '#FFD700',
+          backgroundColor: '#FFD700',
+          yAxisID: 'yStockPrice',
+          tension: 0,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true,
+          _isStockPrice: true,
+        });
+        return;
+      }
+      if (key === FCF_PER_SHARE_KEY) {
+        // Derived per-share row: dashed purple line on its own right-side
+        // axis (yPerShare) so the $/share magnitude doesn't get squashed by
+        // the M-denominated CFO/CapEx bars on yLeft. Override the auto color
+        // so it stays visually distinct regardless of selection order.
+        hasPerShareSeries = true;
+        datasets.push({
+          type: 'line' as const,
+          label: row.label,
+          data: row.values,
+          borderColor: '#a78bfa',
+          backgroundColor: '#a78bfa',
+          yAxisID: 'yPerShare',
+          tension: 0,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          borderDash: [4, 3],
+          spanGaps: true,
+          _isFcfPerShare: true,
+        });
+        return;
+      }
       if (row.format === 'pct') {
         hasPercentSeries = true;
         datasets.push({
@@ -334,8 +599,8 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
       }
     });
 
-    return { yearsAsc, datasets, hasPercentSeries };
-  }, [displayData, charted, unit]);
+    return { yearsAsc, datasets, hasPercentSeries, hasPerShareSeries, hasStockPriceSeries };
+  }, [displayData, charted, unit, period]);
 
   const chartOptions: ChartOptions<'bar'> = useMemo(() => ({
     responsive: true,
@@ -352,10 +617,32 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
         padding: 8,
         callbacks: {
           label: (ctx) => {
+            const ds = ctx.dataset as {
+              _isFcfPerShare?: boolean;
+              _isStockPrice?: boolean;
+              label?: string;
+              yAxisID?: string;
+            };
             const v = ctx.parsed.y;
-            if (v == null) return `${ctx.dataset.label}: —`;
-            const isPct = ctx.dataset.yAxisID === 'yPct';
-            return `${ctx.dataset.label}: ${
+            if (ds._isStockPrice) {
+              return `${ds.label}: ${v == null ? '—' : `$${v.toFixed(2)}`}`;
+            }
+            if (ds._isFcfPerShare) {
+              const tip = fcfTooltipsRef.current?.[ctx.dataIndex];
+              if (v == null || !tip) return `${ds.label}: —`;
+              const fmtM = (n: number | null) =>
+                n == null ? '—' : `$${n.toFixed(1)}M`;
+              const fmtSh = (n: number | null) =>
+                n == null ? '—' : `${n.toFixed(1)}M`;
+              return [
+                `${ds.label}: $${v.toFixed(2)}`,
+                `= CFO ${fmtM(tip.cfo)} − CapEx ${fmtM(tip.capex)} = FCF ${fmtM(tip.fcf)}`,
+                `÷ ${fmtSh(tip.shares)} diluted shares`,
+              ];
+            }
+            if (v == null) return `${ds.label}: —`;
+            const isPct = ds.yAxisID === 'yPct';
+            return `${ds.label}: ${
               isPct ? `${v.toFixed(1)}%` : v.toFixed(1)
             }`;
           },
@@ -382,8 +669,28 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
           callback: (v) => `${v}%`,
         },
       },
+      yPerShare: {
+        position: 'right',
+        grid: { display: false },
+        display: chartConfig?.hasPerShareSeries ?? false,
+        ticks: {
+          color: '#a78bfa',
+          font: { size: 10, family: 'JetBrains Mono, monospace' },
+          callback: (v) => `$${Number(v).toFixed(2)}`,
+        },
+      },
+      yStockPrice: {
+        position: 'right',
+        grid: { display: false },
+        display: chartConfig?.hasStockPriceSeries ?? false,
+        ticks: {
+          color: '#FFD700',
+          font: { size: 10, family: 'JetBrains Mono, monospace' },
+          callback: (v) => `$${Number(v).toFixed(0)}`,
+        },
+      },
     },
-  }), [chartConfig?.hasPercentSeries]);
+  }), [chartConfig?.hasPercentSeries, chartConfig?.hasPerShareSeries, chartConfig?.hasStockPriceSeries]);
 
   // Tiles fetch independently of the statement payload so they should render
   // even while ratios history is loading / errored / empty.
@@ -678,21 +985,37 @@ export default function FinancialsPanel({ ticker, statement = 'income' }: Props)
                       </span>
                     </label>
                   </td>
-                  {row.values.map((v, idx) => (
-                    <td
-                      key={`${row.key}-${idx}`}
-                      style={{
-                        textAlign: 'right',
-                        padding: '4px 10px',
-                        borderTop: row.bold ? '1px solid var(--line)' : 'none',
-                        borderBottom: '1px solid rgba(38,39,45,0.4)',
-                        fontStyle: row.italic ? 'italic' : 'normal',
-                        color: v == null ? 'var(--ink-mute)' : 'var(--ink)',
-                      }}
-                    >
-                      {formatValue(v, row.format, unit)}
-                    </td>
-                  ))}
+                  {row.values.map((v, idx) => {
+                    // FCF/Share is the only row in this table that color-codes
+                    // negatives. CapEx, Dividends, etc. naturally report
+                    // negative cash outflows and have historically rendered in
+                    // neutral ink; keep that contract by scoping the red.
+                    const isFcfRow = row.key === FCF_PER_SHARE_KEY;
+                    const isNeg =
+                      isFcfRow && typeof v === 'number' && Number.isFinite(v) && v < 0;
+                    return (
+                      <td
+                        key={`${row.key}-${idx}`}
+                        style={{
+                          textAlign: 'right',
+                          padding: '4px 10px',
+                          borderTop: row.bold ? '1px solid var(--line)' : 'none',
+                          borderBottom: '1px solid rgba(38,39,45,0.4)',
+                          fontStyle: row.italic ? 'italic' : 'normal',
+                          color:
+                            v == null
+                              ? 'var(--ink-mute)'
+                              : isNeg
+                                ? 'var(--pink)'
+                                : 'var(--ink)',
+                        }}
+                      >
+                        {isFcfRow && typeof v === 'number' && Number.isFinite(v)
+                          ? `${v < 0 ? '-' : ''}$${Math.abs(v).toFixed(2)}`
+                          : formatValue(v, row.format, unit)}
+                      </td>
+                    );
+                  })}
                 </tr>
               );
             })}

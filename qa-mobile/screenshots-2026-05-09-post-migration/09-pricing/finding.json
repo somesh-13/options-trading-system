@@ -1,0 +1,19 @@
+{
+  "route": "/pricing",
+  "status": 200,
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "overflow": {
+    "scrollWidth": 502,
+    "innerWidth": 502,
+    "overflow": 0
+  },
+  "tabsClicked": [
+    "Individual",
+    "Roth_IRA"
+  ],
+  "notes": []
+}

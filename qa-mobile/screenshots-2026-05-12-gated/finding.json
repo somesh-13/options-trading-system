@@ -1,0 +1,245 @@
+{
+  "global": {
+    "pageErrors": [],
+    "consoleErrors": []
+  },
+  "steps": {
+    "gate": {
+      "step": "gate",
+      "status": 200,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [
+        {
+          "url": "http://localhost:3000/api/robinhood/session",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/notifications",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/sync/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/accounts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/holdings?live_prices=true&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/summary?live_prices=true&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/activity?limit=50",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/crypto/positions?account=crypto",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/accounts",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/sync/status",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/holdings?live_prices=true&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/summary?live_prices=true&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/activity?limit=50",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/crypto/positions?account=crypto",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/analytics/runs?limit=100",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/analytics/runs?limit=100",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/sync/status?account=brokerage",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/holdings?live_prices=true&account=brokerage&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/activity?limit=50&account=brokerage",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/summary?live_prices=true&account=brokerage&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/sync/status?account=roth_ira",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/holdings?live_prices=true&account=roth_ira&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/summary?live_prices=true&account=roth_ira&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/activity?limit=50&account=roth_ira",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/sync/status?account=crypto",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/holdings?live_prices=true&account=crypto&source=live",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/activity?limit=50&account=crypto",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:3000/api/robinhood/summary?live_prices=true&account=crypto&source=live",
+          "status": 200
+        }
+      ],
+      "overflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "overflow": 0
+      },
+      "notes": []
+    },
+    "view-portfolio": {
+      "step": "view-portfolio",
+      "status": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [],
+      "overflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "overflow": 0
+      },
+      "notes": []
+    },
+    "view-analytics": {
+      "step": "view-analytics",
+      "status": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [],
+      "overflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "overflow": 0
+      },
+      "notes": []
+    },
+    "view-reports": {
+      "step": "view-reports",
+      "status": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [],
+      "overflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "overflow": 0
+      },
+      "notes": []
+    },
+    "account-all": {
+      "step": "account-all",
+      "status": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [],
+      "overflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "overflow": 0
+      },
+      "notes": []
+    },
+    "account-brokerage": {
+      "step": "account-brokerage",
+      "status": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [],
+      "overflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "overflow": 0
+      },
+      "notes": []
+    },
+    "account-roth_ira": {
+      "step": "account-roth_ira",
+      "status": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [],
+      "overflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "overflow": 0
+      },
+      "notes": []
+    },
+    "account-crypto": {
+      "step": "account-crypto",
+      "status": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [],
+      "overflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "overflow": 0
+      },
+      "notes": []
+    },
+    "account-sofi": {
+      "step": "account-sofi",
+      "status": null,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "failedRequests": [],
+      "apiResponses": [],
+      "overflow": null,
+      "notes": [
+        "account tab not visible"
+      ]
+    }
+  }
+}

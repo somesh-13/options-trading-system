@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getIRFilings,
   refreshIRFilings,
@@ -13,7 +13,8 @@ interface IRFilingsPanelProps {
   ticker: string;
 }
 
-const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 min — IR doesn't change minute-to-minute
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 min — short enough to catch same-day earnings/8-K filings
+const FOCUS_REFRESH_DEBOUNCE_MS = 30 * 1000; // don't re-scrape on every micro-focus event
 
 const THESIS_STYLE: Record<
   ThesisLabel,
@@ -66,6 +67,9 @@ export default function IRFilingsPanel({ ticker }: IRFilingsPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Tracks the last time we triggered a backend re-scrape (POST /refresh) for
+  // this ticker, so focus-driven refreshes don't hammer the scraper.
+  const lastForcedRefreshRef = useRef<number>(0);
 
   const fetchData = useCallback(async () => {
     try {
@@ -80,16 +84,11 @@ export default function IRFilingsPanel({ ticker }: IRFilingsPanelProps) {
     }
   }, [ticker]);
 
-  useEffect(() => {
-    fetchData();
-    const id = setInterval(fetchData, REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [fetchData]);
-
   const handleRefresh = useCallback(async () => {
     try {
       setRefreshing(true);
       setError(null);
+      lastForcedRefreshRef.current = Date.now();
       await refreshIRFilings(ticker, false);
       await fetchData();
     } catch (err) {
@@ -98,6 +97,32 @@ export default function IRFilingsPanel({ ticker }: IRFilingsPanelProps) {
       setRefreshing(false);
     }
   }, [ticker, fetchData]);
+
+  useEffect(() => {
+    // Reset the focus-debounce when the ticker changes so the new ticker
+    // picks up a fresh scrape on its first focus.
+    lastForcedRefreshRef.current = 0;
+    fetchData();
+    const id = setInterval(fetchData, REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [fetchData]);
+
+  // Re-scrape on tab focus / visibility change so visiting the page right
+  // after an earnings announcement picks up the new 8-K immediately.
+  useEffect(() => {
+    const onFocus = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const since = Date.now() - lastForcedRefreshRef.current;
+      if (since < FOCUS_REFRESH_DEBOUNCE_MS) return;
+      handleRefresh();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [handleRefresh]);
 
   const toggle = useCallback((hash: string) => {
     setExpanded((prev) => {

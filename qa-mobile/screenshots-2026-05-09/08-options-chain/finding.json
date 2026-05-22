@@ -1,0 +1,18 @@
+{
+  "route": "/options-chain",
+  "status": 200,
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "overflow": {
+    "scrollWidth": 375,
+    "innerWidth": 375,
+    "overflow": 0
+  },
+  "tabsClicked": [
+    "Individual",
+    "Roth_IRA"
+  ],
+  "notes": []
+}

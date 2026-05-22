@@ -1,8 +1,10 @@
-# VegaEdge Live Agent + Options Pricing API (Cloud Run)
-# Multi-stage build — roadmap §11.2 targets <500MB runtime image.
+# VegaEdge Python backend — single image, used by 5 containers:
+#   pricing-api, data-api, portfolio-api, llm-api, engine-worker
+# Container-specific behavior is driven by SERVICE_NAME + CMD override in
+# docker-compose.yml. See backend/src/api/entry.py for the route filter.
 
 # -----------------------------------------------------------------------------
-# Builder: install wheels into a virtual env we can copy forward.
+# Builder — install wheels into a virtualenv we copy forward.
 # -----------------------------------------------------------------------------
 FROM python:3.11-slim AS builder
 
@@ -12,9 +14,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /build
 
-# Install build toolchain only when needed for scientific wheels; strip after.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc g++ \
+    && apt-get install -y --no-install-recommends gcc g++ libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m venv /venv
@@ -25,7 +26,7 @@ RUN pip install --upgrade pip \
     && pip install -r requirements.txt
 
 # -----------------------------------------------------------------------------
-# Runtime: minimal image, only the venv + source.
+# Runtime — minimal image, only venv + source.
 # -----------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
 
@@ -36,18 +37,20 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# curl is only needed for the healthcheck; omit if your orchestrator
-# probes via an HTTP client other than curl.
+# curl: healthcheck. libpq5: psycopg runtime.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends curl libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /venv /venv
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+# Default CMD targets the route-filtered FastAPI entrypoint.
+# engine-worker overrides this via docker-compose.yml.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl -fsS http://localhost:8080/health || exit 1
 
-CMD ["uvicorn", "api.routes:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "api.entry:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -43,6 +43,11 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
+        # Tag every log line with the owning service so `docker compose logs`
+        # output can be filtered downstream (e.g. `jq 'select(.service=="data-api")'`).
+        svc = os.environ.get("SERVICE_NAME")
+        if svc:
+            payload["service"] = svc
         if record.exc_info:
             payload["exc"] = self.formatException(record.exc_info)
         for key, value in record.__dict__.items():

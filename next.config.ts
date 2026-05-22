@@ -18,6 +18,7 @@ import type { NextConfig } from "next";
 const BACKEND_PROXY_PREFIXES = [
   "agents",
   "analytics",
+  "auth",
   "backtest",
   "flow",
   "ir",
@@ -40,9 +41,14 @@ const nextConfig: NextConfig = {
   // Hide the dev-mode watermark; this app embeds in trader screens.
   devIndicators: false,
   async rewrites() {
+    // BACKEND_URL is the host (and optional port) that fronts every backend
+    // service. In Docker compose this is the Nginx Proxy Manager container,
+    // which routes by /api/<prefix>/ to the owning service. For local dev
+    // (no compose), it falls back to the FastAPI monolith on :8000.
+    const backendUrl = process.env.BACKEND_URL || 'localhost:8000';
     return BACKEND_PROXY_PREFIXES.map((prefix) => ({
       source: `/api/${prefix}/:path*`,
-      destination: `http://localhost:8000/api/${prefix}/:path*`,
+      destination: `http://${backendUrl}/api/${prefix}/:path*`,
     }));
   },
 };

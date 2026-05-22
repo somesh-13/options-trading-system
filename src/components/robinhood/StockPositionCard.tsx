@@ -253,7 +253,7 @@ export function StockPositionCard({ ticker }: { ticker: string }) {
   const arrow = (k: OptSortKey) => (optSortKey === k ? (optSortDir === 'asc' ? ' ▲' : ' ▼') : '');
 
   return (
-    <div className="rv-card" style={{ marginBottom: 14 }}>
+    <div className="rv-card" style={{ marginBottom: 0 }}>
       <div className="rv-card-head">
         <h3 style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
           Your position · {ticker.toUpperCase()}

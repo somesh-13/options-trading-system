@@ -1,0 +1,2 @@
+2026/05/16 23:45:16 [error] 19731#19731: *5639 "/var/www/html/api/pricing/index.html" is not found (2: No such file or directory), client: 172.18.0.1, server: localhost-nginx-proxy-manager, request: "GET /api/pricing/ HTTP/1.1", host: "localhost"
+2026/05/16 23:45:16 [error] 19732#19732: *5640 "/var/www/html/api/market/index.html" is not found (2: No such file or directory), client: 172.18.0.1, server: localhost-nginx-proxy-manager, request: "GET /api/market/ HTTP/1.1", host: "localhost"

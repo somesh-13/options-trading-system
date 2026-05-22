@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useState, useEffect, useMemo, useCallback, type CSSProperties } from 'react';
 import type { Fundamentals } from '@/app/stock/[ticker]/StockDetailClient';
+import DCFForecastCharts from '@/components/dcf/DCFForecastCharts';
 
 interface DCFValuationProps {
   ticker: string;
@@ -62,11 +63,35 @@ interface DeepFundamentals {
   sources?: Record<string, string>;
   asOf?: string;
   asOfFiling?: string | null;
+  /** When the latest 8-K/6-K reports a fresher quarter than yfinance's annual,
+   *  the backend rolls revenue/operatingIncome to TTM that includes it.
+   *  Present only when that rollup actually fired. */
+  latestQuarterReported?: {
+    period_end: string;
+    fiscal_period?: string;
+    filing_form?: '8-K' | '6-K';
+    filing_date?: string;
+    accession?: string;
+    source?: string;
+    ttm_revenue_M?: number | null;
+    ttm_operating_income_M?: number | null;
+  } | null;
 }
 
 type AccentVar = 'var(--green)' | 'var(--gold)' | 'var(--pink)' | 'var(--blue)' | 'var(--purple)';
 
-const YEARS = [2026, 2027, 2028, 2029, 2030] as const;
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS: number[] = [
+  CURRENT_YEAR,
+  CURRENT_YEAR + 1,
+  CURRENT_YEAR + 2,
+  CURRENT_YEAR + 3,
+  CURRENT_YEAR + 4,
+];
+
+import type { Contract } from '@/lib/types/contracts';
+import { effectiveAnnualRevenueM, rampFactor } from '@/lib/types/contracts';
+import ContractsPanel from '@/components/dcf/ContractsPanel';
 
 /**
  * Approximate known corporate BTC treasury holdings (coins). Any ticker with
@@ -256,6 +281,156 @@ function SnapshotRow({ label, value, valueColor }: SnapshotRowProps) {
 }
 
 // ----------------------------------------------------------------------------
+// Manual revenue override row (rendered under the projected-revenue bars)
+// ----------------------------------------------------------------------------
+
+interface RevenueOverrideRowProps {
+  years: number[];
+  /** Resolved (post-override, post-contract) revenue per year — used as the
+   *  placeholder so the user sees the current model output before typing. */
+  computed: number[];
+  overrides: (number | null)[];
+  onChange: (idx: number, value: number | null) => void;
+  onResetAll: () => void;
+}
+
+function RevenueOverrideRow({
+  years,
+  computed,
+  overrides,
+  onChange,
+  onResetAll,
+}: RevenueOverrideRowProps) {
+  const anyOverridden = overrides.some((v) => v != null);
+  return (
+    <div
+      className="rv-card"
+      style={{
+        padding: '10px 14px',
+        background: '#0d0e11',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 10,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span style={{ fontSize: 11, color: 'var(--ink-mute)', fontWeight: 500 }}>
+          Manual revenue override ($M)
+        </span>
+        <span
+          style={{
+            fontSize: 10.5,
+            color: 'var(--ink-mute)',
+            fontFamily: "'JetBrains Mono', monospace",
+          }}
+        >
+          empty = formula · typed value replaces total for that year
+        </span>
+        {anyOverridden && (
+          <button
+            type="button"
+            onClick={onResetAll}
+            className="rv-btn ghost"
+            style={{
+              fontSize: 11,
+              padding: '2px 8px',
+              marginLeft: 'auto',
+            }}
+          >
+            Reset all
+          </button>
+        )}
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${years.length}, minmax(0, 1fr))`,
+          gap: 8,
+        }}
+      >
+        {years.map((y, i) => {
+          const override = overrides[i];
+          const isOverridden = override != null;
+          const placeholder = `auto ${Math.round(computed[i] ?? 0)}`;
+          return (
+            <div
+              key={y}
+              style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}
+            >
+              <label
+                style={{
+                  fontSize: 10,
+                  color: 'var(--ink-mute)',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: '0.05em',
+                  textAlign: 'center',
+                }}
+              >
+                {y}
+              </label>
+              <div style={{ display: 'flex', gap: 4, minWidth: 0 }}>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={isOverridden ? String(override) : ''}
+                  placeholder={placeholder}
+                  aria-label={`${y} revenue override in millions`}
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    if (v === '') return onChange(i, null);
+                    const n = parseFloat(v);
+                    if (Number.isFinite(n)) onChange(i, n);
+                  }}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: '4px 6px',
+                    fontSize: 12,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    background: '#0c0d10',
+                    color: isOverridden ? '#4c9aff' : 'var(--ink)',
+                    border: `1px solid ${isOverridden ? 'rgba(76,154,255,.5)' : 'var(--line)'}`,
+                    borderRadius: 3,
+                    outline: 'none',
+                    textAlign: 'right',
+                  }}
+                />
+                {isOverridden && (
+                  <button
+                    type="button"
+                    onClick={() => onChange(i, null)}
+                    title="Reset to formula"
+                    aria-label={`Reset ${y} to formula`}
+                    style={{
+                      fontSize: 11,
+                      padding: '2px 6px',
+                      background: 'transparent',
+                      color: 'var(--ink-mute)',
+                      border: '1px solid var(--line)',
+                      borderRadius: 3,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ↺
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------------
 // Defaults derivation
 // ----------------------------------------------------------------------------
 
@@ -410,6 +585,14 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
   const [btcHoldings, setBtcHoldings] = useState(defaults.btcHoldings);
   const [btcPrice, setBtcPrice] = useState(defaults.btcPrice);
 
+  // Per-year revenue overrides. null = use the formula; number = manual entry
+  // in $M. When set, the override replaces the total projected revenue for
+  // that year (contract layer is suppressed for the overridden year so the
+  // input value is the *honest* total the user sees on the bar).
+  const [revenueOverrides, setRevenueOverrides] = useState<(number | null)[]>(
+    () => YEARS.map(() => null),
+  );
+
   // Re-apply defaults if ticker/fundamentals changes (e.g. nav to another stock).
   useEffect(() => {
     setRevenueM(defaults.revenueM);
@@ -421,7 +604,20 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
     setSharesM(defaults.sharesM);
     setBtcHoldings(defaults.btcHoldings);
     setBtcPrice(defaults.btcPrice);
+    setRevenueOverrides(YEARS.map(() => null));
   }, [defaults]);
+
+  // Contract-aware DCF layer. Contracts are seeded by ContractsPanel's mount
+  // fetch. The toggle flips ON automatically once a non-empty list lands so
+  // the user immediately sees the contract revenue baked into the projection
+  // for HPC-pivot tickers; non-pivot tickers (AAPL, etc.) stay OFF / hidden.
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [contractLayerOn, setContractLayerOn] = useState(false);
+  const [defaultRevPerMW_M, setDefaultRevPerMW_M] = useState(2);
+  const handleContractsChange = useCallback((next: Contract[]) => {
+    setContracts(next);
+    if (next.length > 0) setContractLayerOn(true);
+  }, []);
 
   const [openSections, setOpenSections] = useState({
     rev: true,
@@ -430,24 +626,45 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
     btc: false,
     macro: false,
     val: false,
+    contracts: false,
   });
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const results = useMemo(() => {
     const discountRate = (fedRate + riskPremium) / 100;
     const revenues: number[] = [];
+    const baseRevenues: number[] = [];
+    const contractRevenues: number[] = [];
     const opIncomeArr: number[] = [];
+    const nopatArr: number[] = [];
     const fcfArr: number[] = [];
 
     let totalPV = 0;
-    YEARS.forEach((_year, i) => {
+    YEARS.forEach((year, i) => {
       const t = i + 1;
-      const revenue_t = revenueM * Math.pow(1 + cagrPct / 100, t);
+      const formulaBase_t = revenueM * Math.pow(1 + cagrPct / 100, t);
+
+      // Layered contract revenue: 0 if toggle off; otherwise sum each
+      // contract's effective annual revenue × ramp factor for this calendar
+      // year. Contracts that energize after 2030 contribute 0 across all 5y.
+      let formulaContracts_t = 0;
+      if (contractLayerOn) {
+        for (const c of contracts) {
+          formulaContracts_t += effectiveAnnualRevenueM(c, defaultRevPerMW_M) * rampFactor(c, year);
+        }
+      }
+
+      // Manual override wins: the typed number IS the total revenue for that
+      // year. Suppress the contract-layer contribution so the bar matches what
+      // the user typed instead of stacking another layer on top.
+      const override = revenueOverrides[i];
+      const baseRevenue_t = override != null ? override : formulaBase_t;
+      const contractRevenue_t = override != null ? 0 : formulaContracts_t;
+      const revenue_t = baseRevenue_t + contractRevenue_t;
+
       const opIncome_t = revenue_t * (opMarginPct / 100);
       const nopat_t = opIncome_t * (1 - taxPct / 100);
       const fcf_t = nopat_t - capexM;
@@ -456,7 +673,10 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
       totalPV += pv;
 
       revenues.push(revenue_t);
+      baseRevenues.push(baseRevenue_t);
+      contractRevenues.push(contractRevenue_t);
       opIncomeArr.push(opIncome_t);
+      nopatArr.push(nopat_t);
       fcfArr.push(fcf_t);
     });
 
@@ -480,7 +700,10 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
       fairPrice,
       deltaPercent,
       revenues,
+      baseRevenues,
+      contractRevenues,
       opIncome: opIncomeArr,
+      nopat: nopatArr,
       fcf: fcfArr,
       enterpriseValue,
       btcTreasuryM,
@@ -490,66 +713,9 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
     revenueM, cagrPct, opMarginPct, taxPct, capexM, netDebtM, sharesM,
     fedRate, riskPremium, terminalMultiple,
     btcHoldings, btcPrice, defaults.hasBtc, currentPrice,
+    contractLayerOn, contracts, defaultRevPerMW_M,
+    revenueOverrides,
   ]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const draw = () => {
-      const styles = getComputedStyle(document.documentElement);
-      const green = styles.getPropertyValue('--green').trim() || '#00C805';
-      const line = styles.getPropertyValue('--line').trim() || '#26272d';
-      const mute = styles.getPropertyValue('--ink-mute').trim() || '#a3a3a8';
-
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, rect.width, rect.height);
-
-      const peak = Math.max(...results.revenues.map(Math.abs), 1) * 1.15;
-      const padding = 40;
-      const chartHeight = rect.height - padding * 2;
-      const chartWidth = rect.width - padding * 2;
-      const spacing = chartWidth / YEARS.length;
-      const barWidth = spacing * 0.4;
-      const zeroY = padding + chartHeight;
-
-      YEARS.forEach((year, i) => {
-        const x = padding + i * spacing + spacing / 2;
-        const revH = Math.max(0, (Math.max(0, results.revenues[i]) / peak) * chartHeight);
-        const fcfVal = results.fcf[i];
-        const fcfH = (Math.abs(fcfVal) / peak) * chartHeight;
-
-        ctx.fillStyle = line;
-        ctx.beginPath();
-        ctx.roundRect(x - barWidth, zeroY - revH, barWidth * 2, revH, 4);
-        ctx.fill();
-
-        ctx.fillStyle = fcfVal >= 0 ? green : '#ff006e';
-        ctx.beginPath();
-        const fcfY = fcfVal >= 0 ? zeroY - fcfH : zeroY;
-        ctx.roundRect(x - barWidth + 4, fcfY, barWidth * 2 - 8, fcfH, 4);
-        ctx.fill();
-
-        ctx.fillStyle = mute;
-        ctx.font = '11px JetBrains Mono, monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(year.toString(), x, rect.height - 10);
-      });
-    };
-
-    draw();
-    const ro = new ResizeObserver(() => draw());
-    ro.observe(canvas);
-    return () => ro.disconnect();
-  }, [results]);
 
   // True only when we got a usable current price from the parent — see the
   // DCFValuationProps comment. When false, the "vs market" delta badge is
@@ -655,10 +821,19 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
                       const srcs = deep.sources ?? {};
                       const total = Object.keys(srcs).length;
                       const fromSec = Object.values(srcs).filter(v => v === 'sec_edgar').length;
+                      const from8K = Object.values(srcs).filter(v => v === 'sec_edgar_8k_ttm').length;
                       const filing = deep.asOfFiling ? ` · 10-K ${deep.asOfFiling}` : '';
-                      return fromSec > 0
-                        ? `✓ SEC EDGAR (${fromSec}) + Yahoo (${total - fromSec}) · ${total} fields${filing} · ${deep.asOf ?? ''}`
-                        : `✓ Yahoo Finance · ${total} fields · ${deep.asOf ?? ''}`;
+                      const lqr = deep.latestQuarterReported;
+                      const ttmTag = from8K > 0 && lqr
+                        ? ` · TTM thru ${lqr.fiscal_period ?? lqr.period_end} (${lqr.filing_form ?? '8-K'} ${lqr.filing_date ?? ''})`
+                        : '';
+                      const yfCount = total - fromSec - from8K;
+                      const parts: string[] = [];
+                      if (fromSec > 0) parts.push(`SEC EDGAR (${fromSec})`);
+                      if (from8K > 0) parts.push(`8-K rollup (${from8K})`);
+                      if (yfCount > 0) parts.push(`Yahoo (${yfCount})`);
+                      const sourceLabel = parts.length > 0 ? parts.join(' + ') : `Yahoo Finance`;
+                      return `✓ ${sourceLabel} · ${total} fields${filing}${ttmTag} · ${deep.asOf ?? ''}`;
                     })()
                   : 'using info-based defaults'}
           </div>
@@ -767,9 +942,57 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
         </div>
       </div>
 
+      <ContractsPanel
+        ticker={ticker}
+        contracts={contracts}
+        onContractsChange={handleContractsChange}
+        defaultRevPerMW_M={defaultRevPerMW_M}
+      />
+
       <div className="rv-dcf-grid">
         {/* Left — controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <AccordionSection
+            title="🔌 Contract Layer"
+            accent="var(--blue)"
+            isOpen={openSections.contracts}
+            onToggle={() => toggleSection('contracts')}
+          >
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                fontSize: 12,
+                color: 'var(--ink-dim)',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={contractLayerOn}
+                onChange={(e) => setContractLayerOn(e.target.checked)}
+                style={{ width: 14, height: 14, accentColor: 'var(--blue)' }}
+              />
+              Bake contracts into projection
+            </label>
+            <Slider
+              label="Default revenue per MW (HPC baseline)"
+              value={defaultRevPerMW_M}
+              onChange={setDefaultRevPerMW_M}
+              min={0.5}
+              max={5}
+              step={0.1}
+              formatValue={(v) => `$${v.toFixed(1)}M/MW/yr`}
+              description="Used only when a contract has MW disclosed but no $ figure stated."
+              accent="var(--blue)"
+            />
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-mute)', fontFamily: 'JetBrains Mono, monospace' }}>
+              {contracts.length} contract{contracts.length === 1 ? '' : 's'} loaded · layer {contractLayerOn ? 'ON' : 'OFF'}
+            </p>
+          </AccordionSection>
+
           <AccordionSection
             title="📈 Revenue & Growth"
             accent="var(--green)"
@@ -1005,186 +1228,51 @@ export default function DCFValuation({ ticker, currentPrice, companyName, fundam
           </AccordionSection>
         </div>
 
-        {/* Right — results */}
+        {/* Right — forecast charts (Revenue / Net Income / FCF) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Fair price hero */}
+          <DCFForecastCharts
+            results={{
+              revenues: results.revenues,
+              baseRevenues: results.baseRevenues,
+              contractRevenues: results.contractRevenues,
+              nopat: results.nopat,
+              fcf: results.fcf,
+              fairPrice: results.fairPrice,
+              deltaPercent: results.deltaPercent,
+            }}
+            years={YEARS.map(String)}
+            currentPrice={typeof currentPrice === 'number' && Number.isFinite(currentPrice) ? currentPrice : undefined}
+            revenueOverrideRow={
+              <RevenueOverrideRow
+                years={YEARS}
+                computed={results.revenues}
+                overrides={revenueOverrides}
+                onChange={(idx, val) =>
+                  setRevenueOverrides((prev) => {
+                    const next = [...prev];
+                    next[idx] = val;
+                    return next;
+                  })
+                }
+                onResetAll={() => setRevenueOverrides(YEARS.map(() => null))}
+              />
+            }
+          />
           <div
-            className="rv-card"
             style={{
-              marginTop: 0,
-              padding: '28px 20px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              background: 'linear-gradient(160deg, rgba(0,200,5,.06) 0%, var(--card) 50%, rgba(255,215,0,.05) 100%)',
+              fontSize: 10.5,
+              color: 'var(--ink-mute)',
+              fontFamily: 'JetBrains Mono, monospace',
+              textAlign: 'center',
+              padding: '0 4px',
             }}
           >
-            <div className="text-section" style={{ marginBottom: 4 }}>
-              ESTIMATED FAIR SHARE PRICE
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
-              {results.fairPrice < 0 && (
-                <span
-                  style={{
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 'clamp(40px, 14vw, 72px)',
-                    fontWeight: 700,
-                    color: 'var(--pink)',
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1,
-                  }}
-                >
-                  −
-                </span>
-              )}
-              <span
-                style={{
-                  fontSize: 22,
-                  color: results.fairPrice < 0 ? 'var(--pink)' : 'var(--green)',
-                  fontWeight: 700,
-                }}
-              >
-                $
-              </span>
-              <span
-                style={{
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 'clamp(40px, 14vw, 72px)',
-                  fontWeight: 700,
-                  color: results.fairPrice < 0 ? 'var(--pink)' : 'var(--ink)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1,
-                  wordBreak: 'break-word',
-                }}
-              >
-                {Math.abs(results.fairPrice).toFixed(2)}
-              </span>
-            </div>
-            {results.fairPrice < 0 && (
-              <div
-                className="rv-sub"
-                style={{
-                  marginTop: 6,
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 11,
-                  color: 'var(--pink)',
-                  textAlign: 'center',
-                  maxWidth: 360,
-                }}
-              >
-                model says discounted FCF doesn&apos;t cover net debt — adjust capex / margin / growth to test
-              </div>
-            )}
-            {hasPrice ? (
-              <div
-                style={{
-                  marginTop: 14,
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 12,
-                  padding: '4px 12px',
-                  borderRadius: 999,
-                  border: `1px solid ${deltaBorder}`,
-                  background: deltaBg,
-                  color: deltaColor,
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                {isPositive ? '▲' : '▼'} {Math.abs(results.deltaPercent).toFixed(1)}% vs market (${(currentPrice as number).toFixed(2)})
-              </div>
-            ) : (
-              <div
-                className="rv-sub"
-                style={{
-                  marginTop: 14,
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: 11,
-                }}
-              >
-                live market price unavailable — refresh the page to retry
-              </div>
-            )}
-          </div>
-
-          {/* Chart */}
-          <div className="rv-card" style={{ marginTop: 0 }}>
-            <div className="rv-card-head">
-              <h3>CASH FLOW FORECAST (2026 – 2030)</h3>
-            </div>
-            <div style={{ position: 'relative', width: '100%', height: 240 }}>
-              <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: 18,
-                marginTop: 10,
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: 10.5,
-                color: 'var(--ink-dim)',
-              }}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 10, height: 10, background: 'var(--line)', borderRadius: 2 }} /> Revenue
-              </span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 10, height: 10, background: 'var(--green)', borderRadius: 2 }} /> Free Cash Flow
-              </span>
-            </div>
-          </div>
-
-          {/* Breakdown table */}
-          <div className="rv-card" style={{ marginTop: 0 }}>
-            <div className="rv-table-wrap">
-            <table className="rv-table">
-              <thead>
-                <tr>
-                  <th>Metric</th>
-                  <th className="r">2026</th>
-                  <th className="r">2028</th>
-                  <th className="r">2030</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Total Revenue</td>
-                  <td className="r rv-num">{fmtM(results.revenues[0])}</td>
-                  <td className="r rv-num">{fmtM(results.revenues[2])}</td>
-                  <td className="r rv-num">{fmtM(results.revenues[4])}</td>
-                </tr>
-                <tr>
-                  <td>Operating Income</td>
-                  <td className="r rv-num">{fmtM(results.opIncome[0])}</td>
-                  <td className="r rv-num">{fmtM(results.opIncome[2])}</td>
-                  <td className="r rv-num">{fmtM(results.opIncome[4])}</td>
-                </tr>
-                <tr style={{ background: 'rgba(0,200,5,.06)' }}>
-                  <td style={{ color: 'var(--green)', fontWeight: 600 }}>Free Cash Flow</td>
-                  <td className="r" style={{ color: 'var(--green)' }}>{fmtM(results.fcf[0])}</td>
-                  <td className="r" style={{ color: 'var(--green)' }}>{fmtM(results.fcf[2])}</td>
-                  <td className="r" style={{ color: 'var(--green)' }}>{fmtM(results.fcf[4])}</td>
-                </tr>
-              </tbody>
-            </table>
-            </div>
-            <div
-              style={{
-                marginTop: 10,
-                fontSize: 10.5,
-                color: 'var(--ink-mute)',
-                fontFamily: 'JetBrains Mono, monospace',
-                textAlign: 'center',
-              }}
-            >
-              EV: {fmtM(results.enterpriseValue)}
-              {defaults.hasBtc ? ` · BTC treasury: ${fmtM(results.btcTreasuryM)}` : ''}
-              {' · '}
-              Net debt: {fmtM(netDebtM)} · Shares: {sharesM.toLocaleString()}M
-            </div>
+            EV: {fmtM(results.enterpriseValue)}
+            {defaults.hasBtc ? ` · BTC treasury: ${fmtM(results.btcTreasuryM)}` : ''}
+            {' · '}
+            Net debt: {fmtM(netDebtM)} · Shares: {sharesM.toLocaleString()}M
+            {' · '}
+            Discount: {results.discountRatePct.toFixed(2)}%
           </div>
         </div>
       </div>

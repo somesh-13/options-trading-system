@@ -1,0 +1,4 @@
+[16/May/2026:23:45:09 +0000] 200 - GET http localhost "/" [Client 172.18.0.1] [Length 1033] [Gzip -] "curl/8.5.0" "-"
+[16/May/2026:23:45:16 +0000] 404 - GET http localhost "/api/pricing/" [Client 172.18.0.1] [Length 150] [Gzip -] "curl/8.5.0" "-"
+[16/May/2026:23:45:16 +0000] 404 - GET http localhost "/api/market/" [Client 172.18.0.1] [Length 150] [Gzip -] "curl/8.5.0" "-"
+[16/May/2026:23:45:16 +0000] 200 - GET http localhost "/" [Client 172.18.0.1] [Length 1033] [Gzip -] "curl/8.5.0" "-"

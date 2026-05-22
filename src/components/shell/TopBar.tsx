@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSyncExternalStore } from 'react';
 import { StatusPills } from './StatusPills';
 import { CommandPaletteTrigger } from './CommandPalette';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -47,20 +46,13 @@ function crumbsFromPath(pathname: string): Crumb[] {
   return crumbs;
 }
 
-const NOOP_SUBSCRIBE = () => () => {};
-
 interface TopBarProps {
   onHamburgerClick?: () => void;
 }
 
 export function TopBar({ onHamburgerClick }: TopBarProps) {
-  const pathname = usePathname();
-  const mounted = useSyncExternalStore(
-    NOOP_SUBSCRIBE,
-    () => true,
-    () => false,
-  );
-  const crumbs = mounted && pathname ? crumbsFromPath(pathname) : [{ label: 'Home', href: '/' }];
+  const pathname = usePathname() ?? '/';
+  const crumbs = crumbsFromPath(pathname);
   return (
     <div className="rv-topbar">
       {/* Hamburger — visible only on mobile (hidden via CSS above 768 px) */}
@@ -79,7 +71,7 @@ export function TopBar({ onHamburgerClick }: TopBarProps) {
         <div className="logo" />
         <div className="name">vega<span>Edge</span></div>
       </Link>
-      <div className="rv-crumbs" suppressHydrationWarning>
+      <div className="rv-crumbs">
         {crumbs.map((c, i) => {
           const isLast = i === crumbs.length - 1;
           return (

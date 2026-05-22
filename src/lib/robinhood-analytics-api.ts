@@ -17,7 +17,13 @@ import { PRICING_API_URL } from './pricing-api';
 import type { RobinhoodAccount } from './robinhood-api';
 
 async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${PRICING_API_URL}${path}`, { cache: 'no-store' });
+  // `credentials: 'include'` ships the app_session cookie through the
+  // Next.js rewrite proxy → FastAPI require_auth. Same-origin in dev; the
+  // backend CORS middleware already sets allow_credentials=True.
+  const res = await fetch(`${PRICING_API_URL}${path}`, {
+    cache: 'no-store',
+    credentials: 'include',
+  });
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`;
     try {
@@ -38,6 +44,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
     cache: 'no-store',
+    credentials: 'include',
   });
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`;

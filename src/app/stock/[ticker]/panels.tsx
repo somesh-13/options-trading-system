@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import QuoteSummary from '@/components/QuoteSummary';
 
 /**
  * Stock-detail Overview panel registry.
@@ -48,12 +49,6 @@ export interface StockPanelDef {
 }
 
 const Icons = {
-  TrendingUp: ({ color }: { color: string }) => (
-    <span aria-hidden style={{ fontSize: 20, lineHeight: 1, color }}>↗</span>
-  ),
-  TrendingDown: ({ color }: { color: string }) => (
-    <span aria-hidden style={{ fontSize: 20, lineHeight: 1, color }}>↘</span>
-  ),
   BarChart3: ({ size = 14 }: { size?: number }) => (
     <span aria-hidden style={{ fontSize: size, lineHeight: 1 }}>▦</span>
   ),
@@ -91,50 +86,21 @@ export const STOCK_OVERVIEW_PANELS: Record<string, StockPanelDef> = {
   'price-overview': {
     id: 'price-overview',
     title: 'Current Price',
-    body: ({ stockData, isPositive, changeColor }) => (
-      <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div className="text-meta">CURRENT PRICE</div>
-            <div
-              style={{
-                fontFamily: 'var(--font-jetbrains-mono), monospace',
-                fontSize: 34,
-                fontWeight: 700,
-                letterSpacing: '-0.01em',
-                color: 'var(--ink)',
-                marginTop: 4,
-              }}
-            >
-              ${stockData.price.toFixed(2)}
-            </div>
-          </div>
-          <div
-            style={{
-              padding: 10,
-              borderRadius: 8,
-              background: isPositive ? 'rgba(0,200,5,.08)' : 'rgba(255,0,110,.08)',
-              border: `1px solid ${isPositive ? 'rgba(0,200,5,.3)' : 'rgba(255,0,110,.3)'}`,
-            }}
-          >
-            {isPositive ? <Icons.TrendingUp color={changeColor} /> : <Icons.TrendingDown color={changeColor} />}
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 14, marginTop: 10, alignItems: 'baseline' }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-jetbrains-mono), monospace',
-              color: changeColor,
-              fontWeight: 600,
-              fontSize: 14,
-            }}
-          >
-            {isPositive ? '+' : ''}${stockData.change.toFixed(2)}
-          </span>
-          <span className="text-meta">LAST UPDATE {stockData.lastUpdated}</span>
-        </div>
-      </>
-    ),
+    body: ({ stockData }) => {
+      // Reconstruct percent from absolute change since panels.tsx receives a
+      // narrower StockData shape than the parent's full record.
+      const prev = stockData.previousClose || stockData.price - stockData.change;
+      const changePercent = prev > 0 ? (stockData.change / prev) * 100 : 0;
+      return (
+        <QuoteSummary
+          variant="embedded"
+          price={stockData.price}
+          change={stockData.change}
+          changePercent={changePercent}
+          lastUpdated={stockData.lastUpdated}
+        />
+      );
+    },
   },
 
   'key-statistics': {

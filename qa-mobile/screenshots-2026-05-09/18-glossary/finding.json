@@ -1,0 +1,13 @@
+{
+  "route": "/glossary",
+  "status": 200,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "overflow": {
+    "scrollWidth": 375,
+    "innerWidth": 375,
+    "overflow": 0
+  },
+  "tabsClicked": [],
+  "notes": []
+}

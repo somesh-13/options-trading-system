@@ -69,7 +69,11 @@ export interface RobinhoodActivityRow {
 }
 
 async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${PRICING_API_URL}${path}`, { cache: 'no-store' });
+  // include the app_session cookie so require_auth passes on protected RH endpoints
+  const res = await fetch(`${PRICING_API_URL}${path}`, {
+    cache: 'no-store',
+    credentials: 'include',
+  });
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`;
     try {
@@ -124,7 +128,10 @@ export function getRobinhoodAccounts(): Promise<{ accounts: string[] }> {
 }
 
 export async function triggerRobinhoodIngest(): Promise<{ files_read: number; total_rows: number; inserted: number; skipped: number }> {
-  const res = await fetch(`${PRICING_API_URL}/api/robinhood/ingest`, { method: 'POST' });
+  const res = await fetch(`${PRICING_API_URL}/api/robinhood/ingest`, {
+    method: 'POST',
+    credentials: 'include',
+  });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json();
 }
@@ -228,6 +235,7 @@ export async function placeCryptoOrder(req: CryptoOrderRequest): Promise<CryptoO
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
     cache: 'no-store',
+    credentials: 'include',
   });
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`;
@@ -278,6 +286,7 @@ export async function placeEquityOrder(req: EquityOrderRequest): Promise<EquityO
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
     cache: 'no-store',
+    credentials: 'include',
   });
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`;
@@ -333,6 +342,7 @@ export async function placeOptionOrder(req: OptionOrderRequest): Promise<OptionO
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
     cache: 'no-store',
+    credentials: 'include',
   });
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`;

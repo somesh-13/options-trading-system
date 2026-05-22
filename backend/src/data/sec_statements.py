@@ -47,8 +47,11 @@ STATEMENTS_TTL_SEC = 24 * 3600
 
 # Bump when the rendered row schema changes so old cache files are auto-discarded
 # rather than served stale. v2 added the four derived pct rows on the income
-# statement (revenue %Chg, gross/operating margin, effective tax rate).
-SCHEMA_VERSION = 2
+# statement (revenue %Chg, gross/operating margin, effective tax rate). v3 fixed
+# non-calendar-FY quarter derivation (AAPL Mar, MSFT Mar, GTLB Jan) in
+# _pick_quarterly_value — previously dropped/wrong values now populate.
+# v4 added years_fiscal_quarter + fiscal_year_end_month to the response.
+SCHEMA_VERSION = 4
 
 # Frontend display unit — backend always returns millions. Per-share rows are
 # left raw (no divisor applied beyond `per_share`).
@@ -407,14 +410,19 @@ STATEMENT_LINE_ITEMS: Dict[StatementName, List[Dict[str, Any]]] = {
 
 
 def _is_quarterly_window(start: Optional[str], end: Optional[str]) -> bool:
-    """True when a flow entry covers ~1 quarter (80–100 days)."""
+    """True when a flow entry covers ~1 quarter.
+
+    Accepts both 12-week (~84d) and 16-week (~112d) windows. The wider bound
+    covers 52/53-week retail filers (CAVA, COST, WMT) whose Q1 runs 16 weeks
+    so the fiscal calendar fits a 4-4-5-style split.
+    """
     if not start or not end:
         return False
     try:
         ds = date.fromisoformat(start)
         de = date.fromisoformat(end)
         days = (de - ds).days
-        return 80 <= days <= 100
+        return 80 <= days <= 120
     except Exception:
         return False
 
@@ -432,18 +440,44 @@ def _is_annual_window(start: Optional[str], end: Optional[str]) -> bool:
         return False
 
 
+def _in_same_fiscal_year(prior_end: Optional[str], q_end: str) -> bool:
+    """True iff ``prior_end`` falls within the 12 months ending at ``q_end``.
+
+    Replaces a legacy ``prior_end[:4] == q_end[:4]`` calendar-year heuristic
+    that silently dropped quarters for filers whose fiscal year straddles
+    two calendar years (AAPL: Sep, MSFT: Jun, GTLB: Jan, etc.). The 370-day
+    window covers leap years plus ~1-week reporting variance.
+    """
+    if not prior_end:
+        return False
+    try:
+        p = date.fromisoformat(prior_end[:10])
+        q = date.fromisoformat(q_end[:10])
+    except (ValueError, TypeError):
+        return False
+    if p > q:
+        return False
+    return (q - p).days <= 370
+
+
 def _ytd_months(start: Optional[str], end: Optional[str]) -> Optional[int]:
-    """Months covered by a YTD flow entry (used for CF YTD math)."""
+    """Months covered by a YTD flow entry (used for CF YTD math).
+
+    The 3-month bucket is widened to cover 16-week (~112d) Q1 windows used by
+    52/53-week retail filers like CAVA — without this, Q1 ends fall in the
+    dead zone between 100d (3M cap) and 170d (6M floor) and are dropped from
+    `_canonical_periods`, hiding Q1 earnings entirely.
+    """
     if not start or not end:
         return None
     try:
         ds = date.fromisoformat(start)
         de = date.fromisoformat(end)
         days = (de - ds).days
-        # 90, 180, 270, 365 → 3, 6, 9, 12 months
-        if 80 <= days <= 100:
+        # 90/112, 180, 270, 365 → 3, 6, 9, 12 months
+        if 80 <= days <= 120:
             return 3
-        if 170 <= days <= 195:
+        if 170 <= days <= 200:
             return 6
         if 260 <= days <= 285:
             return 9
@@ -461,6 +495,41 @@ def _label_for_end(end: str) -> str:
         return d.strftime("%b '%y")
     except Exception:
         return end
+
+
+def _fiscal_quarter_label(end: str, fy_end_month: Optional[int]) -> Optional[str]:
+    """'2025-03-29', fy_end_month=9 → 'Q2 FY25' (AAPL Q2 FY25).
+
+    Fiscal quarter is derived from the offset between the period end month and
+    the filer's fiscal-year-end month. For calendar-aligned and most offset
+    filers (NVDA: Jan, AAPL: Sep, GTLB: Jan) the quarter ends fall exactly on
+    month offsets {0, 3, 6, 9} from the FY end. For 52/53-week retail filers
+    (CAVA, COST, WMT) the period-end months drift — CAVA's Q1 lands in April
+    instead of March with a Dec FY end — so we map diffs to the nearest
+    quarter bucket via a ±1-month tolerance rather than an exact match.
+    The trailing year is the **fiscal** year (year in which Q4 ends), so a
+    quarter that ends before the FY's Q4 in the calendar carries the next
+    year's label — e.g. GTLB Apr '24 is Q1 of FY25, rendered "Q1 FY25". The
+    "FY" prefix disambiguates from calendar year, which matters for offset
+    filers like NVDA (FY ends Jan) where "Q2 '26" reads as future calendar Q2.
+    """
+    if fy_end_month is None:
+        return None
+    try:
+        d = date.fromisoformat(end)
+    except (ValueError, TypeError):
+        return None
+    diff = (fy_end_month - d.month) % 12
+    q = {
+        0: 4, 1: 4, 11: 4,   # Q4 ends within 1 month of FY end
+        2: 3, 3: 3, 4: 3,    # Q3 ends ~3 months before FY end
+        5: 2, 6: 2, 7: 2,    # Q2 ends ~6 months before FY end
+        8: 1, 9: 1, 10: 1,   # Q1 ends ~9 months before FY end
+    }.get(diff)
+    if q is None:
+        return None
+    fy_year = d.year if d.month <= fy_end_month else d.year + 1
+    return f"Q{q} FY{fy_year % 100:02d}"
 
 
 def _entries_merged(facts: dict, namespace: str, tags: List[str]) -> List[dict]:
@@ -572,8 +641,19 @@ def _pick_quarterly_value(
         except (KeyError, TypeError, ValueError):
             return None
 
-    # Flow: try direct quarterly window first.
-    if not is_cash_flow:
+    # Q4 (q_end ∈ fy_ends): prefer FY − (Q1+Q2+Q3) synthesis. It's the
+    # arithmetic source of truth — some filers tag a 3-month "Revenues" at
+    # the FY-end date with a value that doesn't reconcile to the FY total
+    # (e.g. GTLB Jan '25 direct = 64.4M vs synthesis = 211.4M). The direct
+    # path remains as a fallback when synthesis is unavailable.
+    if q_end in fy_ends:
+        synth = _synthesize_q4(cleaned, entries, q_end, is_cash_flow)
+        if synth is not None:
+            return synth
+
+    # Flow: try direct quarterly window (skip for Q4, already attempted via
+    # synthesis above).
+    if not is_cash_flow and q_end not in fy_ends:
         direct = [
             e for e in cleaned
             if e.get("end") == q_end and _is_quarterly_window(e.get("start"), q_end)
@@ -585,44 +665,19 @@ def _pick_quarterly_value(
             except (KeyError, TypeError, ValueError):
                 pass
 
-    # Q4 synthesis path: Q4 = FY − (sum of YTD9M or Q1+Q2+Q3).
-    if q_end in fy_ends:
-        fy_val = _pick_annual_value(entries, q_end, instant=False)
-        if fy_val is None:
-            return None
-        # Find the YTD9M entry ending in the same fiscal year.
-        same_fy = [
+    # Q4 direct fallback: synthesis returned None, accept a direct 3-month
+    # value if one is tagged at the FY-end date.
+    if q_end in fy_ends and not is_cash_flow:
+        direct = [
             e for e in cleaned
-            if (e.get("end") or "")[:4] == q_end[:4]
-            and _ytd_months(e.get("start"), e.get("end")) == 9
+            if e.get("end") == q_end and _is_quarterly_window(e.get("start"), q_end)
         ]
-        if same_fy:
-            same_fy.sort(key=lambda e: e.get("end", ""), reverse=True)
+        if direct:
+            direct.sort(key=lambda e: e.get("filed", ""), reverse=True)
             try:
-                ytd9 = float(same_fy[0]["val"])
-                v = fy_val - ytd9
-                if abs(v) < EPSILON_M * UNIT_DIVISOR:
-                    return 0.0
-                return v
+                return float(direct[0]["val"])
             except (KeyError, TypeError, ValueError):
-                return None
-        # Fall back to summing 3 quarterly entries from earlier in the FY.
-        if not is_cash_flow:
-            qs = [
-                e for e in cleaned
-                if (e.get("end") or "")[:4] == q_end[:4]
-                and _is_quarterly_window(e.get("start"), e.get("end"))
-                and (e.get("end") or "") < q_end
-            ]
-            if len(qs) >= 3:
-                try:
-                    qsum = sum(float(e["val"]) for e in sorted(qs, key=lambda x: x.get("end", ""))[:3])
-                    v = fy_val - qsum
-                    if abs(v) < EPSILON_M * UNIT_DIVISOR:
-                        return 0.0
-                    return v
-                except (KeyError, TypeError, ValueError):
-                    return None
+                pass
         return None
 
     # YTD subtraction: 3-month = current_YTD − prior_YTD within the same fiscal
@@ -631,10 +686,10 @@ def _pick_quarterly_value(
     #   - Income-statement rows for Q2/Q3 when the filer reports cumulative YTD
     #     instead of discrete 3-month numbers (the common pattern). Direct 3M
     #     was tried above and missed; this is the fallback.
-    # Caveat: matches by calendar-year prefix on `end` to keep prior-YTD search
-    # within the same fiscal year. Correct for calendar-FY filers (most). Filers
-    # with a non-calendar FY end (e.g. AAPL: Sep) can split a fiscal year across
-    # two calendar years; the resulting Q1 value may be skipped on the boundary.
+    # Same-fiscal-year matching uses a 12-month rolling window (via
+    # _in_same_fiscal_year), not a calendar-year prefix, so filers with a
+    # non-calendar FY end (AAPL: Sep, MSFT: Jun, GTLB: Jan, etc.) work
+    # correctly — their fiscal year may span two calendar years.
     ytd_now = next(
         (e for e in cleaned if e.get("end") == q_end
          and _ytd_months(e.get("start"), q_end) is not None),
@@ -652,7 +707,7 @@ def _pick_quarterly_value(
     prior_months = (months_now or 0) - 3
     prior = [
         e for e in cleaned
-        if (e.get("end") or "")[:4] == q_end[:4]
+        if _in_same_fiscal_year(e.get("end"), q_end)
         and (e.get("end") or "") < q_end
         and _ytd_months(e.get("start"), e.get("end")) == prior_months
     ]
@@ -666,6 +721,56 @@ def _pick_quarterly_value(
         return v
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def _synthesize_q4(
+    cleaned: List[dict],
+    entries: List[dict],
+    q_end: str,
+    is_cash_flow: bool,
+) -> Optional[float]:
+    """Q4 = FY − (YTD9M, or sum of Q1+Q2+Q3 if YTD9M missing).
+
+    Same-fiscal-year matching uses ``_in_same_fiscal_year`` so non-calendar-FY
+    filers (GTLB: Jan, AAPL: Sep, etc.) resolve correctly.
+    """
+    fy_val = _pick_annual_value(entries, q_end, instant=False)
+    if fy_val is None:
+        return None
+    # Find the YTD9M entry ending in the same fiscal year as q_end.
+    same_fy = [
+        e for e in cleaned
+        if _in_same_fiscal_year(e.get("end"), q_end)
+        and _ytd_months(e.get("start"), e.get("end")) == 9
+    ]
+    if same_fy:
+        same_fy.sort(key=lambda e: e.get("end", ""), reverse=True)
+        try:
+            ytd9 = float(same_fy[0]["val"])
+            v = fy_val - ytd9
+            if abs(v) < EPSILON_M * UNIT_DIVISOR:
+                return 0.0
+            return v
+        except (KeyError, TypeError, ValueError):
+            return None
+    # Fall back to summing 3 quarterly entries from earlier in the FY.
+    if not is_cash_flow:
+        qs = [
+            e for e in cleaned
+            if _in_same_fiscal_year(e.get("end"), q_end)
+            and _is_quarterly_window(e.get("start"), e.get("end"))
+            and (e.get("end") or "") < q_end
+        ]
+        if len(qs) >= 3:
+            try:
+                qsum = sum(float(e["val"]) for e in sorted(qs, key=lambda x: x.get("end", ""))[:3])
+                v = fy_val - qsum
+                if abs(v) < EPSILON_M * UNIT_DIVISOR:
+                    return 0.0
+                return v
+            except (KeyError, TypeError, ValueError):
+                return None
+    return None
 
 
 def _canonical_periods(facts: dict, period: Period) -> Tuple[List[str], Optional[str]]:
@@ -878,6 +983,141 @@ def _empty_response(ticker: str, period: Period, message: str) -> Dict[str, Any]
     }
 
 
+# Mapping from income-statement row keys (STATEMENT_LINE_ITEMS["income"]) to
+# (regex_release_field, llm_field_key). Regex value wins when present; LLM is
+# fallback. Money rows arrive already in $M from both sources; per-share rows
+# are raw. Rows omitted here are left null for the prelim column.
+_PRELIM_INCOME_ROW_FIELDS: Tuple[Tuple[str, Optional[str], Optional[str]], ...] = (
+    ("revenue", "revenue_M", "total_revenues"),
+    ("cost_of_revenue", None, "cost_of_sales"),
+    ("gross_profit", None, "gross_profit"),
+    ("rd", None, "rd"),
+    ("sga", None, "sga"),
+    ("da", None, "da"),
+    ("other_opex", None, "other_opex"),
+    ("operating_income", "operating_income_M", "operating_income"),
+    ("interest_expense", None, "interest_expense"),
+    ("other_non_operating", None, "non_operating_income"),
+    ("pretax_income", None, "pretax_income"),
+    ("tax_provision", None, "tax_provision"),
+    ("net_income", "net_income_M", "consolidated_ni"),
+    ("net_income_to_common", None, "ni_to_common"),
+    ("eps_basic", "eps_basic", "eps_basic"),
+    ("eps_diluted", "eps_diluted", "eps_diluted"),
+)
+
+
+def _llm_field_numeric(parsed: Optional[Dict[str, Any]], key: str) -> Optional[float]:
+    """Read the numeric value for one LLM field, or None when absent / pending."""
+    if not parsed:
+        return None
+    fields = parsed.get("fields") or {}
+    entry = fields.get(key)
+    if not isinstance(entry, dict):
+        return None
+    val = entry.get("value")
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_prelim_income_row_map(
+    release: Dict[str, Any],
+    llm_parsed: Optional[Dict[str, Any]],
+) -> Dict[str, Optional[float]]:
+    out: Dict[str, Optional[float]] = {}
+    for row_key, release_field, llm_field in _PRELIM_INCOME_ROW_FIELDS:
+        v: Optional[float] = None
+        if release_field:
+            raw = release.get(release_field)
+            if raw is not None:
+                try:
+                    v = float(raw)
+                except (TypeError, ValueError):
+                    v = None
+        if v is None and llm_field:
+            v = _llm_field_numeric(llm_parsed, llm_field)
+        out[row_key] = v
+    return out
+
+
+def _augment_with_prelim_8k(result: Dict[str, Any], ticker: str) -> Dict[str, Any]:
+    """Prepend a preliminary column from 8-K / 6-K Exhibit 99.1 when the 10-Q
+    for the most recent quarter hasn't landed yet (ONDS / BTBT after-hours
+    Q1 '26 case). Only mutates ``result`` for income / quarterly responses,
+    and only when the press release's period_end is strictly newer than the
+    XBRL-known most-recent quarter AND no 10-Q covers that period yet.
+    """
+    try:
+        from data.earnings_extract import get_latest_earnings_release, has_10q_for_period
+    except Exception as exc:  # pragma: no cover — defensive
+        log.warning("prelim 8-K augment: import failed for %s: %s", ticker, exc)
+        return result
+
+    try:
+        release = get_latest_earnings_release(ticker, include_body=True)
+    except Exception as exc:
+        log.warning("prelim 8-K augment: release fetch failed for %s: %s", ticker, exc)
+        return result
+    if not release:
+        return result
+
+    period_end = release.get("period_end")
+    if not period_end:
+        return result
+
+    year_ends = result.get("year_ends") or []
+    if year_ends and period_end <= year_ends[0]:
+        return result  # XBRL already covers this quarter or newer
+
+    try:
+        if has_10q_for_period(ticker, period_end):
+            return result  # 10-Q is on EDGAR; XBRL path will catch up
+    except Exception as exc:
+        log.warning("prelim 8-K augment: has_10q_for_period failed for %s: %s", ticker, exc)
+        # Fall through — preferable to show a prelim column than swallow it on
+        # a transient EDGAR fetch error.
+
+    llm_parsed: Optional[Dict[str, Any]] = None
+    body = release.get("_body")
+    accession = release.get("accession")
+    if body and accession:
+        try:
+            from data.earnings_llm_extract import llm_extract_income_statement
+            llm_parsed = llm_extract_income_statement(
+                ticker, body, period_end, accession=accession,
+                filing_form=release.get("filing_form") or "8-K",
+            )
+        except Exception as exc:
+            log.warning("prelim 8-K augment: LLM extract failed for %s/%s: %s", ticker, accession, exc)
+
+    row_values = _build_prelim_income_row_map(release, llm_parsed)
+    if all(v is None for v in row_values.values()):
+        return result  # nothing extractable — don't pollute the response
+
+    fy_month = result.get("fiscal_year_end_month")
+    fiscal_label = _fiscal_quarter_label(period_end, fy_month) if fy_month else None
+    prelim_label = f"{fiscal_label} ·prelim" if fiscal_label else (
+        f"{release.get('fiscal_period') or 'Prelim'} ·prelim"
+    )
+
+    result["years"] = [_label_for_end(period_end)] + list(result.get("years") or [])
+    existing_fq = result.get("years_fiscal_quarter") or []
+    result["years_fiscal_quarter"] = [prelim_label] + list(existing_fq)
+    result["years_source"] = ["sec-8k-prelim"] + list(result.get("years_source") or [])
+    result["year_ends"] = [period_end] + list(year_ends)
+
+    for row in result.get("rows", []) or []:
+        row["values"] = [row_values.get(row.get("key"))] + list(row.get("values") or [])
+
+    result["prelim_accession"] = accession
+    result["prelim_filing_date"] = release.get("filing_date")
+    return result
+
+
 def _extract_statement(
     ticker: str,
     statement: StatementName,
@@ -893,6 +1133,8 @@ def _extract_statement(
     if not force:
         cached = _read_cached(cik, statement, period)
         if cached is not None:
+            if statement == "income" and period == "quarterly":
+                cached = _augment_with_prelim_8k(cached, ticker_u)
             return cached
 
     facts = fetch_company_facts(cik, force=force)
@@ -950,14 +1192,26 @@ def _extract_statement(
     if statement == "income":
         out_rows = _inject_income_derived_rows(out_rows)
 
+    fy_end_month: Optional[int] = None
+    if period == "quarterly" and fy_ends_for_q4:
+        try:
+            fy_end_month = date.fromisoformat(sorted(fy_ends_for_q4)[-1]).month
+        except (ValueError, TypeError):
+            fy_end_month = None
+
     result: Dict[str, Any] = {
         "ticker": ticker_u,
         "currency": "USD",
         "unit": "M",
         "period": period,
         "years": [_label_for_end(e) for e in period_ends],
+        "years_fiscal_quarter": (
+            [_fiscal_quarter_label(e, fy_end_month) for e in period_ends]
+            if period == "quarterly" else None
+        ),
         "years_source": ["sec-edgar"] * len(period_ends),
         "year_ends": period_ends,  # raw ISO dates for downstream consumers (ratios, splice)
+        "fiscal_year_end_month": fy_end_month,
         "rows": out_rows,
         "asOf": latest_filed,
         "source": "sec-edgar",
@@ -969,6 +1223,9 @@ def _extract_statement(
         atomic_write_json(_statement_cache_path(cik, statement, period), result)
     except Exception as exc:
         log.warning("statement cache write failed for %s/%s/%s: %s", ticker_u, statement, period, exc)
+
+    if statement == "income" and period == "quarterly":
+        result = _augment_with_prelim_8k(result, ticker_u)
 
     return result
 

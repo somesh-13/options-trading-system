@@ -10,6 +10,7 @@ import { CryptoTable } from '@/components/robinhood/CryptoTable';
 import { CryptoTradePanel } from '@/components/robinhood/CryptoTradePanel';
 import { EquityTradePanel } from '@/components/robinhood/EquityTradePanel';
 import { ReportsBrowser } from '@/components/robinhood/ReportsBrowser';
+import { RobinhoodPasswordGate } from '@/components/robinhood/RobinhoodPasswordGate';
 import {
   getRobinhoodAccounts,
   getRobinhoodHoldings,
@@ -78,6 +79,14 @@ function minutesAgo(iso: string | null | undefined): number | null {
 }
 
 export default function RobinhoodPage() {
+  return (
+    <RobinhoodPasswordGate>
+      <RobinhoodPageInner />
+    </RobinhoodPasswordGate>
+  );
+}
+
+function RobinhoodPageInner() {
   const [account, setAccount] = useState<RobinhoodAccount>('all');
   const [view, setView] = useState<View>('portfolio');
   const [availableAccounts, setAvailableAccounts] = useState<string[]>([]);
@@ -154,6 +163,38 @@ export default function RobinhoodPage() {
       return null;
     }
   }, []);
+
+  const onDownloadJson = useCallback(() => {
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const payload =
+      account === 'crypto'
+        ? {
+            account: 'crypto',
+            fetched_at: syncStatus?.fetched_at ?? null,
+            exported_at: new Date().toISOString(),
+            holdings: cryptoHoldings,
+          }
+        : {
+            account,
+            fetched_at: syncStatus?.fetched_at ?? null,
+            exported_at: new Date().toISOString(),
+            summary,
+            equities: holdings?.equities ?? [],
+            options: holdings?.options ?? [],
+            activity,
+          };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `robinhood-${account}-${ts}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [account, cryptoHoldings, holdings, summary, activity, syncStatus?.fetched_at]);
 
   const onSync = useCallback(async () => {
     if (syncingRef.current) return;
@@ -371,6 +412,21 @@ export default function RobinhoodPage() {
               />
             )}
             {syncing ? 'Refreshing…' : 'Sync RH'}
+          </button>
+          <button
+            type="button"
+            className="rv-btn"
+            style={{ fontSize: 11 }}
+            onClick={onDownloadJson}
+            disabled={
+              account === 'crypto'
+                ? cryptoHoldings.length === 0
+                : !holdings && !summary
+            }
+            data-testid="download-json-button"
+            title={`Download ${ACCOUNT_LABEL[account]} snapshot as JSON`}
+          >
+            Download JSON
           </button>
           <style>{`@keyframes rv-spin { to { transform: rotate(360deg); } }`}</style>
         </span>

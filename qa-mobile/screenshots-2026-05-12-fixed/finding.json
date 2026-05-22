@@ -1,0 +1,24 @@
+{
+  "route": "/robinhood",
+  "status": 200,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "failedRequests": [],
+  "apiResponses": [
+    {
+      "url": "http://localhost:3000/api/robinhood/session",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:3000/api/notifications",
+      "status": 200
+    }
+  ],
+  "overflow": {
+    "scrollWidth": 375,
+    "innerWidth": 375,
+    "overflow": 0
+  },
+  "tabsClicked": [],
+  "notes": []
+}

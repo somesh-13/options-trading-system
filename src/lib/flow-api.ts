@@ -52,8 +52,15 @@ export interface FlowTickerResponse {
   contracts: FlowContractRow[];
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${PRICING_API_URL}${path}`, { cache: 'no-store' });
+export interface FlowSnapshotRunResponse {
+  queued: boolean;
+  tickers: number;
+  job_id: string;
+  latest_snapshot_age_hours: number | null;
+}
+
+async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${PRICING_API_URL}${path}`, { cache: 'no-store', ...init });
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`;
     try {
@@ -67,6 +74,10 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+function getJson<T>(path: string): Promise<T> {
+  return fetchJson<T>(path);
+}
+
 export function getFlowScan(opts: { minPremium?: number; top?: number } = {}): Promise<FlowScanResponse> {
   const params = new URLSearchParams();
   if (opts.minPremium !== undefined) params.set('min_premium', String(opts.minPremium));
@@ -77,4 +88,8 @@ export function getFlowScan(opts: { minPremium?: number; top?: number } = {}): P
 
 export function getTickerFlow(ticker: string, top = 20): Promise<FlowTickerResponse> {
   return getJson<FlowTickerResponse>(`/api/flow/${encodeURIComponent(ticker)}?top=${top}`);
+}
+
+export function triggerFlowSnapshot(): Promise<FlowSnapshotRunResponse> {
+  return fetchJson<FlowSnapshotRunResponse>('/api/flow/snapshot/run', { method: 'POST' });
 }

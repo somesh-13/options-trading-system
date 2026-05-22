@@ -267,3 +267,37 @@ export function groupStrategies(options: RobinhoodOption[]): StrategyGroup[] {
 
   return groups;
 }
+
+// === Order-panel multi-leg classification ===
+// The order panel's Leg shape (lib/option-legs.ts) differs from RobinhoodOption
+// (`buy/sell` vs `long/short`, lowercase `call/put`, strings instead of numbers).
+// Rather than fork the matchers, adapt and delegate to classify().
+
+import type { Leg as PanelLeg } from './option-legs';
+
+export function classifyMultiLeg(legs: PanelLeg[]): { type: StrategyType; label: string } {
+  if (legs.length === 0) return { type: 'multi_leg', label: 'Empty' };
+
+  const adapted: RobinhoodOption[] = legs.map((l) => ({
+    underlying: '_',
+    side: l.optionType === 'call' ? 'Call' : 'Put',
+    strike: parseFloat(l.strike) || 0,
+    expiry: l.expiration,
+    position: l.side === 'buy' ? 'long' : 'short',
+    quantity: parseInt(l.quantity, 10) || 0,
+    avg_cost: parseFloat(l.entryPrice) || 0,
+    cost_basis: 0,
+    realized_pnl: 0,
+    account: 'all',
+  }));
+
+  // Mirror the sort used inside groupStrategies so vertical / condor matchers
+  // see the same ordering they were authored against.
+  const sorted = [...adapted].sort((a, b) => {
+    if (a.side !== b.side) return a.side === 'Put' ? -1 : 1;
+    if (a.strike !== b.strike) return a.strike - b.strike;
+    return a.position === 'long' ? -1 : 1;
+  });
+
+  return classify(sorted);
+}

@@ -1,0 +1,629 @@
+{
+  "metadata": {
+    "owner": "Somesh Dubey",
+    "location": "Tallahassee, FL",
+    "as_of_date": "2026-04-29",
+    "snapshot_basis": "Reconciled from 3/31/26 official Robinhood statements (Roth + Individual), SoFi 4/29 app screenshots, plus user-confirmed updates through 4/29/26",
+    "total_portfolio_value_usd": 73000,
+    "value_breakdown_note": "Approximate. Robinhood Individual is reported as $19,936 net liq with -$12,514 margin debit (gross securities $32,450). Roth $40,973. SoFi $11,977.",
+    "data_quality_notes": [
+      "Option spread directionalities CORRECTED through user feedback — earlier reconstructions had several put credit spreads mislabeled as bearish",
+      "GOOG and NVDA bearish spreads were CLOSED (user confirmed) — removed from open list",
+      "HOOD Roth short calls $50 1/15/27 and $95 1/15/27 CLOSED for +$8,400 gross, $85 1/21/28 long opened for $2,750 — net +$5,650 cash freed",
+      "Position values reflect 3/31/26 marks where statements are authoritative; user updates layered on top",
+      "Some sub-1% positions in Individual account omitted for clarity",
+      "MAJOR RECATEGORIZATION (4/29/26): CIFR rebranded to Cipher Digital Q4 2025 with $9.3B HPC backlog (AWS+Google/Fluidstack), exiting BTC mining 2027. WULF has $12.8B AI contracts (Fluidstack/Core42), exiting mining EOY 2026. Both moved from 'crypto cluster' to 'AI infrastructure cluster'.",
+      "BTBT (Bit Digital) recategorized as holding company / sum-of-parts: 155K ETH ($461M) + 70.4% stake in WhiteFiber (WYFI, AI infra subsidiary, $427M stake). mNAV $2.74 vs price $1.31 = ~52% discount to NAV. NOT a pure crypto play.",
+      "ROTH OPTIONS LEVEL CORRECTION: Robinhood Roth IRA is Level 2 only (long calls, long puts, covered calls, cash-secured puts). NO vertical spreads in Roth. Credit-spread cycling must stay in Individual account. Earlier strategy doc was wrong on this.",
+      "SMPL revised view: Founder Joe Scalzo back as CEO 1/19/26, $500M buyback authorization, Director Kilts bought $991K at $12.39 on 4/24/26, CFO bought $199K. Moved from 'fundamentally broken' to 'TLH NOW with reload optionality after wash-sale window'.",
+      "TLH PLAN ACCELERATED: Moved from Dec 2026 batch to immediate execution on losing options (TLT calls, SBET) + BMNU + SMPL. Wash-sale 31-day discipline required."
+    ]
+  },
+
+  "accounts": {
+    "roth_ira": {
+      "broker": "Robinhood",
+      "account_number_last4": "7168",
+      "type": "Roth IRA (tax-free)",
+      "total_value_usd": 40973,
+      "cash_balance_usd": 5803,
+      "allocation_pct": {"equities": 71.26, "cash": 13.37, "options": 15.37},
+      "annual_contribution_capacity_usd": 7500,
+      "robinhood_gold_match_pct": 3,
+      "effective_annual_contribution_usd": 7725,
+      "ytd_2026_contribution_usd": 7500,
+      "ytd_2026_ira_match_received_usd": 225,
+      "ytd_2026_dividends_usd": 194.51,
+      "tax_treatment": "All gains tax-free; assignments tax-free; ideal for wheel strategy and high-volatility growth",
+      "options_level": "Level 2 only (long calls, long puts, covered calls, cash-secured puts). NO vertical spreads allowed in Roth.",
+      "strategic_role": "PRIMARY — wheel strategy (CSP + covered calls) + outright LEAPs + core long-term compounders. Credit-spread cycling NOT permitted at Level 2."
+    },
+    "robinhood_individual": {
+      "broker": "Robinhood",
+      "account_number_last4": "2550",
+      "type": "Margin (Individual taxable)",
+      "total_value_usd": 19936,
+      "gross_securities_usd": 32450,
+      "margin_debit_usd": -12514,
+      "margin_interest_apy_pct": 3.5,
+      "annual_margin_interest_cost_usd": 440,
+      "allocation_pct": {"equities": 12.31, "cash": 4.87, "options": 82.82},
+      "ytd_2026_dividends_usd": 11.67,
+      "tax_treatment": "Short-term gains taxed as ordinary income; wash sale rules bite when re-buying same names within 30 days across accounts",
+      "options_level": "Level 3 — vertical spreads, debit spreads, credit spreads all permitted",
+      "strategic_role": "CREDIT-SPREAD VENUE (Roth can't do these) + TLT HEDGE HOME — pay down margin from realized profits, opportunistic plays. TLT shares get 30% margin requirement (vs 50% on stocks) making it efficient hedge here."
+    },
+    "sofi": {
+      "broker": "SoFi Securities (clearing via Apex)",
+      "account_number_last4": "3365",
+      "type": "Individual taxable",
+      "total_value_usd": 11977,
+      "cash_buying_power_usd": 10.96,
+      "all_time_return_usd": 890.91,
+      "all_time_return_pct": 8.04,
+      "tax_year_2025_realized_loss_usd": -254,
+      "tax_year_2025_wash_sale_disallowed_usd": 1249.95,
+      "tax_year_2025_disallowed_names": ["SANA", "SMPL", "TLRY", "BMNU", "SOFI"],
+      "strategic_role": "BUY-AND-HOLD — long-only equity, no options, year-end TLH on losers"
+    }
+  },
+
+  "equity_positions": {
+    "roth_ira": [
+      {"ticker": "HOOD", "shares": 100.01, "price": 69.30, "value_usd": 6931, "cost_basis_per_sh": null, "notes": "Largest Roth equity position; covered calls written against shares"},
+      {"ticker": "TTD", "shares": 200.023, "price": 24.32, "value_usd": 4864.56, "cost_basis_per_sh": 27.12, "unrealized_pnl_usd": -560.04, "unrealized_pct": -10.32, "as_of": "2026-04-29", "portfolio_diversity_pct": 11.49, "notes": "Increased from 180 to 200 shares via DCA; 100 sh encumbered as covered-call collateral, 100 sh free"},
+      {"ticker": "ZETA", "shares": 200.06, "price": 15.92, "value_usd": 3185, "notes": "Short $17.50 6/18/26 call written"},
+      {"ticker": "SOFI", "shares": 200.0, "price": 15.88, "value_usd": 3176, "notes": "Long $20 1/15/27 call also held (long position, not short)"},
+      {"ticker": "RDW", "shares": 300.02, "price": 8.50, "value_usd": 2550, "notes": "Short $12 5/1/26 call written"},
+      {"ticker": "PATH", "shares": 200.03, "price": 11.10, "value_usd": 2220, "notes": "Acquired via 5/15/26 $27 put assignment then exercised long $22 leg → net $5/sh loss; sold short $14 8/21/26 call against"},
+      {"ticker": "QXO", "shares": 100.998, "price": 19.42, "value_usd": 1961, "notes": "Acquired via 3/13/26 $21.50 put assignment; covered call cycling"},
+      {"ticker": "TSLY", "shares": 0, "price": 29.99, "value_usd": 0, "flag": "EXITED_2026_04_29", "notes": "EXITED: YieldMax TSLA Option Income ETF was structurally capped on upside (synthetic call writing) + ROC distributions decay NAV. User sold ~$1,200 worth of 40 shares. Capital freed for redeployment to GOOGL/SCHG/BTBT post wash-sale awareness."},
+      {"ticker": "CIFR", "shares": 100.05, "price": 12.87, "value_usd": 1287, "category": "AI_INFRASTRUCTURE", "notes": "Now Cipher Digital (rebranded Q4 2025). $9.3B HPC contracted backlog: 15-yr AWS deal (300 MW) + 10-yr Google/Fluidstack lease. Exiting BTC mining 2027. KBW Outperform, $20 PT. NOT a crypto play anymore — AI infrastructure."},
+      {"ticker": "DLO", "shares": 100.07, "price": 12.97, "value_usd": 1297},
+      {"ticker": "CLSK", "shares": 100, "price": 8.51, "value_usd": 851, "notes": "Crypto miner — recommend consolidate into WULF/CIFR"},
+      {"ticker": "GRAB", "shares": 200, "price": 3.66, "value_usd": 732, "notes": "Long $5 1/15/27 calls (12 contracts) also held as bullish add-on"},
+      {"ticker": "PLAB", "shares": 15.30, "price": 40.41, "value_usd": 618, "notes": "Sub-1% — too small to matter"},
+      {"ticker": "VPG", "shares": 10.01, "price": 43.42, "value_usd": 435, "notes": "Sub-1%"},
+      {"ticker": "BTBT", "shares": 100.33, "price": 1.31, "value_usd": 131, "category": "HOLDING_COMPANY_NAV_DISCOUNT", "notes": "Bit Digital — sum-of-parts thesis, NOT crypto miner. Holds 155K ETH ($461M) + 70.4% stake in WhiteFiber/WYFI ($427M of AI infra). mNAV $2.74 vs price $1.31 = ~52% discount. Long $1.50 1/21/28 calls also held (2 contracts) as bullish add-on. PLANNED: User considering adding 1,000 sh = $1,310 (1.8% of book)."},
+      {"ticker": "ASST", "shares": 1.00, "price": 10.02, "value_usd": 10, "notes": "+14 sh on stock loan"},
+      {"ticker": "PLTR", "shares": 2.01, "price": 146.28, "value_usd": 294, "notes": "Sub-1%"},
+      {"ticker": "OSS", "shares": 1.03, "price": 7.57, "value_usd": 8},
+      {"ticker": "PYPL", "shares": 1, "price": 45.23, "value_usd": 45, "notes": "Long PYPL $67.50 12/15/28 LEAP also held (3 contracts)"},
+      {"ticker": "VG", "shares": 9.90, "price": 15.76, "value_usd": 156, "notes": "+92 sh on stock loan; assigned out of larger position via $12 and $14 covered calls"},
+      {"ticker": "AMZN", "shares": 0.044, "value_usd": 9, "notes": "Sub-1% — exit"},
+      {"ticker": "BMNR", "shares": 0.023, "value_usd": 0.46},
+      {"ticker": "RZLV", "shares": 0.006, "value_usd": 0.02, "notes": "+100 sh on stock loan"},
+      {"ticker": "WULF", "shares": 0.09, "value_usd": 1.31, "notes": "Was 100 sh, assigned out via $14 3/27 call"},
+      {"ticker": "TSLZ", "shares": 0, "value_usd": 0, "flag": "EXITED_2026_04_29", "notes": "EXITED: T-Rex 2X Inverse Tesla — daily reset volatility decay. Stock loan terminated and shares sold. Even bull bear-Tesla case was destroyed by structural decay. ~$476 freed."}
+    ],
+    "robinhood_individual": [
+      {"ticker": "AMKR", "shares": 100, "price": 45.03, "value_usd": 4503, "yield_pct": 0.80, "notes": "Has covered call $70 1/15/27 written + put hedge $55/$60 6/18/26"},
+      {"ticker": "SLB", "shares": 100, "price": 51.39, "value_usd": 5139, "yield_pct": 2.23, "category": "ENERGY_INFRASTRUCTURE_HEDGE", "notes": "Schlumberger — global oilfield services in 100+ countries. Multi-decade structural position, NOT speculative. KEY CATALYSTS: (1) Venezuela rebuild: Maduro captured Jan 2026, Chevron signed PDVSA asset swap, oil sector rebuild = decades of work; (2) $8B ChampionX acquisition integrated, expands production chemicals + artificial lift; (3) CEO Le Peuch navigated Russia exit + Venezuela preservation = proven operator; (4) $4B returned to shareholders 2025 via dividends + buybacks; (5) Net debt/EBITDA 1.2x = healthy balance sheet. Has short $57.50 9/18/26 covered call generating premium against shares."},
+      {"ticker": "NVO", "shares": 100, "price": 36.75, "value_usd": 3675, "yield_pct": 3.49, "notes": "Acquired via 3/30/26 $80 put assignment; long $70 put exercised next day → net $1k loss on cycle. Now sitting on 100 sh at $80 cost basis (NOT $36.75 mark — large unrealized loss)"},
+      {"ticker": "VG", "shares": 200.02, "price": 15.76, "value_usd": 3152, "yield_pct": 0.40, "category": "GEOPOLITICAL_ENERGY_HEDGE", "notes": "Venture Global LNG — 2nd largest US LNG exporter (becoming #1 with CP2 ramp). CEO confirmed 'largest available incremental LNG capacity in the world'. Iran struck Qatar LNG (Mar 2026), wiped 17% of Qatar capacity, 5+ year recovery. Plaquemines volumes +240% YoY. Morgan Stanley overweight, PT $22 (from $8). Goldman PT $18.50. CP2 has 29 MTPA peak capacity, $20.7B financed. 49 MTPA contracted. NOT speculative — structural supply-side hedge to Iran/Middle East risk."},
+      {"ticker": "WULF", "shares": 200, "price": 14.43, "value_usd": 2886, "category": "AI_INFRASTRUCTURE", "notes": "$12.8B AI contracts (Fluidstack/Core42), 70% of 2026 rev from HPC. Exiting mining EOY 2026. KBW Outperform, $23 PT. Reclassified from crypto miner to AI infrastructure."},
+      {"ticker": "GRAB", "shares": 600, "price": 3.66, "value_usd": 2196, "notes": "Has 2x short $5 7/17/26 calls written against shares"},
+      {"ticker": "GOOG", "shares": 5.00, "price": 286.86, "value_usd": 1435, "yield_pct": 0.30, "flag": "UNDERWEIGHT_CORE", "notes": "MUST scale up — flagship core compounder. GOOGL bearish call spread CLOSED for ~$408 loss"},
+      {"ticker": "CIFR", "shares": 100, "price": 12.87, "value_usd": 1287, "category": "AI_INFRASTRUCTURE", "notes": "AI infra play (rebranded Cipher Digital). See Roth notes for full thesis."},
+      {"ticker": "DLO", "shares": 100, "price": 12.97, "value_usd": 1297, "notes": "Has $21.47/$24.47 1/15/27 call DEBIT spread + short $17 12/17/27 call"},
+      {"ticker": "HOOD", "shares": 15, "price": 69.30, "value_usd": 1040, "notes": "Tiny equity position; main HOOD exposure is via spreads"},
+      {"ticker": "NVDA", "shares": 6, "price": 174.40, "value_usd": 1046, "yield_pct": 0.02, "flag": "UNDERWEIGHT_CORE", "notes": "MUST scale up. NVDA bearish call spread CLOSED"},
+      {"ticker": "BTBT", "shares": 300, "price": 1.31, "value_usd": 393, "category": "HOLDING_COMPANY_NAV_DISCOUNT", "notes": "Bit Digital sum-of-parts: ETH treasury + 70.4% WhiteFiber stake. NAV discount 52%. Reclassified from crypto miner."},
+      {"ticker": "TSLA", "shares": 1.03, "price": 371.75, "value_usd": 382, "notes": "Sub-1%"},
+      {"ticker": "RR", "shares": 100, "price": 2.09, "value_usd": 209, "notes": "Richtech Robotics (NOT Rolls-Royce) — small momentum name"},
+      {"ticker": "MAPS", "shares": 200.33, "price": 0.6584, "value_usd": 132, "notes": "WM Technology — recommend exit"},
+      {"ticker": "VLN", "shares": 100, "price": 1.13, "value_usd": 113},
+      {"ticker": "AAL", "shares": -100, "price": 10.74, "value_usd": -1074, "notes": "SHORT 100 shares with long $12 6/18/26 call as protection (synthetic put structure)"},
+      {"ticker": "PFE", "shares": 1, "price": 28.08, "value_usd": 28, "yield_pct": 6.19},
+      {"ticker": "BRK.A", "shares": 0.000016, "value_usd": 11, "notes": "Sub-1%"},
+      {"ticker": "QS", "shares": 0.21, "value_usd": 1.34},
+      {"ticker": "OGZPY", "shares": 2, "value_usd": 2.20},
+      {"ticker": "AZREF", "shares": 0.99, "value_usd": 0.99},
+      {"ticker": "SBRCY", "shares": 2, "value_usd": 1.04, "notes": "Sberbank — sanctioned Russian ADR, illiquid"},
+      {"ticker": "FRCB", "shares": 0.61, "value_usd": 0.01, "notes": "First Republic remnant"},
+      {"ticker": "NEE", "shares": 0.06, "value_usd": 5.54, "yield_pct": 2.52},
+      {"ticker": "SOFI", "shares": 100, "price": 15.88, "value_usd": 1588, "notes": "Has covered $23 5/29/26 call + cash-secured $30 6/18/26 put"}
+    ],
+    "sofi": [
+      {"ticker": "HOOD", "shares": 100.025, "price": 70.58, "value_usd": 7059, "cost_basis_per_sh": 57.91, "unrealized_pnl_usd": 1266, "unrealized_pct": 21.86, "notes": "WINNER — biggest holding here"},
+      {"ticker": "SMPL", "shares": 200.096, "price": 13.56, "value_usd": 2714, "cost_basis_per_sh": 19.24, "unrealized_pnl_usd": -1136, "unrealized_pct": -29.50, "flag": "TLH_IMMEDIATE_HARVEST_4_29_26_RELOAD_OPTION", "notes": "REVISED THESIS: Founder Joe Scalzo back as CEO 1/19/26 (replaced Tanner). $500M buyback authorization (40%+ of mcap potential). Director Kilts bought $991K at $12.39 on 4/24/26. CFO bought $199K. Q1 beat slightly, FY guidance reaffirmed. Quest brand growing, Atkins declining. PLAN: Harvest now for $1,136 loss (~$273 tax benefit at 24%), wait 31 days (until 5/30), then re-enter if conviction holds. Buyback floor at $12-13 caps further downside."},
+      {"ticker": "PATH", "shares": 119.886, "price": 10.51, "value_usd": 1260, "cost_basis_per_sh": 15.88, "unrealized_pnl_usd": -644, "unrealized_pct": -33.82, "flag": "TLH_CANDIDATE_DEC_2026_OR_EARLIER", "notes": "Watch wash-sale: PATH also held in Roth (200 sh). Less urgent than SMPL/BMNU since no buyback floor. Decide harvest timing based on Q2 earnings and aggregate tax-loss needs."},
+      {"ticker": "BMNU", "shares": 500, "price": 1.79, "value_usd": 893, "cost_basis_per_sh": 5.15, "unrealized_pnl_usd": -1684, "unrealized_pct": -65.36, "flag": "TLH_IMMEDIATE_HARVEST_4_29_26", "expense_ratio_pct": 1.5, "notes": "T-Rex 2x leveraged BMNR ETF — daily reset volatility decay. Even in bull case where BMNR/ETH rallies 100%, BMNU only gets to ~$3-3.50 (still below $5.15 cost). Recovery path mathematically broken. HARVEST NOW (not December). Wash-sale 31 days from sale date — DO NOT buy BMNU during window. CAN buy BMNR shares same day (different CUSIP, not substantially identical)."}
+    ]
+  },
+
+  "option_positions": {
+    "roth_ira": {
+      "long_calls": [
+        {"ticker": "PYPL", "strike": 67.50, "expiration": "2028-12-15", "contracts": 3, "cost_basis_per_contract": 7.88, "current_mark_per_contract": 5.78, "current_value_usd": 1734, "structure": "outright_leap", "thesis": "PYPL turnaround"},
+        {"ticker": "HOOD", "strike": 85.00, "expiration": "2028-01-21", "contracts": 1, "cost_basis_per_contract": 27.50, "current_mark_per_contract": 21.08, "current_value_usd": 2108, "structure": "outright_leap", "thesis": "Long-dated bullish HOOD post short-call closes; uncapped upside on shares + LEAP"},
+        {"ticker": "BTBT", "strike": 1.50, "expiration": "2028-01-21", "contracts": 2, "current_value_usd": 212, "structure": "outright_leap"},
+        {"ticker": "GRAB", "strike": 5.00, "expiration": "2027-01-15", "contracts": 12, "current_value_usd": 372, "structure": "outright_leap"},
+        {"ticker": "SLB", "strike": 60.00, "expiration": "2027-01-15", "contracts": 1, "current_value_usd": 450, "structure": "outright_leap", "category": "ENERGY_INFRASTRUCTURE_HEDGE", "thesis": "Bullish bet on Venezuela rebuild + ChampionX synergies + oilfield services cycle. Outright long call (Level 2 in Roth). Pairs with 100 sh in Individual."},
+        {"ticker": "SOFI", "strike": 20.00, "expiration": "2027-01-15", "contracts": 1, "current_value_usd": 251, "structure": "outright_leap", "notes": "Bullish add-on to 200 sh equity"},
+        {"ticker": "ZETA", "strike": 35.00, "expiration": "2028-01-21", "contracts": 1, "structure": "outright_leap"}
+      ],
+      "short_calls_covered": [
+        {"ticker": "HOOD", "strike": 85.00, "expiration": "2026-06-18", "contracts": 1, "current_mark_per_contract": 3.53, "current_liability_usd": 353, "covered_by": "100 sh HOOD equity", "notes": "Covered call generating premium against equity + LEAP"},
+        {"ticker": "PATH", "strike": 14.00, "expiration": "2026-08-21", "contracts": 1, "current_liability_usd": 104, "covered_by": "200 sh PATH equity"},
+        {"ticker": "TTD", "strike": 27.50, "expiration": "2026-09-18", "contracts": 1, "current_mark_per_contract": 3.85, "current_liability_usd": 385, "credit_collected_estimate_usd": 297, "current_total_return_pct": -29.63, "as_of": "2026-04-29", "covered_by": "100 of 200 sh TTD equity (other 100 unencumbered)"},
+        {"ticker": "ZETA", "strike": 17.50, "expiration": "2026-06-18", "contracts": 1, "current_liability_usd": 152, "covered_by": "200 sh ZETA equity"},
+        {"ticker": "RDW", "strike": 12.00, "expiration": "2026-05-01", "contracts": 1, "current_liability_usd": 25, "covered_by": "300 sh RDW equity"},
+        {"ticker": "SOFI", "strike": 21.00, "expiration": "2026-08-21", "contracts": 1, "covered_by": "200 sh SOFI"}
+      ],
+      "short_puts_cash_secured": [
+        {"ticker": "OSS", "strike": 10.00, "expiration": "2026-04-17", "contracts": 1, "current_liability_usd": 255, "notes": "May have already expired/assigned by 4/29"}
+      ],
+      "closed_recently_user_confirmed": [
+        {"ticker": "HOOD", "structure": "short_call", "strike": 50.00, "expiration": "2027-01-15", "realized_pnl_usd": 6150, "notes": "Closed in April 2026"},
+        {"ticker": "HOOD", "structure": "short_call", "strike": 95.00, "expiration": "2027-01-15", "realized_pnl_usd": 2250, "notes": "Closed in April 2026"}
+      ]
+    },
+    "robinhood_individual": {
+      "summary": "Approximately 80 distinct option spread legs across ~50 tickers. All directional spreads listed below with corrected directional labels.",
+      "bullish_call_debit_spreads": [
+        {"ticker": "MSFT", "long_strike": 500, "short_strike": 505, "expiration": "2028-12-15", "contracts": 4, "spread_width": 5, "max_profit_usd": 2000, "thesis": "Bullish MSFT — Azure + Copilot"},
+        {"ticker": "META", "long_strike": 800, "short_strike": 810, "expiration": "2028-12-15", "contracts": 1, "spread_width": 10, "max_profit_usd": 1000},
+        {"ticker": "AMZN", "long_strike": 300, "short_strike": 320, "expiration": "2028-12-15", "contracts": 3, "spread_width": 20, "max_profit_usd": 6000},
+        {"ticker": "HOOD", "long_strike": 200, "short_strike": 210, "expiration": "2028-01-21", "contracts": 13, "spread_width": 10, "max_profit_usd": 13000, "thesis": "Big bullish bet"},
+        {"ticker": "HOOD", "long_strike": 140, "short_strike": 145, "expiration": "2028-01-21", "contracts": 1, "spread_width": 5, "max_profit_usd": 500},
+        {"ticker": "ADBE", "long_strike": 400, "short_strike": 410, "expiration": "2027-01-15", "contracts": 8, "spread_width": 10, "max_profit_usd": 8000},
+        {"ticker": "DUOL", "long_strike": 300, "short_strike": 310, "expiration": "2028-01-21", "contracts": 3, "spread_width": 10, "max_profit_usd": 3000},
+        {"ticker": "BMNR", "long_strike": 75, "short_strike": 100, "expiration": "2027-01-15", "contracts": 23, "spread_width": 25, "max_profit_usd": 57500},
+        {"ticker": "BMNR", "long_strike": 85, "short_strike": 90, "expiration": "2028-01-21", "contracts": 21, "spread_width": 5, "max_profit_usd": 10500},
+        {"ticker": "QXO", "long_strike": 30, "short_strike": 35, "expiration": "2028-01-21", "contracts": 3, "spread_width": 5, "max_profit_usd": 1500, "notes": "User CONFIRMED bullish call DEBIT spread (not credit)"},
+        {"ticker": "DLO", "long_strike": 21.47, "short_strike": 24.47, "expiration": "2027-01-15", "contracts": 3, "spread_width": 3, "max_profit_usd": 900},
+        {"ticker": "TTD", "long_strike": 65, "short_strike": 70, "expiration": "2028-01-21", "contracts": 6, "spread_width": 5, "max_profit_usd": 3000},
+        {"ticker": "ZETA", "long_strike": 30, "short_strike": 35, "expiration": "2028-01-21", "contracts": 5, "spread_width": 5, "max_profit_usd": 2500},
+        {"ticker": "SBET", "long_strike": 50, "short_strike": 55, "expiration": "2027-01-15", "contracts": 77, "short_contracts": 62, "spread_width": 5, "max_profit_usd": 88500, "cost_basis_per_contract": 0.03, "total_premium_at_risk_usd": 531, "exit_rules": ["Sell at $0.06 (double)", "TLH by Dec 29, 2026 if not moving"], "notes": "Lottery ticket — well sized"},
+        {"ticker": "ACN", "long_strike": 300, "short_strike": 310, "expiration": "2028-01-21", "contracts": 1, "spread_width": 10, "max_profit_usd": 1000},
+        {"ticker": "AMPX", "long_strike": 17, "short_strike": 22, "expiration": "2028-01-21", "contracts": 1, "spread_width": 5},
+        {"ticker": "BABA", "long_strike": 180, "short_strike": 185, "expiration": "2027-12-17", "contracts": 1, "spread_width": 5},
+        {"ticker": "C", "long_strike": 170, "short_strike": 180, "expiration": "2028-12-15", "contracts": 1, "spread_width": 10},
+        {"ticker": "CIFR", "long_strike": 20, "expiration": "2027-01-15", "contracts": 1, "structure": "long_call", "notes": "Outright long, paired with short $35 12/17/27"},
+        {"ticker": "CLSK", "long_strike": 25, "short_strike": 35, "expiration": "2027-01-15", "contracts": 18, "spread_width": 10, "max_profit_usd": 18000},
+        {"ticker": "CRM", "long_strike": 310, "short_strike": 320, "expiration": "2028-01-21", "contracts": 1, "spread_width": 10},
+        {"ticker": "CRWV", "long_strike": 100, "short_strike": 110, "expiration": "2027-12-17", "contracts": 1, "spread_width": 10, "thesis": "AI infrastructure"},
+        {"ticker": "ENPH", "long_strike": 70, "short_strike": 75, "expiration": "2027-01-15", "contracts": 2, "spread_width": 5},
+        {"ticker": "FISV", "long_strike": 100, "short_strike": 110, "expiration": "2028-01-21", "contracts": 1, "spread_width": 10},
+        {"ticker": "GLXY", "long_strike": 55, "short_strike": 60, "expiration": "2028-01-21", "contracts": 1, "spread_width": 5},
+        {"ticker": "IREN", "long_strike": 60, "short_strike": 80, "expiration": "2028-01-21", "contracts": 1, "spread_width": 20, "thesis": "AI/HPC pivot"},
+        {"ticker": "JOBY", "long_strike": 30, "short_strike": 32, "expiration": "2028-01-21", "contracts": 14, "spread_width": 2, "max_profit_usd": 2800, "thesis": "eVTOL leader"},
+        {"ticker": "MARA", "long_strike": 30, "short_strike": 35, "expiration": "2027-12-17", "contracts": 8, "spread_width": 5, "max_profit_usd": 4000},
+        {"ticker": "NBIS", "long_strike": 150, "short_strike": 160, "expiration": "2028-01-21", "contracts": 2, "spread_width": 10, "max_profit_usd": 2000, "thesis": "AI compute (Nebius)"},
+        {"ticker": "ONDS", "long_strike": 15, "short_strike": 20, "expiration": "2028-01-21", "contracts": 3, "spread_width": 5},
+        {"ticker": "PFE", "long_strike": 35, "expiration": "2027-12-17", "contracts": 1, "structure": "long_call"},
+        {"ticker": "PYPL", "long_strike": 80, "short_strike": 85, "expiration": "2027-01-15", "contracts": 20, "spread_width": 5, "max_profit_usd": 10000, "notes": "Plus 30 contracts of older $80/$85 also held — total 50 contracts. Cost basis very cheap (~$0.30)"},
+        {"ticker": "QS", "long_strike": 20, "short_strike": 25, "expiration": "2028-01-21", "contracts": 8, "spread_width": 5},
+        {"ticker": "RDW", "long_strike": 15, "short_strike": 20, "expiration": "2028-01-21", "contracts": 5, "spread_width": 5, "max_profit_usd": 2500},
+        {"ticker": "SNAP", "long_strike": 12, "short_strike": 15, "expiration": "2028-01-21", "contracts": 5, "spread_width": 3},
+        {"ticker": "SOUN", "long_strike": 10, "short_strike": 20, "expiration": "2028-01-21", "contracts": 1, "spread_width": 10},
+        {"ticker": "UNH", "long_strike": 400, "short_strike": 410, "expiration": "2027-01-15", "contracts": 1, "spread_width": 10},
+        {"ticker": "VG", "long_strike": 15, "short_strike": 20, "expiration": "2028-01-21", "contracts": 1, "spread_width": 5},
+        {"ticker": "VPG", "long_strike": 55, "short_strike": 60, "expiration": "2026-11-20", "contracts": 2, "spread_width": 5},
+        {"ticker": "VZ", "long_strike": 55, "expiration": "2028-01-21", "contracts": 1, "structure": "long_call"},
+        {"ticker": "WULF", "long_strike": 12, "short_strike": 22, "expiration": "2028-01-21", "contracts": 1, "spread_width": 10},
+        {"ticker": "WULF", "long_strike": 15, "short_strike": 17, "expiration": "2027-12-17", "contracts": 2, "spread_width": 2},
+        {"ticker": "XPEV", "long_strike": 35, "short_strike": 40, "expiration": "2027-01-15", "contracts": 2, "spread_width": 5}
+      ],
+      "bullish_put_credit_spreads": [
+        {"ticker": "HIMS", "short_strike": 80, "long_strike": 60, "expiration": "2027-01-15", "contracts": 2, "spread_width": 20, "credit_collected_per_contract_usd": 1830, "max_loss_total_usd": 340, "current_unrealized_loss_usd": 340, "thesis": "HIMS holds above $80", "status": "Currently at near-max loss; HIMS at ~$26", "exit_strategy": "Hold to expiration to cap at max loss; theta works in our favor now"},
+        {"ticker": "CRWV", "short_strike": 150, "long_strike": 130, "expiration": "2027-01-15", "contracts": 1, "spread_width": 20, "thesis": "Bullish CRWV"},
+        {"ticker": "IREN", "short_strike": 85, "long_strike": 75, "expiration": "2026-11-20", "contracts": 1, "spread_width": 10, "credit_collected_per_contract_usd": 855, "max_loss_total_usd": 145, "current_unrealized_loss_usd": 90, "current_total_return_pct": -10.53, "thesis": "Bullish IREN", "status": "At near-max loss; IREN at $42 vs $76 breakeven"},
+        {"ticker": "MSTR", "short_strike": 280, "long_strike": 270, "expiration": "2027-01-15", "contracts": 1, "spread_width": 10, "thesis": "Bullish MSTR / BTC"},
+        {"ticker": "NOW", "short_strike": 150, "long_strike": 140, "expiration": "2027-01-15", "contracts": 3, "spread_width": 10},
+        {"ticker": "ZM", "short_strike": 140, "long_strike": 130, "expiration": "2027-01-15", "contracts": 3, "spread_width": 10},
+        {"ticker": "META", "short_strike": 950, "long_strike": 920, "expiration": "2027-03-19", "contracts": 1, "spread_width": 30, "thesis": "Bullish META"},
+        {"ticker": "ENVX", "short_strike": 20, "long_strike": 10, "expiration": "2027-01-15", "contracts": 2, "spread_width": 10},
+        {"ticker": "QXO", "short_strike": 37, "long_strike": 27, "expiration": "2027-01-15", "contracts": 1, "spread_width": 10},
+        {"ticker": "PFE", "short_strike": 42, "long_strike": 32, "expiration": "2027-01-15", "contracts": 1, "spread_width": 10},
+        {"ticker": "NBIS", "short_strike": 155, "long_strike": 145, "expiration": "2027-01-15", "contracts": 1, "spread_width": 10, "notes": "Closed in March (per CSV) — verify current status"}
+      ],
+      "bearish_call_credit_spreads": [
+        {"ticker": "CAVA", "short_strike": 35, "long_strike": 45, "expiration": "2027-01-15", "contracts": 3, "spread_width": 10, "thesis": "CAVA stays below $35 (user confirmed bearish)"}
+      ],
+      "bearish_put_debit_spreads": [
+        {"ticker": "CVNA", "long_strike": 200, "short_strike": 185, "expiration": "2026-05-15", "contracts": 1, "spread_width": 15, "max_profit_usd": 1500, "thesis": "CVNA falls below $185 by mid-May (user confirmed bearish put debit)"}
+      ],
+      "other_structures": [
+        {"ticker": "META", "structure": "long_strangle_or_complex", "expiration": "2027-01-15", "legs": ["long $800 call", "short $780 call", "long $860 put", "short $840 put"], "notes": "Complex structure — bullish call debit + bearish put debit (synthetic short straddle minus protection)"},
+        {"ticker": "META", "expiration": "2026-05-15", "legs": ["long 4× $860 put", "short 4× $850 put"], "structure": "bearish_put_debit_spread"},
+        {"ticker": "AMKR", "structure": "covered_call_plus_put_collar", "legs": ["short $70 call 1/15/27", "long $50 call 3/20/26 (likely expired)", "short $55 put 6/18/26", "long $60 put 6/18/26"]},
+        {"ticker": "AMKR", "long_strike": 50, "short_strike": 55, "expiration": "2028-01-21", "contracts": 1, "structure": "bullish_call_debit_spread", "spread_width": 5},
+        {"ticker": "GRAB", "short_strike": 5, "expiration": "2026-07-17", "contracts": 2, "structure": "covered_calls", "notes": "Covered by 600 sh GRAB"},
+        {"ticker": "SLB", "short_strike": 57.50, "expiration": "2026-09-18", "contracts": 1, "structure": "covered_call", "notes": "Covered by 100 sh SLB"},
+        {"ticker": "SOFI", "structure": "short_strangle", "legs": ["short $23 call 5/29/26", "short $30 put 6/18/26"], "notes": "Covered call + cash-secured put on 100 SOFI"},
+        {"ticker": "AAL", "structure": "synthetic_put", "legs": ["short 100 sh AAL", "long $12 6/18/26 call"], "notes": "Bearish AAL bet with capped upside loss"},
+        {"ticker": "BITF", "long_strike": 5, "expiration": "2028-01-21", "contracts": 1, "structure": "long_call"},
+        {"ticker": "KEEL", "long_strike": 5, "expiration": "2028-01-21", "contracts": 1, "structure": "long_call"},
+        {"ticker": "SANA", "long_strike": 5, "expiration": "2028-01-21", "contracts": 1, "structure": "long_call"},
+        {"ticker": "WYFI", "long_strike": 40, "short_strike": 45, "expiration": "2026-05-15", "contracts": 1, "structure": "near_zero_debit_spread", "notes": "Effectively expired worthless"}
+      ],
+      "closed_recently_user_confirmed": [
+        {"ticker": "GOOG", "structure": "bearish_call_credit_spread", "strikes": "200/205", "expiration": "2027-01-15", "realized_loss_usd": -408, "closed_date": "2026-03-09", "notes": "Closed deep ITM"},
+        {"ticker": "NVDA", "structure": "bearish_call_credit_spread", "strikes": "160/165", "expiration": "2027-01-15", "realized_loss_usd": null, "notes": "Closed, was deep ITM at NVDA $209"},
+        {"ticker": "META", "structure": "bullish_call_debit_spread", "strikes": "780/800", "expiration": "2027-01-15", "realized_loss_usd": -496, "closed_date": "2026-03-09"}
+      ]
+    }
+  },
+
+  "consolidated_exposures": {
+    "by_ticker_top_concentrations": [
+      {
+        "ticker": "HOOD",
+        "total_exposure_usd": 17800,
+        "pct_of_portfolio": 24.4,
+        "components": [
+          {"account": "SoFi", "type": "100 shares", "value_usd": 7059},
+          {"account": "Roth", "type": "100 shares", "value_usd": 6931},
+          {"account": "Roth", "type": "long $85 1/21/28 LEAP", "value_usd": 2108},
+          {"account": "Roth", "type": "short $85 6/18/26 covered call", "value_usd": -353},
+          {"account": "Individual", "type": "15 shares", "value_usd": 1040},
+          {"account": "Individual", "type": "13× $200/$210 1/21/28 + 1× $140/$145 1/21/28 debit spreads", "value_usd": 630}
+        ],
+        "risk_flag": "OVER_CONCENTRATED",
+        "target_pct": 18,
+        "action": "Trim to 18% via not adding more, then via covered call assignments if HOOD spikes"
+      },
+      {
+        "cluster_name": "AI_INFRASTRUCTURE_CLUSTER",
+        "tickers": ["WULF", "CIFR", "BTBT_WYFI_portion", "NBIS", "CRWV", "IREN", "AMKR", "PLAB", "NVDA"],
+        "estimated_total_exposure_usd": 12500,
+        "pct_of_portfolio": 17.1,
+        "categorization_note": "RECATEGORIZED 4/29/26: WULF + CIFR moved here from crypto cluster. Both are now contracted-revenue HPC/AI infrastructure plays with hyperscaler backlogs ($12.8B WULF, $9.3B CIFR). BTBT's WhiteFiber (WYFI) stake also belongs here.",
+        "risk_flag": "CONCENTRATED_AI_CAPEX_CYCLE",
+        "action": "This is your largest thematic bet. Diversify with VRT (data center power/cooling) at 3-5%. Don't add more concentrated single names."
+      },
+      {
+        "cluster_name": "PURE_CRYPTO_EXPOSURE",
+        "tickers": ["BMNR_equity_and_spreads", "BTBT_ETH_portion", "BMNU", "MARA_spreads", "BITF_long_call", "GLXY_spread", "MSTR_spread", "SBET"],
+        "estimated_total_exposure_usd": 5500,
+        "pct_of_portfolio": 7.5,
+        "categorization_note": "TRUE crypto bets: ETH treasury exposure (BMNR, BTBT-ETH portion) + miners that haven't pivoted (MARA, BITF) + speculative crypto spreads. Down from previously-overestimated 12% after WULF/CIFR/BTBT-WYFI moved to AI infra.",
+        "risk_flag": "CORRELATED_BETA_REDUCED",
+        "action": "Manageable size. BMNU = TLH now. CLSK = small catalyst-trade position. BMNR + BTBT-ETH stay as ETH-recovery bets."
+      },
+      {
+        "cluster_name": "CLSK_SPECULATIVE_CATALYST",
+        "tickers": ["CLSK"],
+        "estimated_exposure_usd": 1900,
+        "pct_of_portfolio": 2.6,
+        "categorization_note": "The only major miner without HPC/AI deal. ~1 GW capacity. Asymmetric: deal announcement = 2-3x re-rate; no deal = slow decay. Hold at 2-3%, set price alerts, decide by Q4 2026.",
+        "action": "HOLD as catalyst trade. Don't add, don't sell. Re-evaluate at Q3 earnings."
+      },
+      {
+        "cluster_name": "GEOPOLITICAL_ENERGY_HEDGE",
+        "tickers": ["VG", "SLB"],
+        "estimated_exposure_usd": 8300,
+        "pct_of_portfolio": 11.4,
+        "categorization_note": "RECATEGORIZED 4/29/26: VG and SLB both incorrectly labeled speculative. These are structural energy infrastructure positions with multi-year/decade catalysts.",
+        "vg_thesis": "Iran-Qatar LNG disruption (Mar 2026, 17% Qatar capacity destroyed, 5+ year recovery) created structural supply gap. VG = 2nd largest US LNG exporter going to #1, has 'largest available incremental LNG capacity in the world' (CEO Sabel statement). 49 MTPA contracted. Plaquemines volumes +240% YoY. CP2 Phase 2 FID with $20.7B financed. Morgan Stanley overweight, PT $22 (from $8). Goldman PT $18.50 vs current $15.76.",
+        "slb_thesis": "Schlumberger — Venezuela rebuild catalyst (Maduro captured Jan 2026, Chevron-PDVSA asset swap, decades of infrastructure work needed). $8B ChampionX acquisition integrated. CEO Le Peuch proven operator (Russia exit + Venezuela preservation). $4B returned to shareholders 2025. 2.23% dividend, 1.2x net debt/EBITDA. Active in 100+ countries — drilling, completion, pipelines, reservoir mapping, emissions tech.",
+        "action": "HOLD/ADD both on dips. VG already running covered calls — continue. SLB short $57.50 9/18/26 covered call collecting premium. Consider adding 50-100 sh SLB on pullbacks to $48-50 zone. This cluster is the SINGLE BEST diversifier vs the AI/fintech/crypto book — different macro drivers (geopolitics + commodity cycle + supply constraints) than rest of portfolio.",
+        "growth_target_pct": "12-15% (currently 11.4%)"
+      }
+    ],
+    "underweight_core_compounders": [
+      {"ticker": "GOOGL/GOOG", "current_value_usd": 1435, "current_pct": 1.97, "target_pct": 10, "gap_usd": 5900, "priority": "HIGHEST", "notes": "Reduced from 15% target due to antitrust + AI-search disruption risk"},
+      {"ticker": "NVDA", "current_value_usd": 1046, "current_pct": 1.43, "target_pct": 7, "gap_usd": 4100, "priority": "HIGH", "notes": "Reduced from 10% — 'largest company in world' historically underperforms next decade"},
+      {"ticker": "MSFT_underlying", "current_value_usd": 0, "current_pct": 0, "target_pct": 4, "gap_usd": 2900, "notes": "Currently only via LEAPs spread; add base equity"},
+      {"ticker": "AMZN_underlying", "current_value_usd": 9, "current_pct": 0, "target_pct": 4, "gap_usd": 2900, "notes": "Currently only via LEAPs spread"},
+      {"ticker": "SCHG_or_QQQM", "current_value_usd": 0, "current_pct": 0, "target_pct": 13, "gap_usd": 9500, "notes": "Increased from 5% to absorb GOOGL+NVDA risk transfer; ETF anchor for diversification"}
+    ],
+    "sector_gap_fills_must_haves": [
+      {
+        "sector": "Consumer Staples",
+        "current_pct": 0,
+        "target_pct": 5,
+        "target_value_usd": 3650,
+        "rationale": "ZERO staples exposure — biggest portfolio gap. Provides ballast in drawdowns when AI/fintech/crypto correlate down together. Lowest historical drawdown of any sector.",
+        "candidates": ["VDC ETF (Vanguard Consumer Staples, 0.10% ER)", "COST (Costco — 14-15% earnings CAGR)", "PG/KO/MDLZ as alternatives"],
+        "priority": "MUST_HAVE",
+        "note": "SMPL is NOT consumer staples ballast — it's a single-name speculative bet that's down 30%. Don't conflate."
+      },
+      {
+        "sector": "Healthcare",
+        "current_pct": 5,
+        "current_composition_note": "Current 'healthcare' is broken bets (NVO down 70%, HIMS spread, PFE 1 sh, UNH spread). NOT real healthcare exposure.",
+        "target_pct": 8,
+        "target_value_usd": 5840,
+        "rationale": "Aging demographics + AI in drug discovery = structural tailwind. Lower volatility than tech. 13% of S&P 500.",
+        "candidates": ["UNH (just topped Q1 2026 estimates, hiked outlook)", "LLY (GLP-1 winner taking NVO share)", "VHT/XLV ETFs as simpler diversified play"],
+        "priority": "MUST_HAVE"
+      },
+      {
+        "sector": "Industrial Power/Cooling (AI infrastructure picks-and-shovels)",
+        "current_pct": 0,
+        "target_pct": 3,
+        "target_value_usd": 2200,
+        "rationale": "VRT (Vertiv) makes the data center power and cooling that NVDA chips literally cannot run without. Diversifies AI exposure beyond chip-makers.",
+        "candidates": ["VRT", "ETN (Eaton)"],
+        "priority": "NICE_TO_HAVE"
+      },
+      {
+        "sector": "International developed",
+        "current_pct": 0,
+        "target_pct": 5,
+        "target_value_usd": 3650,
+        "rationale": "USD strong dollar reversion likely; international P/E ~30% cheaper than US. No European/Japanese exposure currently.",
+        "candidates": ["VXUS", "VEA"],
+        "priority": "NICE_TO_HAVE"
+      }
+    ]
+  },
+
+  "realized_pnl": {
+    "robinhood_individual": {
+      "ytd_2026_usd": 2155.76,
+      "lifetime_since_2024_2025_usd": -505.56,
+      "ytd_top_winners": [
+        {"ticker": "CIFR", "trades": 18, "realized_usd": 1158.35, "pct": 49.42},
+        {"ticker": "WULF", "trades": 18, "realized_usd": 1010.31, "pct": 192.21},
+        {"ticker": "ENPH", "trades": 7, "realized_usd": 707.01, "pct": 231.81},
+        {"ticker": "SLV", "trades": 4, "realized_usd": 677.76, "pct": 6.61}
+      ],
+      "lifetime_top_winners": [
+        {"ticker": "SOFI", "trades": 97, "realized_usd": 2691.62, "pct": 24.48},
+        {"ticker": "CIFR", "trades": 71, "realized_usd": 1815.34, "pct": 305.00},
+        {"ticker": "WULF", "trades": 41, "realized_usd": 1569.31, "pct": 239.09},
+        {"ticker": "HOOD", "trades": 63, "realized_usd": 1533.56, "pct": 1.50}
+      ],
+      "lifetime_hims": {"trades": 6, "realized_usd": -20.22, "pct": -0.20, "notes": "Net flat across all closed HIMS cycles"}
+    },
+    "roth_ira_q1_2026": {
+      "net_premium_collected_usd": 6873.75,
+      "annualized_run_rate_usd": 27495,
+      "notes": "Includes the +$8,400 from HOOD short-call closes in April"
+    },
+    "sofi": {
+      "tax_year_2025_total_usd": -254.07,
+      "wash_sale_disallowed_2025_usd": 1249.95
+    },
+    "lifetime_combined_taxable_realized_usd": -760,
+    "ytd_2026_combined_realized_usd_estimate": 4500,
+    "interpretation": "Two-year lifetime essentially breakeven across taxable accounts. Q1 2026 inflecting positive. Roth premium engine working but offsets vary."
+  },
+
+  "strategy_rules": {
+    "ROTH_LEVEL_2_CONSTRAINT": {
+      "permitted_in_roth": ["long calls (incl LEAPs)", "long puts", "covered calls", "cash-secured puts"],
+      "NOT_permitted_in_roth": ["vertical spreads (debit OR credit)", "iron condors", "iron butterflies", "any multi-leg requiring margin"],
+      "implication": "Credit-spread cycling MUST stay in Individual account (Level 3). Roth runs the WHEEL strategy + outright LEAPs. Original strategy doc was wrong on this."
+    },
+    "credit_spread_strategy": {
+      "description": "User runs high-credit, high-probability put credit spreads — IN INDIVIDUAL ACCOUNT ONLY (Roth can't do these)",
+      "credit_target_pct_of_width": "85%",
+      "profit_target_pct_of_credit": "40-50%",
+      "loss_handling": "Hold to expiration to cap at max loss (rather than panic-close at -1.5x credit pre-expiration)",
+      "position_sizing_target": "Max loss per trade ≤ 1-2% of net liquidation value",
+      "current_violations": "Some positions sized so pre-expiration close would exceed 5-6% of NLV",
+      "going_forward_rule": "Open new credit spreads ONLY in Individual account; manage existing Roth spreads to expiration (none should exist post-recategorization)"
+    },
+    "wheel_strategy_roth": {
+      "description": "The wheel — sell cash-secured puts, get assigned, sell covered calls, get called away, repeat. WORKS in Roth at Level 2.",
+      "primary_underlyings": ["TTD (already running)", "HOOD (already running)", "ZETA", "SOFI", "TLT (planned)", "BMNR (planned, sized small)"],
+      "tlt_wheel_specifics": {
+        "premium_per_cycle_usd": "80-120 (CSP $84) to 50-80 (CC $89-90)",
+        "annual_yield_pct": "12-18% on capital",
+        "share_dividend_yield_pct": 4.53,
+        "rationale": "Low IV, high liquidity, neg beta to stocks, dividend cushion"
+      },
+      "bmnr_wheel_specifics": {
+        "premium_per_cycle_usd": "400-800 (much higher IV)",
+        "annual_yield_pct": "60-100% potential",
+        "drawdown_risk": "-50% to -70% in extended crypto winter",
+        "max_position_size_pct": "5-7% of portfolio (1 contract = $3,500-4,500 capital)"
+      }
+    },
+    "tax_location_rules_corrected": {
+      "wheel_strategy_and_LEAPs": "Roth IRA (Level 2 permitted, tax-free assignments)",
+      "credit_spreads": "Individual account ONLY (Level 3 required, NOT permitted in Roth)",
+      "TLT_hedge": "Individual account preferred (30% margin requirement = capital efficient + offsets equity drawdowns)",
+      "high_volatility_growth": "Roth IRA (NVDA, TTD, ZETA, RDW, BMNR, BTBT)",
+      "long_term_compounders": "Taxable accounts (GOOGL, MSFT, AMZN, SCHG) for LTCG treatment + step-up at death",
+      "dividend_payers_high_yield": "Roth (escape dividend tax) — TLT, NVO, SLB",
+      "wash_sale_prevention": "Trade each name in only ONE account, OR wait 31 calendar days when crossing accounts. Selling calls + buying shares same day = wash sale (substantially identical)."
+    },
+    "risk_caps": {
+      "max_single_name_pct": 18,
+      "max_correlated_cluster_pct": 15,
+      "max_total_options_premium_at_risk_pct": 15,
+      "max_margin_debit_pct_of_nlv": 20,
+      "current_individual_account_margin_pct": 63
+    }
+  },
+
+  "wash_sale_tracker": {
+    "purpose": "Active TLH ledger — verify each ticker before any trade. Updated as harvests happen.",
+    "active_blackouts": [
+      {"ticker": "TLT", "harvest_date": "EXECUTED 2026-04-29 (both Roth and Individual)", "no_buy_through_date": "2026-05-30", "applies_to_all_accounts": true, "applies_to": "Shares + ANY calls + ANY puts", "note": "Selling calls then buying shares triggers wash sale. Fresh re-entry for TLT wheel after 5/30/26."},
+      {"ticker": "SBET", "harvest_date": "PLANNED 2026-04-29", "no_buy_through_date": "2026-05-30", "applies_to_all_accounts": true, "applies_to": "Shares + any options"},
+      {"ticker": "BMNU", "harvest_date": "PLANNED 2026-04-29", "no_buy_through_date": "2026-05-30", "applies_to_all_accounts": true, "applies_to": "BMNU only — BMNR is OK to buy (different CUSIP, not substantially identical)"},
+      {"ticker": "SMPL", "harvest_date": "PLANNED 2026-04-29 (changed from December)", "no_buy_through_date": "2026-05-30", "applies_to_all_accounts": true, "reload_decision_date": "2026-06-01", "reload_thesis": "If founder/buyback execution still intact, re-enter at then-prevailing price"}
+    ],
+    "deferred_blackouts": [
+      {"ticker": "PATH", "harvest_window": "Q3-Q4 2026 if Q2 earnings disappoint", "applies_to_all_accounts": true, "watch": "Held in both SoFi (119 sh) and Roth (200 sh) — would need full exit + 31 days"}
+    ],
+    "lessons_from_2025_disallowed_losses": [
+      {"ticker": "SANA", "year": 2025, "disallowed_usd": 39.60},
+      {"ticker": "SMPL", "year": 2025, "disallowed_usd": 445.36, "lesson": "Was the biggest single disallowed loss — sold in SoFi while buying in Robinhood"},
+      {"ticker": "SOFI", "year": 2025, "disallowed_usd": 12.74},
+      {"ticker": "TLRY", "year": 2025, "disallowed_usd": 22.21},
+      {"ticker": "BMNU", "year": 2025, "disallowed_usd": 724.92, "lesson": "BMNU loss disallowed by re-buying within window"}
+    ]
+  },
+
+  "tlh_execution_plan_revised": {
+    "philosophy": "REVISED 4/29/26 — moved from December batch to immediate execution. Reasons: (1) wasting-asset options (TLT, SBET) decay to zero by waiting; (2) BMNU has terminal decay path; (3) SMPL has buyback floor capping further downside, so loss is ~frozen at current levels; (4) 2026 YTD realized gains ($2,156) need offsetting losses NOW for 2026 tax efficiency.",
+    "immediate_harvest_4_29_26": [
+      {
+        "ticker": "BMNU",
+        "account": "SoFi",
+        "shares_sold": 500,
+        "expected_realized_loss_usd": -1684,
+        "wash_sale_window_through": "2026-05-30",
+        "do_not_buy": ["BMNU only — different from BMNR"],
+        "can_buy_same_day": ["BMNR shares (different CUSIP, not substantially identical)"],
+        "redeploy": "Either BMNR shares directly, or SCHG ETF, or hold cash 31 days"
+      },
+      {
+        "ticker": "SMPL",
+        "account": "SoFi",
+        "shares_sold": 200.096,
+        "expected_realized_loss_usd": -1136,
+        "wash_sale_window_through": "2026-05-30",
+        "do_not_buy": ["SMPL in any account, any options"],
+        "reload_decision_date": "2026-06-01",
+        "reload_thesis": "Founder Joe Scalzo + $500M buyback + Director Kilts $991K buy at $12.39 = thesis intact. Re-enter if conviction holds at June price."
+      },
+      {
+        "ticker": "TLT",
+        "account": "Robinhood Individual",
+        "options_sold": "All TLT $100 7/17/26 calls (10 contracts)",
+        "expected_realized_loss_usd": "300-500 (depending on cost basis)",
+        "wash_sale_window_through": "2026-05-30",
+        "status": "EXECUTED 2026-04-29 — user confirmed exit from both Roth and Individual",
+        "do_not_buy": ["TLT shares, TLT calls, TLT puts in ANY account during window — selling calls + buying shares = wash sale"],
+        "redeploy_after_window": "Buy TLT shares in Individual account (4.5% dividend, 30% margin requirement = capital efficient hedge). Start TLT wheel."
+      },
+      {
+        "ticker": "TLT",
+        "account": "Robinhood Roth",
+        "options_sold": "All TLT $100 1/15/27 calls (5 contracts)",
+        "tax_impact_usd": 0,
+        "status": "EXECUTED 2026-04-29 — user confirmed exit",
+        "note": "No tax benefit (Roth), but freed ~$330 of capital from a wasting asset",
+        "wash_sale_window_through": "2026-05-30 (still applies even in Roth)"
+      },
+      {
+        "ticker": "SBET",
+        "account": "Robinhood Individual",
+        "options_sold": "All SBET 1/15/27 options: 26× outright long $50 calls (mark $0.27, value $702) + 162× $50/$55 debit spreads (mark $0.03, value $486)",
+        "total_current_value_usd": 1188,
+        "total_cost_basis_usd_estimate": 2618,
+        "expected_realized_loss_usd": -1430,
+        "tax_benefit_at_24pct_usd": 343,
+        "wash_sale_window_through": "2026-05-30",
+        "do_not_buy": ["SBET shares or any SBET options through 5/30/26"],
+        "gtt_strategy_analysis": {
+          "current_gtt": "$0.06 on 162 spreads (target double from $0.03 cost = $972 if filled)",
+          "fill_probability_06": "~30% on volatility spike (SBET briefly $12-15)",
+          "fill_probability_20": "~12% on sustained rally (SBET sustained $20-25)",
+          "expected_value_06": "$146",
+          "expected_value_20": "$330",
+          "recommendation_if_holding": "Split: 81 contracts at $0.06 GTT + 81 contracts at $0.20 GTT for both vol-spike and moonshot capture",
+          "recommendation_if_harvesting": "Cancel GTT, sell at market today, take $343 tax benefit"
+        }
+      }
+    ],
+    "expected_totals": {
+      "total_realized_loss_usd_estimate": "-3,300 to -3,650",
+      "tax_savings_at_24pct_usd_estimate": "790-880",
+      "capital_freed_for_redeployment_usd": "approximately 4,800 (after BMNU $893 + SMPL $2,714 + TLT options $460 + SBET $200-400)"
+    },
+    "redeployment_plan_post_wash_sale": {
+      "after_2026_06_01": [
+        {"action": "Buy TLT shares in Individual account", "amount_usd": "1,500-2,500", "purpose": "Hedge + wheel substrate"},
+        {"action": "Buy BTBT shares in Roth", "amount_usd": "1,310 (1,000 sh × $1.31)", "purpose": "NAV-discount + WhiteFiber AI infra play (planned add)"},
+        {"action": "Begin healthcare/staples gap fill", "amount_usd": "500-1,000", "purpose": "VHT or VDC ETF anchors"},
+        {"action": "Optionally re-enter SMPL if thesis intact", "amount_usd": "1,500-2,000", "purpose": "Founder + buyback execution play"}
+      ]
+    },
+    "deferred_tlh_candidates": [
+      {"ticker": "PATH", "account": "SoFi + Roth", "expected_loss_usd": -644, "decision_date": "After Q2 earnings", "note": "Held in BOTH SoFi and Roth — would need full exit + 31 days. Less time-sensitive than wasting-asset options."}
+    ]
+  },
+
+  "wheel_strategy_targets": {
+    "tlt_wheel_individual": {
+      "starting_after": "2026-06-01 (post wash-sale)",
+      "capital_required_usd": 8400,
+      "cycle_mechanics": {
+        "step_1": "Sell cash-secured $84 put 30-45 DTE for $0.80-1.20 premium ($80-120/contract)",
+        "step_2": "If TLT >$84 at expiry: keep premium, repeat (~12 cycles/year)",
+        "step_3": "If assigned: own 100 sh at $84 effective $83 cost",
+        "step_4": "Sell covered $89-90 call 30-45 DTE for $0.50-0.80 premium",
+        "step_5": "If called away: capital gain + premium; if not: collect dividends + repeat"
+      },
+      "expected_annual_yield_pct": "12-18% (premiums + dividends + occasional cap gains)",
+      "alpaca_algo_extension": "Same TLT can run Keltner Channel mean-reversion strategy in Alpaca account on shares (not options). Buy lower band, sell upper band, 3% stop. Works in fixed income because rates oscillate."
+    },
+    "bmnr_wheel_roth": {
+      "starting": "Anytime",
+      "capital_required_usd": 3500,
+      "max_position_size_pct_of_book": 7,
+      "expected_annual_yield_pct": "60-100% (very high IV)",
+      "drawdown_risk_pct": "50-70% in extended crypto winter",
+      "sizing_rule": "1 contract MAX given existing crypto exposure; if assigned, manage as long-term ETH treasury position"
+    },
+    "ttd_wheel_roth_active": {
+      "current_state": "Already running. 200 sh TTD in Roth, 100 encumbered as collateral for short $27.50 9/18/26 call.",
+      "next_action": "Consider selling 30-45 DTE call on the unencumbered 100 shares for $200-400 additional premium",
+      "current_short_call_status": "Mark $3.85, total return -29.63% on the option (TTD rallying threatens the position; theta will help if TTD <$27.50)"
+    },
+    "nvo_wheel_individual_planned": {
+      "context": "100 sh NVO at $80 cost basis, currently $36.75 (deep underwater)",
+      "instead_of_outright_add": "Sell $35 cash-secured put 30-45 DTE for ~$1 premium ($100/contract). If assigned, average down to $34 effective cost (better than buying at $40). If not assigned, collect premium and repeat.",
+      "covered_call_overlay": "Sell $42.50 call 30-45 DTE on existing 100 sh for $1-1.50 premium ($100-150/contract)",
+      "rationale": "Generate income on dead capital while turnaround thesis develops"
+    },
+    "pfe_wheel_roth_planned": {
+      "context": "PFE at ~$27, healthcare exposure under $50 per user request",
+      "capital_required_usd": 2700,
+      "where": "Roth IRA (NOT Individual — user already has PFE bull put credit spread + long $35 call in Individual; Roth keeps clean from wash-sale risk)",
+      "cycle_mechanics": {
+        "step_1_csp": "Sell $26 cash-secured put 30-45 DTE for $0.40-0.70 premium ($40-70/contract)",
+        "step_2_assigned": "If assigned, own 100 sh at $26 effective $25.60 cost; collect 6.37% dividend (~$172/yr) while waiting",
+        "step_3_cc": "Sell $28 covered call 30-45 DTE for $0.35-0.60 premium ($35-60/contract)",
+        "step_4_repeat": "If called away above $28: capital gain + premium; if not, collect dividend + repeat covered call"
+      },
+      "expected_annual_yield_pct": "15-20% (premiums + dividends + occasional capital gains)",
+      "risk_factor": "Trump tariff overhang on drugmakers — 100% tariffs floated for those without pricing deals. High dividend reflects political risk. Sized 1-2 contracts (5-7% of book) appropriate.",
+      "fills_sector_gap": "Healthcare currently 0% real exposure; PFE wheel gets us to ~4% with income"
+    }
+  },
+
+  "planning_inputs_for_1m_target": {
+    "starting_value_usd": 73000,
+    "target_value_usd": 1000000,
+    "horizon_years": 10,
+    "annual_contribution_usd": 7725,
+    "sustainable_option_income_base_case_usd": 12000,
+    "sustainable_option_income_stretch_case_usd": 18000,
+    "required_cagr_at_base_case_income_pct": 22,
+    "required_cagr_at_stretch_case_income_pct": 18,
+    "required_cagr_no_option_income_pct": 25.5,
+    "realistic_target_range_usd": "700000-850000",
+    "stretch_goal_usd": 1000000,
+    "stretch_conditions": [
+      "Option income inflects to net +$15-20k/yr from current breakeven",
+      "Equity book averages 18-20% CAGR",
+      "No major drawdowns (>30%) timed badly",
+      "Annual contributions raised with IRA limit increases"
+    ]
+  },
+
+  "immediate_action_items": [
+    {"priority": 1, "action": "EXECUTE TLH BATCH TODAY/THIS WEEK: Sell BMNU (500 sh, ~$1,684 loss), SMPL (200 sh, ~$1,136 loss), all TLT calls in both accounts (~$300-500 loss in Individual + free up $330 in Roth), all SBET spreads (~$130-330 loss).", "tax_impact": "Realized loss ~$3,300-3,650; tax savings ~$790-880 at 24% bracket", "wash_sale_window_through": "2026-05-30"},
+    {"priority": 2, "action": "Calendar wash-sale blackouts: TLT, SBET, BMNU, SMPL — no buying any of these (shares OR options) in any account through 5/30/26", "where": "All accounts"},
+    {"priority": 3, "action": "✅ COMPLETED 2026-04-29: Liquidated TSLY (40 sh, ~$1,200) — yield trap, NAV decay caps even moonshot upside", "where": "Roth"},
+    {"priority": 4, "action": "✅ COMPLETED 2026-04-29: Liquidated TSLZ (30 sh on loan, ~$476) — leveraged inverse decay guaranteed", "where": "Roth"},
+    {"priority": 5, "action": "Buy 1,000 sh BTBT in Roth (~$1,310) — sum-of-parts thesis: ETH treasury + 70.4% WhiteFiber AI infra stake at 52% NAV discount", "sizing": "1.8% of book = appropriate speculative bucket", "where": "Roth"},
+    {"priority": 6, "action": "Begin scaling GOOGL ($1,435 → $7k+) and NVDA ($1,046 → $5k+) over 6-12 months via monthly Roth contributions. Lower targets than original plan due to antitrust + 'largest company' headwinds", "where": "Roth primarily"},
+    {"priority": 7, "action": "Add SCHG ETF anchor — start with $500-1000 from cash. Increased target from 5% → 13% of book to absorb GOOGL/NVDA risk transfer", "where": "Roth or SoFi"},
+    {"priority": 8, "action": "MUST-HAVE GAP FILL: Add VHT (healthcare) and VDC (consumer staples) ETFs over 18 months. Currently zero real exposure to either sector. ~$3,000 each over 18 months.", "where": "Roth", "rationale": "Portfolio ballast for inevitable AI/fintech/crypto correlated drawdown"},
+    {"priority": 9, "action": "Pay down Individual margin debit by ~$2k from realized profits this quarter (target -$10k by July)", "where": "Individual"},
+    {"priority": 10, "action": "POST-WASH-SALE 6/1/26: Buy TLT shares in Individual ($1,500-2,500), start TLT wheel strategy", "where": "Individual"},
+    {"priority": 11, "action": "POST-WASH-SALE 6/1/26: Decide on SMPL re-entry based on then-prevailing thesis (founder + buyback execution)"},
+    {"priority": 12, "action": "Consider BMNR wheel in Roth — 1 contract max, $3,500-4,500 capital, 60-100% IV-driven yield potential but accept 50-70% drawdown risk in extended crypto winter"},
+    {"priority": 13, "action": "Set GTC sell order: SBET $0.06/contract = double from $0.03 cost (+$531 realized) — IF still holding after TLH decision"},
+    {"priority": 14, "action": "HOLD HIMS, CRWV, IREN credit spreads to expiration — high credit collected means max loss is small (~$340 + $300 + $145 combined)"},
+    {"priority": 15, "action": "Consider NVO wheel: sell $35 CSP 30-45 DTE on existing 100 sh + sell $42.50 covered call. Generate income on underwater turnaround position rather than averaging down."},
+    {"priority": 16, "action": "Stop opening NEW credit spreads in Individual until margin debit <$10k. Existing spreads run to expiration."},
+    {"priority": 17, "action": "Recategorize CIFR/WULF mentally: AI infrastructure plays, NOT crypto miners. Don't reduce these as part of 'crypto consolidation' — they belong with NBIS/CRWV/IREN."},
+    {"priority": 18, "action": "Sell sub-$300 clutter in Individual: AMZN frac, BRK.A frac, OSS frac, NEE, OGZPY, AZREF, SBRCY, FRCB, QS dust, MAPS, VLN. ~$500 freed."},
+    {"priority": 19, "action": "Recategorize VG and SLB as GEOPOLITICAL_ENERGY_HEDGE — these are structural multi-year positions, NOT speculative. Single best diversifier vs AI/fintech/crypto book.", "rationale": "VG: Iran-Qatar disruption + LNG capacity dominance (MS PT $22). SLB: Venezuela rebuild + ChampionX + 100-country operations."},
+    {"priority": 20, "action": "Consider adding 50-100 sh SLB on pullbacks to $48-50 zone (if energy cycle pulls back). Target cluster growth from 11.4% → 12-15% of book.", "where": "Individual or Roth"}
+  ]
+}
+

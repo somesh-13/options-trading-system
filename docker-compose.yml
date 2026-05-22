@@ -1,0 +1,226 @@
+# VegaEdge — full Docker stack.
+#
+#  ingress: nginx-proxy-manager (host :80, admin UI :81)
+#  app:     frontend (Next.js) + 5 Python services (one image, different CMDs)
+#  data:    postgres + mongo + redis
+#
+# Bring-up:
+#   cp .env.docker .env        # adjust secrets in .env.local for app keys
+#   docker compose build
+#   docker compose up -d
+#   # then visit http://localhost:81 to log into NPM and create the proxy
+#   # hosts (see infra/npm/README.md).
+
+name: vegaedge
+
+x-backend-image: &backend-image
+  build:
+    context: ./backend
+  image: vegaedge/backend:latest
+  restart: unless-stopped
+  env_file:
+    - .env.docker
+  depends_on:
+    postgres:
+      condition: service_healthy
+    mongo:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  networks:
+    - edge
+    - data
+  healthcheck:
+    test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 5s
+    start_period: 30s
+    retries: 3
+
+services:
+  # =========================================================================
+  # Edge — Nginx Proxy Manager (single entrypoint, GUI on :81)
+  # =========================================================================
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: vegaedge_npm
+    restart: unless-stopped
+    ports:
+      - "80:80"      # public HTTP
+      - "81:81"      # admin UI
+      - "443:443"    # reserved for future TLS
+    volumes:
+      - ./infra/npm/data:/data
+      - ./infra/npm/letsencrypt:/etc/letsencrypt
+      - ./infra/npm/logs:/data/logs
+    networks:
+      - edge
+    healthcheck:
+      test: ["CMD", "/bin/check-health"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+
+  # =========================================================================
+  # Frontend — Next.js standalone
+  # =========================================================================
+  frontend:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_PRICING_API_URL: ""
+    image: vegaedge/frontend:latest
+    container_name: vegaedge_frontend
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: npm
+      NODE_ENV: production
+      # Next.js standalone defaults `HOSTNAME` to the container's hostname,
+      # which makes it bind only to the bridge IP and break the in-container
+      # healthcheck (and any same-host requests). Force all-interfaces bind.
+      HOSTNAME: 0.0.0.0
+    networks:
+      - edge
+    expose:
+      - "8080"
+
+  # =========================================================================
+  # Backend services — same image, different SERVICE_NAME (drives entry.py
+  # route filter) and different CMD for engine-worker.
+  # =========================================================================
+  pricing-api:
+    <<: *backend-image
+    container_name: vegaedge_pricing_api
+    environment:
+      SERVICE_NAME: pricing-api
+    expose:
+      - "8080"
+
+  data-api:
+    <<: *backend-image
+    container_name: vegaedge_data_api
+    environment:
+      SERVICE_NAME: data-api
+    expose:
+      - "8080"
+
+  portfolio-api:
+    <<: *backend-image
+    container_name: vegaedge_portfolio_api
+    environment:
+      SERVICE_NAME: portfolio-api
+    # Existing SQLite + cache + broker CSVs are mounted in until per-module
+    # cutover to Postgres/Mongo is complete. Long-form syntax used because
+    # the broker dirs have spaces in their names ("hood reports", "sofi reports").
+    volumes:
+      - type: bind
+        source: ./backend/trades.db
+        target: /app/trades.db
+      - type: bind
+        source: ./backend/.cache
+        target: /app/.cache
+      - type: bind
+        source: ./hood reports
+        target: /app/hood reports
+        read_only: true
+      - type: bind
+        source: ./sofi reports
+        target: /app/sofi reports
+        read_only: true
+    expose:
+      - "8080"
+
+  llm-api:
+    <<: *backend-image
+    container_name: vegaedge_llm_api
+    environment:
+      SERVICE_NAME: llm-api
+    expose:
+      - "8080"
+
+  engine-worker:
+    <<: *backend-image
+    container_name: vegaedge_engine_worker
+    environment:
+      SERVICE_NAME: engine-worker
+    volumes:
+      - type: bind
+        source: ./backend/trades.db
+        target: /app/trades.db
+      - type: bind
+        source: ./backend/.cache
+        target: /app/.cache
+    # Override CMD: no HTTP, just the scheduler.
+    command: ["python", "-m", "engine.worker_main"]
+    # Worker has no HTTP server and python:3.11-slim has no pgrep. Use the
+    # cmdline of PID 1 (Python re-execs itself as PID 1 here) as the liveness
+    # probe — it stays available as long as the worker process is the entrypoint.
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q engine.worker_main /proc/1/cmdline"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # =========================================================================
+  # Data layer
+  # =========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: vegaedge_postgres
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    container_name: vegaedge_mongo
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    volumes:
+      - mongo_data:/data/db
+      - ./infra/mongo/init.js:/docker-entrypoint-initdb.d/01-init.js:ro
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: vegaedge_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  edge:
+    driver: bridge
+  data:
+    driver: bridge
+    internal: false   # set true once DBs only need internal reach (no migrate exec)
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:

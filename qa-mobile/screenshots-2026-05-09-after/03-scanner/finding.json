@@ -1,0 +1,13 @@
+{
+  "route": "/scanner",
+  "status": 200,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "overflow": {
+    "scrollWidth": 848,
+    "innerWidth": 848,
+    "overflow": 0
+  },
+  "tabsClicked": [],
+  "notes": []
+}

@@ -111,7 +111,79 @@ def start_scheduler() -> AsyncIOScheduler:
 
     sched.start()
     log.info("Scheduler started with jobs: %s", [j.id for j in sched.get_jobs()])
+    _maybe_hydrate_flow_on_boot(sched)
     return sched
+
+
+# Threshold for considering the flow snapshot fresh on boot. Friday's 16:05 ET
+# snapshot is ~64h old by Monday morning, so >24h triggers a Monday hydrate
+# but a same-day restart after a successful snapshot is skipped.
+_FLOW_BOOT_STALE_HOURS = 24.0
+# A "real" snapshot fans out to the full watchlist (~30 defaults + RH holdings).
+# Anything below this is treated as degenerate (e.g. a manual single-ticker
+# CLI run) and re-hydrated even when fresh by age.
+_FLOW_BOOT_MIN_TICKERS = 5
+
+
+def _maybe_hydrate_flow_on_boot(sched: AsyncIOScheduler) -> None:
+    """Queue an immediate `run_flow_snapshot` when the DB has no fresh data.
+
+    Prevents the /flow page being stuck on stale (or single-ticker manual)
+    snapshots after a backend restart in the hours before the 16:05 ET cron.
+    Also re-hydrates if the latest snapshot only covered a handful of tickers
+    (degenerate manual runs leave the page looking broken).
+    """
+    try:
+        from data.option_snapshots import latest_snapshot_age_hours, latest_snapshot_ticker_count
+        age = latest_snapshot_age_hours()
+        ticker_count = latest_snapshot_ticker_count()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("flow snapshot hydrate on boot: age check failed: %s", exc)
+        age = None
+        ticker_count = 0
+
+    fresh = age is not None and age <= _FLOW_BOOT_STALE_HOURS
+    full = ticker_count >= _FLOW_BOOT_MIN_TICKERS
+    if fresh and full:
+        log.info(
+            "flow snapshot hydrate on boot: age=%.1fh tickers=%d; skipping",
+            age, ticker_count,
+        )
+        return
+
+    age_repr = f"{age:.1f}h" if age is not None else "None"
+    log.info(
+        "flow snapshot hydrate on boot: age=%s tickers=%d; queueing run_flow_snapshot",
+        age_repr, ticker_count,
+    )
+    sched.add_job(
+        run_flow_snapshot,
+        trigger="date",
+        run_date=datetime.now(timezone.utc),
+        id="flow_snapshot_hydrate_boot",
+        replace_existing=True,
+    )
+
+
+def queue_flow_snapshot_run() -> str:
+    """Submit a one-shot `run_flow_snapshot` to the running scheduler.
+
+    Used by the `POST /api/flow/snapshot/run` endpoint so the ~2-minute
+    snapshot fans out on APScheduler's thread executor instead of blocking
+    the request worker. Returns the assigned job id.
+    """
+    sched = get_scheduler()
+    if not sched.running:
+        sched.start()
+    job_id = f"flow_snapshot_manual_{int(datetime.now(timezone.utc).timestamp())}"
+    sched.add_job(
+        run_flow_snapshot,
+        trigger="date",
+        run_date=datetime.now(timezone.utc),
+        id=job_id,
+        replace_existing=True,
+    )
+    return job_id
 
 
 def stop_scheduler() -> None:

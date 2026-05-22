@@ -181,11 +181,13 @@ export function HoldingsTable({ equities }: { equities: RobinhoodHolding[] }) {
             <tr>
               {COLUMNS.map((col) => {
                 const active = sortKey === col.key;
+                const isSymbol = col.key === 'symbol';
                 return (
                   <th
                     key={col.key}
                     onClick={() => onHeaderClick(col.key)}
                     aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    className={isSymbol ? 'rv-sticky-col' : undefined}
                     style={{
                       textAlign: col.align,
                       cursor: 'pointer',
@@ -210,7 +212,7 @@ export function HoldingsTable({ equities }: { equities: RobinhoodHolding[] }) {
             )}
             {sorted.map((h) => (
               <tr key={`${h.symbol}-${h.account}`}>
-                <td>
+                <td className="rv-sticky-col">
                   <Link
                     href={stockHref(h.symbol)}
                     data-testid={`equity-link-${h.symbol}`}

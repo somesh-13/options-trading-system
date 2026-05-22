@@ -1,16 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlowLeaderboard } from '@/components/flow/FlowLeaderboard';
 import { FlowContractTable } from '@/components/flow/FlowContractTable';
 import {
   getFlowScan,
   getTickerFlow,
+  triggerFlowSnapshot,
   type FlowScanResponse,
   type FlowTickerResponse,
 } from '@/lib/flow-api';
 
 const REFRESH_MS = 5 * 60_000; // 5 min — snapshot job runs once a day
+const POST_SCAN_REFRESH_MS = 150_000; // ~2.5 min: ample for a 76-ticker × 1.5s fan-out
 
 export default function FlowPage() {
   const [scan, setScan] = useState<FlowScanResponse | null>(null);
@@ -19,6 +21,9 @@ export default function FlowPage() {
   const [detail, setDetail] = useState<FlowTickerResponse | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [scanning, setScanning] = useState(false);
+  const [scanSummary, setScanSummary] = useState<string | null>(null);
+  const scanRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadScan = useCallback(async () => {
     try {
@@ -39,6 +44,29 @@ export default function FlowPage() {
     const id = setInterval(loadScan, REFRESH_MS);
     return () => clearInterval(id);
   }, [loadScan]);
+
+  useEffect(() => () => {
+    if (scanRefreshTimer.current) clearTimeout(scanRefreshTimer.current);
+  }, []);
+
+  const onScan = useCallback(async () => {
+    if (scanning) return;
+    setScanning(true);
+    setScanSummary(null);
+    try {
+      const r = await triggerFlowSnapshot();
+      setScanSummary(`queued ${r.tickers} tickers — refreshing in ~2 min`);
+      if (scanRefreshTimer.current) clearTimeout(scanRefreshTimer.current);
+      scanRefreshTimer.current = setTimeout(() => {
+        loadScan();
+        setScanSummary(null);
+      }, POST_SCAN_REFRESH_MS);
+    } catch (e) {
+      setScanSummary(`scan failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setScanning(false);
+    }
+  }, [loadScan, scanning]);
 
   useEffect(() => {
     if (!selected) {
@@ -68,7 +96,24 @@ export default function FlowPage() {
     <main className="min-h-screen bg-[#1E1E1E] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <header className="mb-4 sm:mb-6">
-          <h2 className="rv-h1">Flow</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="rv-h1">Flow</h2>
+            <button
+              type="button"
+              onClick={onScan}
+              disabled={scanning}
+              className="rv-btn ghost"
+              style={{ fontSize: 11, padding: '4px 10px' }}
+              title="Re-run the option-chain snapshot across the full watchlist"
+            >
+              {scanning ? '…' : '↻ scan now'}
+            </button>
+            {scanSummary && (
+              <span style={{ fontSize: 11, color: 'var(--ink-mute)', fontFamily: "'JetBrains Mono', monospace" }}>
+                {scanSummary}
+              </span>
+            )}
+          </div>
           <div className="rv-sub">
             Premium-ranked options activity from the daily 16:05 ET snapshot.
             {scan?.snapshot_at && (

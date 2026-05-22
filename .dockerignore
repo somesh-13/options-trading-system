@@ -1,5 +1,32 @@
 node_modules
 .next
-backend
-.env.local
 .git
+.env.local
+.env*.local
+
+# Backend artefacts (re-included selectively via backend/Dockerfile COPY rules)
+backend/venv
+backend/.venv
+backend/.cache
+backend/trades.db*
+backend/logs
+backend/backend.nohup.out
+backend/.run
+
+# Repo-level cruft we don't need inside images
+.run
+qa-mobile
+sweep-results
+test-results
+playwright-report
+screenshots*
+*.md
+!CLAUDE.md
+*.log
+nohup.out
+tsconfig.tsbuildinfo
+hood reports
+sofi reports
+backtest_results_*.csv
+daily_backtest_*.csv
+revamp-handoff.zip

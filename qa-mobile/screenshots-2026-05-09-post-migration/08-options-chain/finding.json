@@ -1,0 +1,17 @@
+{
+  "route": "/options-chain",
+  "status": 200,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "overflow": {
+    "scrollWidth": 506,
+    "innerWidth": 506,
+    "overflow": 0
+  },
+  "tabsClicked": [
+    "Individual"
+  ],
+  "notes": [
+    "tab[1] Roth_IRA: locator.click: Timeout 5000ms exceeded."
+  ]
+}

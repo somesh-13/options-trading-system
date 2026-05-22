@@ -201,6 +201,49 @@ def snapshot_watchlist(
 # Read helpers for the /flow page + detectors
 # ---------------------------------------------------------------------------
 
+def latest_snapshot_age_hours() -> Optional[float]:
+    """Return age in hours of the newest `option_chain_snapshot` row globally.
+
+    `None` when the table is empty. Used by the boot-time hydrate check and
+    the `/api/flow/snapshot/run` response.
+    """
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT MAX(snapshot_at) AS latest FROM option_chain_snapshot"
+    ).fetchone()
+    latest = row["latest"] if row else None
+    if not latest:
+        return None
+    try:
+        ts = datetime.fromisoformat(latest)
+    except ValueError:
+        return None
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - ts).total_seconds() / 3600.0
+
+
+def latest_snapshot_ticker_count() -> int:
+    """Count distinct tickers in the most recent snapshot batch.
+
+    Boot hydrate uses this to detect a degenerate single-ticker manual run
+    (e.g. `python -m data.option_snapshots --ticker AAPL`) and re-hydrate
+    even when that row is technically fresh by age.
+    """
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT MAX(snapshot_at) AS latest FROM option_chain_snapshot"
+    ).fetchone()
+    latest = row["latest"] if row else None
+    if not latest:
+        return 0
+    row = conn.execute(
+        "SELECT COUNT(DISTINCT ticker) AS n FROM option_chain_snapshot WHERE snapshot_at = ?",
+        (latest,),
+    ).fetchone()
+    return int(row["n"]) if row else 0
+
+
 def _latest_two_snapshot_timestamps(ticker: str) -> List[str]:
     """Return the two most recent distinct `snapshot_at` timestamps for ticker.
 

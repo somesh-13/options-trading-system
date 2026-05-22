@@ -1,6 +1,6 @@
 """FastAPI Routes for Options Pricing Engine"""
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import sys
@@ -13,6 +13,7 @@ import pandas as pd
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
+from auth.dependencies import require_auth
 from pricing.black_scholes import black_scholes, black_scholes_call, black_scholes_put
 from pricing.greeks import calculate_greeks
 from datetime import datetime
@@ -74,6 +75,8 @@ from api.models import (
     RobinhoodSyncResponse,
     RobinhoodSyncStatus,
     RobinhoodSessionStatus,
+    LoginRequest,
+    AuthStatus,
     FlowContractRow,
     FlowLeaderboardRow,
     FlowScanResponse,
@@ -206,12 +209,22 @@ def startup():
         logging.getLogger(__name__).warning("Broker ingest skipped: %s", exc)
 
     # APScheduler — non-fatal if startup fails (tests / CI may not want jobs running).
-    try:
-        from engine.scheduler import start_scheduler
-        start_scheduler()
-    except Exception as exc:  # noqa: BLE001
+    # Skip in per-service containers; engine-worker runs the scheduler on its own
+    # so we don't get N copies of every cron job fanned out across API replicas.
+    _service = os.getenv("SERVICE_NAME", "")
+    if _service in ("", "monolith"):
+        try:
+            from engine.scheduler import start_scheduler
+            start_scheduler()
+        except Exception as exc:  # noqa: BLE001
+            import logging
+            logging.getLogger(__name__).warning("Scheduler failed to start: %s", exc)
+    else:
         import logging
-        logging.getLogger(__name__).warning("Scheduler failed to start: %s", exc)
+        logging.getLogger(__name__).info(
+            "SERVICE_NAME=%s — scheduler not started in this container (engine-worker owns it)",
+            _service,
+        )
 
 
 # Correlation-ID + latency middleware (§11.4)
@@ -244,6 +257,70 @@ async def _observability_mw(request, call_next):
         },
     )
     return response
+
+
+@app.exception_handler(Exception)
+async def _log_unhandled_exception(request: Request, exc: Exception):
+    """Capture any uncaught exception with a full traceback before FastAPI's
+    default 500 swallows the original error. The current pattern of
+    ``raise HTTPException(500, str(exc))`` in route handlers preserves only
+    the message string — this handler ensures the upstream library traceback
+    (yfinance, google-genai, SEC, etc.) lands in backend-error.log keyed by
+    correlation-id so it can be cross-referenced from the response header.
+    """
+    from fastapi.responses import JSONResponse
+    from infra.observability import get_correlation_id
+    import logging as _logging
+
+    cid = get_correlation_id()
+    _logging.getLogger("http.error").exception(
+        "unhandled exception",
+        extra={
+            "cid": cid,
+            "method": request.method,
+            "path": request.url.path,
+        },
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "internal error", "cid": cid},
+        headers={"x-correlation-id": cid} if cid else {},
+    )
+
+
+@app.exception_handler(HTTPException)
+async def _log_http_exception(request: Request, exc: HTTPException):
+    """Log explicit HTTPException 5xx paths (with the route's detail string)
+    so we have a record even when the route caught and rewrote the cause.
+    Re-raises so FastAPI's default HTTPException handler still formats the
+    response (preserving any custom headers like Retry-After).
+    """
+    from fastapi.responses import JSONResponse
+    from infra.observability import get_correlation_id
+    import logging as _logging
+
+    if exc.status_code >= 500:
+        cid = get_correlation_id()
+        _logging.getLogger("http.error").exception(
+            "http 5xx",
+            extra={
+                "cid": cid,
+                "method": request.method,
+                "path": request.url.path,
+                "status": exc.status_code,
+                "detail": exc.detail,
+            },
+        )
+    # Preserve FastAPI's default body shape and any custom headers.
+    headers = dict(getattr(exc, "headers", None) or {})
+    cid = get_correlation_id()
+    if cid:
+        headers.setdefault("x-correlation-id", cid)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=headers,
+    )
 
 
 @app.get("/metrics")
@@ -730,8 +807,26 @@ def get_ticker_fundamentals_endpoint(ticker: str):
         if isinstance(result, dict) and "quoteType" not in result:
             result["quoteType"] = "EQUITY"
         return result
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fundamentals fetch failed for {ticker}: {str(e)}")
+        msg = str(e).lower()
+        # yfinance emits "possibly delisted; no price data found" when Yahoo's
+        # quote endpoint rate-limits or briefly 404s — not an actual delisting.
+        # Surface as 503 with Retry-After so the client can back off rather
+        # than rendering a hard 500.
+        if (
+            "possibly delisted" in msg
+            or "no price data found" in msg
+            or "no data found" in msg
+        ):
+            raise HTTPException(
+                status_code=503,
+                detail=f"upstream quote provider has no data for {ticker_u} right now",
+                headers={"Retry-After": "30"},
+            )
+        # Real error — let the top-level exception handler log the traceback.
+        raise
 
 
 @app.get("/api/market/{ticker}/latest-earnings")
@@ -812,15 +907,24 @@ def get_ticker_contracts(ticker: str, force: bool = False):
     per-ticker keyed on the latest 8-K accession; in-memory cached ~30 min.
     """
     from data.contract_extract import extract_contracts
+    from llm.gemini_client import GeminiQuotaExceeded
     try:
         return extract_contracts(ticker.upper(), force=force).model_dump()
     except _AnthropicNotConfigured as e:
         raise HTTPException(status_code=503, detail=str(e))
-    except Exception as e:
+    except GeminiQuotaExceeded:
+        # Free-tier Gemini quota exhausted (20 req/min for gemini-2.5-flash).
+        # Not a server bug — tell the client to retry.
         raise HTTPException(
-            status_code=500,
-            detail=f"Contract extraction failed for {ticker}: {str(e)}",
+            status_code=503,
+            detail="LLM provider rate-limited; try again in ~60s",
+            headers={"Retry-After": "60"},
         )
+    except HTTPException:
+        raise
+    except Exception:
+        # Real error — let the top-level exception handler log the traceback.
+        raise
 
 
 @app.post("/api/scanner/regime-shift/{ticker}")
@@ -1544,7 +1648,7 @@ def get_trading_orders(status: str = "open"):
         raise HTTPException(status_code=500, detail=f"Orders fetch failed: {str(e)}")
 
 
-@app.post("/api/execution/order")
+@app.post("/api/execution/order", dependencies=[Depends(require_auth)])
 def submit_trading_order(req: OrderRequest):
     """Submit a trading order to Alpaca."""
     try:
@@ -1562,7 +1666,7 @@ def submit_trading_order(req: OrderRequest):
         raise HTTPException(status_code=500, detail=f"Order submission failed: {str(e)}")
 
 
-@app.delete("/api/execution/order/{order_id}")
+@app.delete("/api/execution/order/{order_id}", dependencies=[Depends(require_auth)])
 def cancel_trading_order(order_id: str):
     """Cancel a specific order."""
     try:
@@ -1630,7 +1734,7 @@ def get_option_chain(
         raise HTTPException(status_code=500, detail=f"Chain snapshot failed: {str(e)}")
 
 
-@app.post("/api/execution/options/order")
+@app.post("/api/execution/options/order", dependencies=[Depends(require_auth)])
 def submit_options_order(req: OptionsOrderRequest):
     """Submit an options order to Alpaca."""
     try:
@@ -1647,7 +1751,7 @@ def submit_options_order(req: OptionsOrderRequest):
         raise HTTPException(status_code=500, detail=f"Options order failed: {str(e)}")
 
 
-@app.post("/api/execution/options/exercise")
+@app.post("/api/execution/options/exercise", dependencies=[Depends(require_auth)])
 def exercise_options_position(req: ExerciseRequest):
     """Exercise an options position."""
     try:
@@ -1656,7 +1760,7 @@ def exercise_options_position(req: ExerciseRequest):
         raise HTTPException(status_code=500, detail=f"Exercise failed: {str(e)}")
 
 
-@app.delete("/api/execution/options/position/{symbol}")
+@app.delete("/api/execution/options/position/{symbol}", dependencies=[Depends(require_auth)])
 def close_options_position(symbol: str):
     """Close an options position."""
     try:
@@ -2221,11 +2325,55 @@ async def agents_trade_recommendation(payload: dict):
 
 
 # ---------------------------------------------------------------------------
+# App auth (single-user cookie gate)
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/auth/login", response_model=AuthStatus)
+def auth_login(body: LoginRequest, response: Response):
+    """Verify the password and set the session cookie.
+
+    Returns 503 when APP_PASSWORD_HASH is unset (operator forgot to bootstrap),
+    401 on a wrong password. On success the response carries the HttpOnly
+    `app_session` cookie and the auth status payload.
+    """
+    from auth import sessions as _sessions
+
+    if not _sessions.is_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="Authentication is not configured on this server (APP_PASSWORD_HASH unset).",
+        )
+    if not _sessions.verify_password(body.password):
+        raise HTTPException(status_code=401, detail="Invalid password")
+
+    _sessions.set_session_cookie(response)
+    return AuthStatus(configured=True, authenticated=True)
+
+
+@app.post("/api/auth/logout", response_model=AuthStatus)
+def auth_logout(response: Response):
+    """Clear the session cookie. Idempotent — succeeds even when not signed in."""
+    from auth import sessions as _sessions
+
+    _sessions.clear_session_cookie(response)
+    return AuthStatus(configured=_sessions.is_configured(), authenticated=False)
+
+
+@app.get("/api/auth/me", response_model=AuthStatus)
+def auth_me(app_session: Optional[str] = Cookie(default=None)):
+    """Report the caller's auth state for the frontend `useAuth` hook."""
+    from auth import sessions as _sessions
+
+    return AuthStatus(**_sessions.status_for(app_session))
+
+
+# ---------------------------------------------------------------------------
 # Robinhood real-portfolio endpoints
 # ---------------------------------------------------------------------------
 
 
-@app.post("/api/robinhood/ingest", response_model=RobinhoodIngestResponse)
+@app.post("/api/robinhood/ingest", response_model=RobinhoodIngestResponse, dependencies=[Depends(require_auth)])
 def robinhood_ingest():
     """Re-scan `hood reports/` and `sofi reports/` and upsert new activity rows."""
     try:
@@ -2248,7 +2396,7 @@ def robinhood_ingest():
         raise HTTPException(status_code=500, detail=f"Ingest failed: {exc}")
 
 
-@app.post("/api/robinhood/sync", response_model=RobinhoodSyncResponse)
+@app.post("/api/robinhood/sync", response_model=RobinhoodSyncResponse, dependencies=[Depends(require_auth)])
 def robinhood_sync(account: Optional[str] = None):
     """Pull live positions from ALL Robinhood accounts and persist one snapshot per account.
 
@@ -2364,7 +2512,7 @@ def robinhood_sync(account: Optional[str] = None):
     )
 
 
-@app.get("/api/robinhood/sync/status", response_model=RobinhoodSyncStatus)
+@app.get("/api/robinhood/sync/status", response_model=RobinhoodSyncStatus, dependencies=[Depends(require_auth)])
 def robinhood_sync_status(account: Optional[str] = None):
     """Last-known live-sync state for the dashboard's source toggle."""
     from brokers import robinhood_api as rh_api
@@ -2385,7 +2533,7 @@ def robinhood_sync_status(account: Optional[str] = None):
     )
 
 
-@app.get("/api/robinhood/session", response_model=RobinhoodSessionStatus)
+@app.get("/api/robinhood/session", response_model=RobinhoodSessionStatus, dependencies=[Depends(require_auth)])
 def robinhood_session():
     """Current Robinhood in-process auth state (used by StatusPills)."""
     from brokers import robinhood_api as rh_api
@@ -2393,13 +2541,13 @@ def robinhood_session():
     return RobinhoodSessionStatus(**rh_api.session_status())
 
 
-@app.get("/api/robinhood/accounts", response_model=RobinhoodAccountsResponse)
+@app.get("/api/robinhood/accounts", response_model=RobinhoodAccountsResponse, dependencies=[Depends(require_auth)])
 def robinhood_accounts():
     """Distinct account tags present in the activity DB."""
     return RobinhoodAccountsResponse(accounts=rh_portfolio.list_accounts())
 
 
-@app.get("/api/robinhood/holdings", response_model=RobinhoodHoldingsResponse)
+@app.get("/api/robinhood/holdings", response_model=RobinhoodHoldingsResponse, dependencies=[Depends(require_auth)])
 def robinhood_holdings(
     live_prices: bool = True,
     account: Optional[str] = None,
@@ -2428,7 +2576,7 @@ def robinhood_holdings(
     )
 
 
-@app.get("/api/robinhood/summary", response_model=RobinhoodSummary)
+@app.get("/api/robinhood/summary", response_model=RobinhoodSummary, dependencies=[Depends(require_auth)])
 def robinhood_summary(
     live_prices: bool = True,
     account: Optional[str] = None,
@@ -2447,7 +2595,7 @@ def robinhood_summary(
     return RobinhoodSummary(**s.__dict__)
 
 
-@app.get("/api/robinhood/activity", response_model=List[RobinhoodActivityRow])
+@app.get("/api/robinhood/activity", response_model=List[RobinhoodActivityRow], dependencies=[Depends(require_auth)])
 def robinhood_activity(limit: int = 50, trans_code: Optional[str] = None, account: Optional[str] = None):
     limit = max(1, min(int(limit), 500))
     rows = rh_portfolio.recent_activity(limit=limit, trans_code=trans_code, account=account)
@@ -2461,7 +2609,7 @@ def robinhood_activity(limit: int = 50, trans_code: Optional[str] = None, accoun
 # =============================================
 
 
-@app.get("/api/robinhood/analytics/portfolio-greeks")
+@app.get("/api/robinhood/analytics/portfolio-greeks", dependencies=[Depends(require_auth)])
 def robinhood_portfolio_greeks(account: str = "all"):
     try:
         return rh_analytics.portfolio_greeks_for_account(account)
@@ -2469,7 +2617,7 @@ def robinhood_portfolio_greeks(account: str = "all"):
         raise HTTPException(status_code=500, detail=f"Portfolio Greeks failed: {exc}")
 
 
-@app.get("/api/robinhood/analytics/hedge-ratio")
+@app.get("/api/robinhood/analytics/hedge-ratio", dependencies=[Depends(require_auth)])
 def robinhood_hedge_ratio(account: str = "all", target_delta: float = 0.0):
     try:
         return rh_analytics.hedge_ratio_for_account(account, target_delta=target_delta)
@@ -2477,7 +2625,7 @@ def robinhood_hedge_ratio(account: str = "all", target_delta: float = 0.0):
         raise HTTPException(status_code=500, detail=f"Hedge ratio failed: {exc}")
 
 
-@app.get("/api/robinhood/analytics/hedge-ratio-by-underlying")
+@app.get("/api/robinhood/analytics/hedge-ratio-by-underlying", dependencies=[Depends(require_auth)])
 def robinhood_hedge_ratio_by_underlying(account: str = "all", target_delta: float = 0.0):
     try:
         return rh_analytics.hedge_ratio_by_underlying_for_account(
@@ -2487,7 +2635,7 @@ def robinhood_hedge_ratio_by_underlying(account: str = "all", target_delta: floa
         raise HTTPException(status_code=500, detail=f"Per-underlying hedge ratio failed: {exc}")
 
 
-@app.get("/api/robinhood/analytics/delta-gamma-hedge")
+@app.get("/api/robinhood/analytics/delta-gamma-hedge", dependencies=[Depends(require_auth)])
 def robinhood_delta_gamma_hedge(
     account: str = "all",
     underlying: Optional[str] = None,
@@ -2507,7 +2655,7 @@ def robinhood_delta_gamma_hedge(
         raise HTTPException(status_code=500, detail=f"Delta-gamma hedge failed: {exc}")
 
 
-@app.get("/api/robinhood/analytics/rebalance-check")
+@app.get("/api/robinhood/analytics/rebalance-check", dependencies=[Depends(require_auth)])
 def robinhood_rebalance_check(
     account: str = "all",
     delta_limit: float = 1000.0,
@@ -2525,7 +2673,7 @@ def robinhood_rebalance_check(
         raise HTTPException(status_code=500, detail=f"Rebalance check failed: {exc}")
 
 
-@app.get("/api/robinhood/analytics/stress-test")
+@app.get("/api/robinhood/analytics/stress-test", dependencies=[Depends(require_auth)])
 def robinhood_stress_test(
     account: str = "all",
     spot_shock: float = 0.10,
@@ -2541,7 +2689,7 @@ def robinhood_stress_test(
         raise HTTPException(status_code=500, detail=f"Stress test failed: {exc}")
 
 
-@app.get("/api/robinhood/analytics/limits-check")
+@app.get("/api/robinhood/analytics/limits-check", dependencies=[Depends(require_auth)])
 def robinhood_limits_check(
     account: str = "all",
     max_delta: float = 10000.0,
@@ -2559,7 +2707,7 @@ def robinhood_limits_check(
         raise HTTPException(status_code=500, detail=f"Limits check failed: {exc}")
 
 
-@app.get("/api/robinhood/analytics/drawdown")
+@app.get("/api/robinhood/analytics/drawdown", dependencies=[Depends(require_auth)])
 def robinhood_drawdown(account: str = "all", limit: float = 0.10):
     try:
         return rh_analytics.drawdown_for_account(account, limit=limit)
@@ -2595,7 +2743,7 @@ class TickerChatResponse(_ChatBaseModel):
     error: Optional[str] = None
 
 
-@app.get("/api/robinhood/analytics/ticker-report/{ticker}")
+@app.get("/api/robinhood/analytics/ticker-report/{ticker}", dependencies=[Depends(require_auth)])
 def robinhood_ticker_report(ticker: str, account: Optional[str] = None):
     """All positions + aggregate Greeks + recent activity for one ticker."""
     try:
@@ -2604,7 +2752,7 @@ def robinhood_ticker_report(ticker: str, account: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"Ticker report failed: {exc}")
 
 
-@app.post("/api/robinhood/analytics/ticker-chat", response_model=TickerChatResponse)
+@app.post("/api/robinhood/analytics/ticker-chat", response_model=TickerChatResponse, dependencies=[Depends(require_auth)])
 def robinhood_ticker_chat(req: TickerChatRequest):
     """One-shot Gemini answer grounded in the live ticker report."""
     history = [m.model_dump() for m in req.history]
@@ -2616,7 +2764,7 @@ def robinhood_ticker_chat(req: TickerChatRequest):
 # Robinhood Crypto endpoints
 # =============================================
 
-@app.get("/api/robinhood/crypto/positions", response_model=List[CryptoHoldingResponse])
+@app.get("/api/robinhood/crypto/positions", response_model=List[CryptoHoldingResponse], dependencies=[Depends(require_auth)])
 def robinhood_crypto_positions(account: str = "crypto"):
     """Return crypto holdings from the latest robinhood_live_snapshot tagged 'crypto'.
 
@@ -2649,7 +2797,7 @@ def robinhood_crypto_quote(symbol: str):
         return CryptoQuoteResponse(symbol=sym, error=str(exc))
 
 
-@app.post("/api/robinhood/crypto/order", response_model=CryptoOrderResponse)
+@app.post("/api/robinhood/crypto/order", response_model=CryptoOrderResponse, dependencies=[Depends(require_auth)])
 def robinhood_crypto_order(req: CryptoOrderRequest):
     """Place or simulate a crypto order.
 
@@ -2822,7 +2970,7 @@ def robinhood_crypto_order(req: CryptoOrderRequest):
     )
 
 
-@app.post("/api/robinhood/equity/order", response_model=EquityOrderResponse)
+@app.post("/api/robinhood/equity/order", response_model=EquityOrderResponse, dependencies=[Depends(require_auth)])
 def robinhood_equity_order(req: EquityOrderRequest):
     """Place or simulate an equity (stock) order via Robinhood.
 
@@ -3059,7 +3207,7 @@ def robinhood_equity_order(req: EquityOrderRequest):
     )
 
 
-@app.post("/api/robinhood/options/order", response_model=OptionOrderResponse)
+@app.post("/api/robinhood/options/order", response_model=OptionOrderResponse, dependencies=[Depends(require_auth)])
 def robinhood_options_order(req: OptionOrderRequest):
     """Place or simulate a single-leg option order via Robinhood.
 
@@ -3687,6 +3835,28 @@ def flow_scan(min_premium: float = 0.0, top: int = 30):
         tickers_scanned=len(tickers),
         tickers_with_data=len(out_rows),
     )
+
+
+@app.post("/api/flow/snapshot/run")
+def flow_snapshot_run():
+    """Queue an immediate `run_flow_snapshot` on the scheduler.
+
+    Mirrors `/api/notifications/scan-now`. The snapshot fans out ~76 tickers
+    × 1.5s and so must run on the scheduler's thread executor — never inline
+    — to avoid blocking the request worker. Returns the queued job id plus
+    the watchlist size for the client to display.
+    """
+    from engine.scheduler import _flow_watchlist, queue_flow_snapshot_run
+    from data.option_snapshots import latest_snapshot_age_hours
+
+    tickers = _flow_watchlist()
+    job_id = queue_flow_snapshot_run()
+    return {
+        "queued": True,
+        "tickers": len(tickers),
+        "job_id": job_id,
+        "latest_snapshot_age_hours": latest_snapshot_age_hours(),
+    }
 
 
 @app.get("/api/flow/{ticker}", response_model=FlowTickerResponse)

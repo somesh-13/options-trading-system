@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import type { RobinhoodOption } from '@/lib/robinhood-api';
 import { groupStrategies, type StrategyGroup } from '@/lib/option-strategies';
 
@@ -95,63 +95,66 @@ function strategyChipColor(type: StrategyGroup['type']): { bg: string; border: s
 }
 
 export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return localStorage.getItem(COLLAPSE_KEY) === '1';
-    } catch {
-      return false;
-    }
-  });
+  const [hydrated, setHydrated] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [sort, setSort] = useState<SortState>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
 
-  const [sort, setSort] = useState<SortState>(() => {
-    if (typeof window === 'undefined') return null;
+  // Load persisted UI state after mount to avoid SSR hydration mismatch.
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1');
+    } catch {
+      /* ignore */
+    }
     try {
       const raw = localStorage.getItem(SORT_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as SortState;
-      return parsed && parsed.key ? parsed : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as SortState;
+        if (parsed && parsed.key) setSort(parsed);
+      }
     } catch {
-      return null;
+      /* ignore */
     }
-  });
-
-  const [expanded, setExpanded] = useState<Set<string>>(() => {
-    if (typeof window === 'undefined') return new Set();
     try {
       const raw = localStorage.getItem(EXPANDED_GROUPS_KEY);
-      if (!raw) return new Set();
-      const arr = JSON.parse(raw);
-      return new Set(Array.isArray(arr) ? arr : []);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) setExpanded(new Set(arr));
+      }
     } catch {
-      return new Set();
+      /* ignore */
     }
-  });
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     try {
       localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
     } catch {
       /* ignore */
     }
-  }, [collapsed]);
+  }, [collapsed, hydrated]);
 
   useEffect(() => {
+    if (!hydrated) return;
     try {
       if (sort) localStorage.setItem(SORT_KEY, JSON.stringify(sort));
       else localStorage.removeItem(SORT_KEY);
     } catch {
       /* ignore */
     }
-  }, [sort]);
+  }, [sort, hydrated]);
 
   useEffect(() => {
+    if (!hydrated) return;
     try {
       localStorage.setItem(EXPANDED_GROUPS_KEY, JSON.stringify([...expanded]));
     } catch {
       /* ignore */
     }
-  }, [expanded]);
+  }, [expanded, hydrated]);
 
   const groups = useMemo(() => {
     const all = groupStrategies(options);
@@ -280,7 +283,7 @@ export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
       </div>
       {!collapsed && (
         <div style={{ overflowX: 'auto' }}>
-          <table className="rv-table" style={{ minWidth: 720, width: '100%' }}>
+          <table className="rv-table rh-options-table" style={{ minWidth: 720, width: '100%' }}>
             <thead>
               <tr>
                 <th style={{ width: 24 }}></th>
@@ -316,9 +319,8 @@ export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
     const chip = strategyChipColor(g.type);
 
     return (
-      <>
+      <Fragment key={g.id}>
         <tr
-          key={`${g.id}-head`}
           onClick={isMultiLeg ? () => toggleExpand(g.id) : undefined}
           style={{
             cursor: isMultiLeg ? 'pointer' : 'default',
@@ -354,7 +356,11 @@ export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
             >
               {g.label}
             </span>
-            {g.subLabel && (
+            {/* Strategy description (g.subLabel) only renders once the row is
+                expanded — keeps collapsed rows clean and avoids wrapping the
+                chip line on narrow screens. Single-leg groups are always
+                "open" so their description still appears. */}
+            {isOpen && g.subLabel && (
               <span style={{ fontSize: 10, color: 'var(--ink-mute)', fontFamily: "'JetBrains Mono', monospace" }}>
                 {g.subLabel}
               </span>
@@ -434,7 +440,7 @@ export function OptionsTable({ options }: { options: RobinhoodOption[] }) {
             </td>
           </tr>
         ))}
-      </>
+      </Fragment>
     );
   }
 }

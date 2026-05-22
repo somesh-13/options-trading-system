@@ -183,6 +183,103 @@ body {
   font-size: 15px !important;
 }
 
+/* AI Data Center comparison table: zoomed-up sizing so the dense peer
+ * comparison is readable without needing to squint. */
+.aidc-table { font-size: 14px; }
+.aidc-table th, .aidc-table td { padding: 10px 12px; }
+.aidc-table th { font-size: 12px; }
+.aidc-table th:hover { color: var(--gold); }
+@media (min-width: 900px) {
+  .aidc-table { font-size: 15px; }
+  .aidc-table th { font-size: 13px; }
+}
+
+/* Sticky-left ticker column: keep the stock identity visible while the rest
+ * of the comparison columns scroll horizontally on narrow screens.
+ * Sticky cells need an opaque background that matches their row state
+ * (default / hover / selected) so the scrolling cells slide under cleanly.
+ * Two flavors:
+ *   .aidc-sticky-col — scoped to the AI Datacenter table (preserves the
+ *                      table's larger padding context).
+ *   .rv-sticky-col   — generic, reusable on any horizontal-scroll table. */
+.aidc-table th.aidc-sticky-col,
+.aidc-table td.aidc-sticky-col,
+th.rv-sticky-col,
+td.rv-sticky-col {
+  position: sticky;
+  left: 0;
+  background: var(--card);
+  z-index: 1;
+}
+.aidc-table th.aidc-sticky-col,
+th.rv-sticky-col { z-index: 2; }
+.aidc-table tbody tr:hover td.aidc-sticky-col,
+tr:hover td.rv-sticky-col { background: #1a1b1f; }
+.aidc-table tbody tr.sel td.aidc-sticky-col {
+  background: linear-gradient(to right, rgba(255,215,0,.06), rgba(255,215,0,.06)), var(--card);
+}
+/* Right edge shadow hints that more columns lie behind the sticky column. */
+.aidc-table th.aidc-sticky-col::after,
+.aidc-table td.aidc-sticky-col::after,
+th.rv-sticky-col::after,
+td.rv-sticky-col::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -6px;
+  width: 6px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(0,0,0,0.35), transparent);
+}
+
+/* Clickable / sortable header cell. */
+th.rv-sortable { cursor: pointer; user-select: none; }
+th.rv-sortable:hover { color: var(--gold); }
+
+/* Robinhood options-table: two leftmost columns (expand toggle + Underlying)
+ * stay pinned while the right columns scroll horizontally. Uses :nth-child
+ * so every row, including expanded leg rows, gets the same sticky treatment
+ * without per-row className wiring. */
+.rh-options-table th:nth-child(1),
+.rh-options-table td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  background: var(--card);
+  z-index: 1;
+  width: 24px;
+  min-width: 24px;
+  max-width: 24px;
+}
+.rh-options-table thead th:nth-child(1) { z-index: 2; }
+.rh-options-table th:nth-child(2),
+.rh-options-table td:nth-child(2) {
+  position: sticky;
+  left: 24px;
+  background: var(--card);
+  z-index: 1;
+}
+.rh-options-table thead th:nth-child(2) { z-index: 2; }
+.rh-options-table th:nth-child(2)::after,
+.rh-options-table td:nth-child(2)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -6px;
+  width: 6px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(0,0,0,0.35), transparent);
+}
+/* Expanded leg rows have their own darker background; the sticky cells must
+ * carry it too so the scrolling cells slide under cleanly. */
+.rh-options-table tr[style*='rgba(0,0,0,.15)'] td:nth-child(1),
+.rh-options-table tr[style*='rgba(0, 0, 0, .15)'] td:nth-child(1),
+.rh-options-table tr[style*='rgba(0,0,0,.15)'] td:nth-child(2),
+.rh-options-table tr[style*='rgba(0, 0, 0, .15)'] td:nth-child(2) {
+  background: #16171a;
+}
+
 /* ---------- grids + KPI ---------- */
 .rv-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
 .rv-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
@@ -431,6 +528,213 @@ body {
 .rv-chain tbody tr.sel { background: rgba(255,215,0,.06); }
 .rv-chain td.itm    { background: rgba(255,255,255,.02); color: var(--ink); }
 .rv-chain td.strike { background: #0d0e11; color: var(--ink); font-weight: 600; }
+
+/* ---------- Option chain — mobile single-side view (Robinhood-style) ----------
+ * On phones the desktop 13-column Calls|Strike|Puts table forces horizontal
+ * scrolling, and the strike column drifts off-screen mid-scroll. We render a
+ * dedicated mobile layout: Call/Put toggle + a single-side table with the
+ * strike pinned sticky-left so it stays visible while the quote columns
+ * scroll. CSS toggles which DOM tree is visible by viewport width. */
+.rv-chain-desktop      { display: block; }
+.rv-chain-mobile-wrap  { display: none; }
+@media (max-width: 720px) {
+  .rv-chain-desktop     { display: none; }
+  .rv-chain-mobile-wrap { display: block; }
+}
+
+.rv-chain-side-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 8px 8px 6px;
+  background: #0d0e11;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+.rv-chain-side-toggle button {
+  flex: 1;
+  background: transparent;
+  color: var(--ink-mute);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  min-height: 44px;
+  letter-spacing: .05em;
+}
+.rv-chain-side-toggle button.on.call {
+  background: rgba(0,200,5,.12);
+  color: var(--green);
+  border-color: var(--green);
+}
+.rv-chain-side-toggle button.on.put {
+  background: rgba(255,0,110,.12);
+  color: var(--pink);
+  border-color: var(--pink);
+}
+
+.rv-chain-mobile-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.rv-chain-mobile-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--ink);
+}
+.rv-chain-mobile-table thead th {
+  position: sticky;
+  top: 0;
+  background: #0d0e11;
+  color: var(--ink-mute);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  z-index: 2;
+}
+.rv-chain-mobile-table thead th.rv-sticky-col { z-index: 3; }
+.rv-chain-mobile-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap;
+  text-align: right;
+}
+.rv-chain-mobile-table td.r,
+.rv-chain-mobile-table th.r { text-align: right; }
+.rv-chain-mobile-table td.strike-col,
+.rv-chain-mobile-table th.strike-col {
+  text-align: left;
+  min-width: 92px;
+  font-weight: 600;
+}
+.rv-chain-mobile-table td.strike-col .strike-val { font-size: 15px; }
+.rv-chain-mobile-table td.strike-col .strike-atm {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(58,141,255,.18);
+  color: var(--blue);
+  vertical-align: middle;
+}
+/* ITM tinting: green for calls below spot, pink for puts above spot.
+ * Picks up the active-side color because the row is only marked .itm when
+ * its leg is ITM for the currently-displayed side. */
+.rv-chain-mobile-table tbody tr.itm td { background: rgba(255,255,255,.02); }
+.rv-chain-mobile-table tbody tr.itm td.bid,
+.rv-chain-mobile-table tbody tr.itm td.ask { color: var(--ink); font-weight: 500; }
+.rv-chain-mobile-table tbody tr.atm td {
+  background: rgba(58,141,255,.06);
+  border-top: 1px solid var(--blue);
+  border-bottom: 1px solid var(--blue);
+}
+.rv-chain-mobile-table tbody tr.atm.itm td { background: rgba(58,141,255,.10); }
+.rv-chain-mobile-table td.bid { color: var(--pink); }
+.rv-chain-mobile-table td.ask { color: var(--green); }
+
+.rv-chain-mobile-hint {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--ink-mute);
+  border-top: 1px solid var(--line-soft);
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ---------- Trade ticket overlay (options-chain page) ---------------------
+ * Mounts only when the user highlights a contract. Desktop: centered modal.
+ * Mobile: bottom sheet that slides up from the bottom edge. Backdrop click,
+ * the × button, or ESC dismisses. */
+.rv-trade-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: rv-overlay-fade 160ms ease-out;
+}
+.rv-trade-overlay-panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  padding-top: 38px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+.rv-trade-overlay-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  background: #0d0e11;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: var(--ink-mute);
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.rv-trade-overlay-close:hover { color: var(--ink); }
+@keyframes rv-overlay-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Mobile: bottom sheet flavor. Full-width, anchored to the bottom edge, slides
+ * up on open. Larger close-button hit area for thumbs. */
+@media (max-width: 640px) {
+  .rv-trade-overlay-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .rv-trade-overlay-panel {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+    padding-top: 44px;
+    animation: rv-sheet-up 220ms cubic-bezier(.2,.8,.2,1);
+  }
+  .rv-trade-overlay-close {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+}
+@keyframes rv-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
 
 .rv-ticket { padding: 14px; font-size: 12px; }
 .rv-ticket-line { font-family: 'JetBrains Mono', monospace; font-size: 13px; margin: 2px 0; }
